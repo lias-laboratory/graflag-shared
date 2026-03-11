@@ -26,7 +26,6 @@ RUN pip install --no-cache-dir --break-system-packages --upgrade git+https://git
 WORKDIR /app
 
 # Install your custom libraries
-COPY libs/ ./libs/
-RUN pip install --no-cache-dir --break-system-packages ./libs/graflag_runner ./libs/graflag_bond
+RUN pip install --no-cache-dir --break-system-packages graflag-runner graflag-bond
 
 CMD ["python3", "-m", "graflag_runner"]
