@@ -46,7 +46,6 @@ WORKDIR /app
 COPY methods/strgnn/train_graflag.py ./train_graflag.py
 
 # Copy custom libraries
-COPY libs/ ./libs/
-RUN pip3 install --no-cache-dir ./libs/graflag_runner
+RUN pip3 install --no-cache-dir graflag-runner
 
 CMD ["python3", "-m", "graflag_runner", "--pass-env-args"]

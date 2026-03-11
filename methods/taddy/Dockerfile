@@ -34,8 +34,7 @@ RUN git clone https://github.com/yixingwang0517/Temporal-Anomaly-Detection-in-Dy
 COPY methods/taddy/train_graflag.py ./train_graflag.py
 
 # Copy custom libraries (graflag_runner will be added later)
-COPY libs/ ./libs/
-RUN pip install --no-cache-dir ./libs/graflag_runner
+RUN pip install --no-cache-dir graflag-runner
 
 # Run with graflag_runner wrapper
 CMD ["python3", "-m", "graflag_runner", "--pass-env-args"]

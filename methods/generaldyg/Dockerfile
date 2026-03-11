@@ -47,7 +47,6 @@ COPY methods/generaldyg/train_graflag.py ./train_graflag.py
 COPY methods/generaldyg/dataset_all.py ./dataset_all.py
 
 # Copy custom libraries
-COPY libs/ ./libs/
-RUN pip install --no-cache-dir ./libs/graflag_runner
+RUN pip install --no-cache-dir graflag-runner
 
 CMD ["python3", "-m", "graflag_runner", "--pass-env-args"]
