@@ -1,0 +1,67 @@
+name: Publish Libraries to PyPI
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      library:
+        description: 'Library to publish (graflag_runner, graflag_evaluator, graflag_bond, or all)'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - graflag_runner
+          - graflag_evaluator
+          - graflag_bond
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+    strategy:
+      matrix:
+        library:
+          - name: graflag_runner
+            path: libs/graflag_runner
+          - name: graflag_evaluator
+            path: libs/graflag_evaluator
+          - name: graflag_bond
+            path: libs/graflag_bond
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check if library should be published
+        id: check
+        run: |
+          if [ "${{ github.event_name }}" = "release" ]; then
+            echo "should_publish=true" >> $GITHUB_OUTPUT
+          elif [ "${{ inputs.library }}" = "all" ] || [ "${{ inputs.library }}" = "${{ matrix.library.name }}" ]; then
+            echo "should_publish=true" >> $GITHUB_OUTPUT
+          else
+            echo "should_publish=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Set up Python
+        if: steps.check.outputs.should_publish == 'true'
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install build tools
+        if: steps.check.outputs.should_publish == 'true'
+        run: pip install build
+
+      - name: Build package
+        if: steps.check.outputs.should_publish == 'true'
+        working-directory: ${{ matrix.library.path }}
+        run: python -m build
+
+      - name: Publish to PyPI
+        if: steps.check.outputs.should_publish == 'true'
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: ${{ matrix.library.path }}/dist/
