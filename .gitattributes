@@ -1,0 +1,9 @@
+datasets/**/*.tsv filter=lfs diff=lfs merge=lfs -text
+datasets/digg/digg filter=lfs diff=lfs merge=lfs -text
+datasets/**/*.npz filter=lfs diff=lfs merge=lfs -text
+datasets/**/*.pkl filter=lfs diff=lfs merge=lfs -text
+datasets/**/*.pt filter=lfs diff=lfs merge=lfs -text
+datasets/**/*.edges filter=lfs diff=lfs merge=lfs -text
+datasets/uci/uci filter=lfs diff=lfs merge=lfs -text
+datasets/**/*.npy filter=lfs diff=lfs merge=lfs -text
+datasets/**/*.csv filter=lfs diff=lfs merge=lfs -text
