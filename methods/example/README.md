@@ -20,7 +20,9 @@ Starting point for integrating new Graph Anomaly Detection (GAD) methods into Gr
    - Clone source code if wrapping existing implementation
    - Update the COPY path for your method
 
-4. **Implement `train_graflag.py`:**
+4. **(Pattern A only) Implement `train_graflag.py`:**
+   - Only needed if writing a custom training script (Pattern A)
+   - Pattern B methods (PyGOD via graflag_bond) do not need this file
    - Replace `YourModel` class with your actual implementation
    - Update argument parsing for your parameters
    - Implement training and prediction logic
@@ -32,14 +34,21 @@ Starting point for integrating new Graph Anomaly Detection (GAD) methods into Gr
 
 ## File Structure
 
+Required files (all methods):
 ```
 methods/your_method_name/
 +-- .env              Method configuration and parameters
 +-- Dockerfile        Container definition
-+-- train_graflag.py  Main integration script (Pattern A)
 ```
 
-For Pattern B methods (PyGOD via graflag_bond), only `.env` and `Dockerfile` are needed.
+Pattern A methods (custom training script) also include:
+```
++-- train_graflag.py  Custom integration script (optional, Pattern A only)
+```
+
+The `COMMAND` field in `.env` defines what runs inside the container. Pattern A methods
+typically set `COMMAND=python3 train_graflag.py`, while Pattern B methods (PyGOD via
+graflag_bond) set `COMMAND=python3 -m graflag_bond.train` and need no additional files.
 
 ## Parameter Passing
 

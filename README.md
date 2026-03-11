@@ -16,13 +16,14 @@ libs/             Shared Python libraries
 
 ## Methods
 
-Each method directory contains:
+Each method directory requires at minimum `.env` and `Dockerfile`. Pattern A methods
+(custom training scripts) also include a `train_graflag.py` integration script:
 
 ```
 methods/method_name/
-    .env               Method configuration and parameters
-    Dockerfile         Container definition (clones source from GitHub)
-    train_graflag.py   GraFlag integration script
+    .env               Method configuration and parameters (required)
+    Dockerfile         Container definition (required)
+    train_graflag.py   Custom integration script (Pattern A only, optional)
 ```
 
 See `graflag-docs/METHOD_INTEGRATION_GUIDE.md` for adding new methods.
