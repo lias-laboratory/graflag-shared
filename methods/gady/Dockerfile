@@ -37,8 +37,7 @@ COPY methods/gady/train_graflag.py ./train_graflag.py
 COPY methods/gady/data_loader.py ./data_loader.py
 
 # Copy and install graflag_runner library
-COPY libs/ ./libs/
-RUN pip install --no-cache-dir ./libs/graflag_runner
+RUN pip install --no-cache-dir graflag-runner
 
 # Entry point with parameter extraction
 CMD ["python3", "-m", "graflag_runner", "--pass-env-args"]

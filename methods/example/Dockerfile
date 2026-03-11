@@ -89,8 +89,7 @@ COPY methods/example/train_graflag.py ./train_graflag.py
 # ------------------------------------------------------------------------------
 # The graflag_runner library provides ResultWriter and execution framework
 
-COPY libs/ ./libs/
-RUN pip install --no-cache-dir ./libs/graflag_runner
+RUN pip install --no-cache-dir graflag-runner
 
 # ------------------------------------------------------------------------------
 # Step 9: Set the entry point (REQUIRED)
