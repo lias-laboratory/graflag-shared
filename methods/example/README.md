@@ -1,6 +1,6 @@
 # GraFlag Method Template
 
-This template provides a starting point for integrating new Graph Anomaly Detection (GAD) methods into GraFlag.
+Starting point for integrating new Graph Anomaly Detection (GAD) methods into GraFlag.
 
 ## Quick Start
 
@@ -12,6 +12,7 @@ This template provides a starting point for integrating new Graph Anomaly Detect
 2. **Update the `.env` file:**
    - Set `METHOD_NAME=your_method_name`
    - Update `DESCRIPTION` and `SOURCE_CODE`
+   - Set `SUPPORTED_DATASETS` if applicable
    - Add your method's parameters (prefix with `_`)
 
 3. **Update the `Dockerfile`:**
@@ -26,24 +27,23 @@ This template provides a starting point for integrating new Graph Anomaly Detect
 
 5. **Test your method:**
    ```bash
-   ./graflag_cli.py benchmark -m your_method_name -d email_snapshot --build
+   graflag run -m your_method_name -d your_dataset --build
    ```
 
 ## File Structure
 
 ```
 methods/your_method_name/
-├── .env              # Method configuration and parameters
-├── Dockerfile        # Container definition
-├── train_graflag.py  # Main integration script
-└── README.md         # Method documentation (optional)
++-- .env              Method configuration and parameters
++-- Dockerfile        Container definition
++-- train_graflag.py  Main integration script (Pattern A)
 ```
 
-## Key Concepts
+For Pattern B methods (PyGOD via graflag_bond), only `.env` and `Dockerfile` are needed.
 
-### Parameter Passing
+## Parameter Passing
 
-Parameters in `.env` prefixed with `_` are passed as CLI arguments:
+Parameters in `.env` prefixed with `_` are passed as CLI arguments when using `--pass-env-args`:
 
 ```bash
 # In .env
@@ -56,20 +56,10 @@ python3 train_graflag.py --learning_rate 0.001 --epochs 100
 
 Users can override parameters:
 ```bash
-./graflag_cli.py benchmark -m method -d dataset --params LEARNING_RATE=0.01 EPOCHS=50
+graflag run -m method -d dataset --params LEARNING_RATE=0.01 EPOCHS=50
 ```
 
-### Data Formats
-
-GraFlag supports multiple dataset formats:
-
-| Format | Files | Description |
-|--------|-------|-------------|
-| Edge Stream | `Data.csv`, `Label.csv` | Timestamped edges with labels |
-| Snapshot | `acc_*.npy`, `split.npz` | Graph snapshots with train/test splits |
-| Edge List | `edges.txt` | Simple edge list |
-
-### Result Types
+## Result Types
 
 Choose the appropriate result type for `writer.save_scores()`:
 
@@ -78,10 +68,10 @@ Choose the appropriate result type for `writer.save_scores()`:
 | `NODE_ANOMALY_SCORES` | Static node-level anomaly scores |
 | `EDGE_ANOMALY_SCORES` | Static edge-level anomaly scores |
 | `GRAPH_ANOMALY_SCORES` | Graph-level anomaly scores |
-| `TEMPORAL_*` | Time-indexed scores |
-| `*_STREAM_*` | Streaming/dynamic scores |
+| `TEMPORAL_*` | Time-indexed scores (2D arrays) |
+| `*_STREAM_*` | Streaming scores (1D with timestamps) |
 
-### ResultWriter API
+## ResultWriter API
 
 ```python
 from graflag_runner import ResultWriter
@@ -91,26 +81,18 @@ writer = ResultWriter()
 # Log training metrics (saved to training.csv)
 writer.spot("training", epoch=1, loss=0.5, auc=0.8)
 
-# Log validation metrics (saved to validation.csv)
-writer.spot("validation", epoch=1, auc=0.85)
-
 # Save anomaly scores (required)
 writer.save_scores(
-    result_type="EDGE_STREAM_ANOMALY_SCORES",
-    scores=[0.1, 0.9, ...],
-    edges=[[0, 1], [1, 2], ...],
-    timestamps=[0, 0, 1, ...],
-    ground_truth=[0, 1, 0, ...],
+    result_type="NODE_ANOMALY_SCORES",
+    scores=[0.1, 0.9, 0.3],
+    ground_truth=[0, 1, 0],
 )
 
 # Add metadata
-writer.add_metadata(
-    method_name="your_method",
-    dataset="dataset_name",
-    method_parameters={...},
-    exec_time=123.45,
-    memory=512.0,
-)
+writer.add_metadata(method_name="your_method", dataset="cora")
+
+# Add resource metrics (optional, also set automatically by graflag_runner)
+writer.add_resource_metrics(exec_time_ms=1234.5, peak_memory_mb=512.3, peak_gpu_mb=2048.0)
 
 # Finalize and write results.json
 writer.finalize()
@@ -118,47 +100,20 @@ writer.finalize()
 
 ## Environment Variables
 
-These are automatically set by GraFlag:
+Automatically set by GraFlag:
 
 | Variable | Description |
 |----------|-------------|
 | `DATA` | Path to dataset directory |
 | `EXP` | Path to experiment output directory |
 | `METHOD_NAME` | Method name from .env |
-
-## Output Structure
-
-Your method should produce files in the `EXP` directory:
-
-```
-experiments/exp__method__dataset__timestamp/
-├── results.json       # Main output (created by ResultWriter)
-├── training.csv       # Training metrics (from writer.spot())
-├── validation.csv     # Validation metrics (from writer.spot())
-├── method_output.txt  # Stdout/stderr capture
-└── service_config.json # Experiment configuration
-```
-
-## Tips
-
-1. **Reproducibility:** Always set random seeds
-2. **Memory:** Track and report peak memory usage
-3. **Logging:** Use `writer.spot()` for training curves
-4. **Normalization:** Normalize scores to [0, 1] range
-5. **Error Handling:** Gracefully handle missing labels
+| `COMMAND` | Command from .env |
 
 ## Example Methods
 
-Study these existing methods for reference:
+Study these for reference:
 
-- `generaldyg` - General dynamic GNN (PyTorch + GPU)
-- `taddy` - Temporal anomaly detection
-- `strgnn` - Structural temporal GNN
-- `anograph` - C++ based streaming method
-- `dynwalk` - Random walk + autoencoder
-
-## Need Help?
-
-- Check the main `CLAUDE.md` in the repository root
-- Review existing method implementations
-- Open an issue on GitHub
+- `generaldyg` -- Dynamic GNN (Pattern A, --pass-env-args)
+- `taddy` -- Temporal anomaly detection (Pattern A, --pass-env-args)
+- `bond_dominant` -- Deep matrix factorization (Pattern B, graflag_bond)
+- `bond_cola` -- Contrastive learning (Pattern B, graflag_bond)
