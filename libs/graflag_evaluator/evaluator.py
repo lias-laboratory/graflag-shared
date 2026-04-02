@@ -48,7 +48,12 @@ class Evaluator:
         self.result_type = self.results.get("result_type")
         if not self.result_type:
             raise ValueError("result_type not found in results.json")
-        
+
+        # Load custom metric plugins (experiment-local and global)
+        global_plugins = Path(__file__).parent / "plugins"
+        experiment_plugins = self.experiment_path / "custom_metrics"
+        MetricCalculator.load_plugins(global_plugins, experiment_plugins)
+
         logger.info(f"[INFO] Evaluating experiment: {self.experiment_path.name}")
         logger.info(f"   Result type: {self.result_type}")
     

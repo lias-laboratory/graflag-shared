@@ -1,6 +1,8 @@
 """Metric calculators for different result types."""
 
+import importlib.util
 import numpy as np
+from pathlib import Path
 from sklearn import metrics
 from typing import Dict, List, Any, Callable
 import logging
@@ -34,7 +36,36 @@ class MetricCalculator:
         logger.debug(f"Registered metric {metric_func.__name__} for {result_type}")
     
     @classmethod
-    def calculate_metrics(cls, result_type: str, scores: np.ndarray, 
+    def load_plugins(cls, *plugin_dirs: Path):
+        """Load custom metric plugins from directories.
+
+        Each ``.py`` file in the given directories is imported.  The file is
+        expected to call ``MetricCalculator.register_metric()`` at import time
+        to register its metrics.
+
+        Non-existent directories are silently skipped.
+
+        Args:
+            *plugin_dirs: Paths to directories containing plugin ``.py`` files.
+        """
+        for plugin_dir in plugin_dirs:
+            plugin_dir = Path(plugin_dir)
+            if not plugin_dir.is_dir():
+                continue
+            for py_file in sorted(plugin_dir.glob("*.py")):
+                if py_file.name.startswith("_"):
+                    continue
+                module_name = f"graflag_plugin_{py_file.stem}"
+                try:
+                    spec = importlib.util.spec_from_file_location(module_name, py_file)
+                    mod = importlib.util.module_from_spec(spec)
+                    spec.loader.exec_module(mod)
+                    logger.info(f"[INFO] Loaded plugin: {py_file.name}")
+                except Exception as e:
+                    logger.error(f"[ERROR] Failed to load plugin {py_file.name}: {e}")
+
+    @classmethod
+    def calculate_metrics(cls, result_type: str, scores: np.ndarray,
                          ground_truth: np.ndarray, **kwargs) -> Dict[str, Any]:
         """
         Calculate all registered metrics for a result type.
