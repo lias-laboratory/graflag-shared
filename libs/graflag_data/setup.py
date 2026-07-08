@@ -4,7 +4,7 @@ from setuptools import setup
 
 setup(
     name="graflag_data",
-    version="1.0.0",
+    version="1.0.1",
     description="Dataset metadata + downloader for GraFlag benchmarks.",
     author="GraFlag Team",
     packages=["graflag_data"],

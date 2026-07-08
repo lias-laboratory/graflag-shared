@@ -4,7 +4,7 @@ from setuptools import setup
 
 setup(
     name="graflag_evaluator",
-    version="1.0.0",
+    version="1.0.1",
     description="Evaluation framework for graph anomaly detection methods in GraFlag",
     author="GraFlag Team",
     packages=["graflag_evaluator"],

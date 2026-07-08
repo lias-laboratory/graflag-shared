@@ -4,7 +4,7 @@ from setuptools import setup
 
 setup(
     name="graflag_bond",
-    version="1.0.0",
+    version="1.0.1",
     description="Universal PyGOD detector wrapper for GraFlag BOND methods",
     author="GraFlag Team",
     packages=["graflag_bond"],
