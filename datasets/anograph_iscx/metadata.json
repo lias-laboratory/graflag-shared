@@ -1,0 +1,20 @@
+{
+  "name": "anograph_iscx",
+  "description": "ISCX-IDS2012 intrusion-detection edge stream (preprocessed for AnoGraph).",
+  "source": "https://www.unb.ca/cic/datasets/ids.html",
+  "source_repo": "https://github.com/Stream-AD/AnoGraph",
+  "license": "University of New Brunswick CIC terms",
+  "compatible_methods": ["anograph", "anographk", "anoedgeg", "anoedgel"],
+  "format": "Data.csv: src,dst,timestamp; Label.csv: 0=normal, 1=anomaly",
+  "files": [
+    {
+      "name": "Data.csv",
+      "url": "https://raw.githubusercontent.com/Stream-AD/AnoGraph/master/data/ISCX/Data.csv"
+    },
+    {
+      "name": "Label.csv",
+      "url": "https://raw.githubusercontent.com/Stream-AD/AnoGraph/master/data/ISCX/Label.csv"
+    }
+  ],
+  "notes": "URLs point at the preprocessed copy in the AnoGraph reference repo. Original ISCX-IDS2012 PCAPs require acceptance of CIC license."
+}

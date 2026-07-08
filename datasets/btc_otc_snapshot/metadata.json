@@ -1,0 +1,20 @@
+{
+  "name": "btc_otc_snapshot",
+  "description": "Bitcoin OTC trust network converted to the STRGNN/AddGraph temporal-snapshot format.",
+  "source_repo": "https://github.com/KnowledgeDiscovery/StrGNN",
+  "derived": true,
+  "derived_from": "btc_otc",
+  "format": "acc_graph.npy (T,N,N), sta_graph.npy, split.npz",
+  "files": [],
+  "build": {
+    "command": [
+      "python3",
+      "../convert_to_strgnn.py",
+      "../btc_otc/soc-sign-bitcoinotc.csv",
+      ".",
+      "--format", "bitcoin"
+    ],
+    "produces": ["acc_graph.npy", "sta_graph.npy", "split.npz"]
+  },
+  "notes": "Regenerated locally by ../convert_to_strgnn.py from the base btc_otc dataset."
+}

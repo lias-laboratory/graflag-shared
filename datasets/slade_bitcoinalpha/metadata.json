@@ -1,0 +1,14 @@
+{
+  "name": "slade_bitcoinalpha",
+  "description": "Bitcoin Alpha trust network preprocessed for SLADE (temporal, with anomaly labels).",
+  "source": "http://snap.stanford.edu/data/soc-sign-bitcoin-alpha.html",
+  "source_repo": "https://github.com/jhsk777/SLADE",
+  "compatible_methods": ["slade"],
+  "format": "CSV columns: u,i,ts,label,idx",
+  "files": [
+    {
+      "name": "ml_bitcoinalpha.csv",
+      "url": "https://raw.githubusercontent.com/jhsk777/SLADE/main/data/ml_bitcoinalpha.csv"
+    }
+  ]
+}

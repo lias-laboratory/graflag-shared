@@ -1,0 +1,20 @@
+__pycache__/
+*.pyc
+*.egg-info/
+build/
+dist/
+experiments/
+
+# Dataset binaries are never checked in - they are downloaded on demand by
+# graflag_data (reads datasets/*/metadata.json, fetches from the original
+# source, and runs any declared build step). Only metadata, READMEs, and
+# conversion scripts live under datasets/.
+datasets/**/*.csv
+datasets/**/*.tsv
+datasets/**/*.pt
+datasets/**/*.pkl
+datasets/**/*.npy
+datasets/**/*.npz
+datasets/**/*.edges
+datasets/digg/digg
+datasets/uci/uci

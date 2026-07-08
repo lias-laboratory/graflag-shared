@@ -1,0 +1,14 @@
+{
+  "name": "btc_alpha",
+  "description": "Who-trusts-whom network of Bitcoin Alpha users (signed temporal trust graph).",
+  "source": "https://snap.stanford.edu/data/soc-sign-bitcoin-alpha.html",
+  "license": "SNAP research license (see source page)",
+  "format": "CSV: source,target,rating,timestamp",
+  "files": [
+    {
+      "name": "soc-sign-bitcoinalpha.csv",
+      "url": "https://snap.stanford.edu/data/soc-sign-bitcoinalpha.csv.gz",
+      "extract": "gunzip"
+    }
+  ]
+}

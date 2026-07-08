@@ -1,0 +1,15 @@
+{
+  "name": "digg",
+  "description": "Digg reply network (users replying to other users on Digg).",
+  "source": "http://konect.cc/networks/munmun_digg_reply/",
+  "license": "CC BY-SA 4.0 (KONECT)",
+  "format": "Edge list",
+  "files": [
+    {
+      "name": "digg",
+      "url": "http://konect.cc/files/download.tsv.munmun_digg_reply.tar.bz2",
+      "extract": "tar.bz2",
+      "members": ["munmun_digg_reply/out.munmun_digg_reply"]
+    }
+  ]
+}

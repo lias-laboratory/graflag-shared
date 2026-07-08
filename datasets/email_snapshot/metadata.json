@@ -1,0 +1,38 @@
+{
+  "name": "email_snapshot",
+  "description": "Email communication network in snapshot format used by StrGNN (1% anomaly ratio).",
+  "source_repo": "https://github.com/KnowledgeDiscovery/StrGNN",
+  "derived": true,
+  "format": "acc_email.npy (T,N,N), sta_email.npy, split.npz; plus the raw email0.01.npz / email0.05.npz variants.",
+  "files": [
+    {
+      "name": "acc_email.npy",
+      "url": "https://raw.githubusercontent.com/KnowledgeDiscovery/StrGNN/main/detection/data/acc_email.npy"
+    },
+    {
+      "name": "sta_email.npy",
+      "url": "https://raw.githubusercontent.com/KnowledgeDiscovery/StrGNN/main/detection/data/sta_email.npy"
+    },
+    {
+      "name": "email0.01.npz",
+      "url": "https://raw.githubusercontent.com/KnowledgeDiscovery/StrGNN/main/detection/data/email0.01.npz"
+    },
+    {
+      "name": "email0.01_sta.npz",
+      "url": "https://raw.githubusercontent.com/KnowledgeDiscovery/StrGNN/main/detection/data/email0.01_sta.npz"
+    },
+    {
+      "name": "email0.05.npz",
+      "url": "https://raw.githubusercontent.com/KnowledgeDiscovery/StrGNN/main/detection/data/email0.05.npz"
+    },
+    {
+      "name": "email0.05_sta.npz",
+      "url": "https://raw.githubusercontent.com/KnowledgeDiscovery/StrGNN/main/detection/data/email0.05_sta.npz"
+    }
+  ],
+  "build": {
+    "command": ["python3", "-c", "import shutil; shutil.copy('email0.01.npz', 'split.npz')"],
+    "produces": ["split.npz"]
+  },
+  "notes": "split.npz is a copy of email0.01.npz (default 1% anomaly ratio). The 0.10 variants upstream are empty files and are intentionally not listed."
+}

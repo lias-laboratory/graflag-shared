@@ -1,0 +1,14 @@
+{
+  "name": "slade_wikipedia",
+  "description": "Wikipedia edit bipartite network preprocessed for SLADE; anomalies are edits by later-banned users.",
+  "source": "http://snap.stanford.edu/jodie/",
+  "source_repo": "https://github.com/jhsk777/SLADE",
+  "compatible_methods": ["slade"],
+  "format": "CSV columns: u,i,ts,label,idx",
+  "files": [
+    {
+      "name": "ml_wikipedia.csv",
+      "url": "https://raw.githubusercontent.com/jhsk777/SLADE/main/data/ml_wikipedia.csv"
+    }
+  ]
+}

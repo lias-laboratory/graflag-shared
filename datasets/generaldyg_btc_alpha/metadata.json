@@ -1,0 +1,27 @@
+{
+  "name": "generaldyg_btc_alpha",
+  "description": "Bitcoin Alpha trust network preprocessed for GeneralDyG (3 anomaly-injection rates: 1%, 5%, 10%).",
+  "source": "https://drive.google.com/drive/folders/1nJGwX0QaWZY3RH8JfqogJYMbq9PXkYhC",
+  "source_repo": "https://github.com/YXNTU/GeneralDyG",
+  "derived": true,
+  "derived_from": "btc_alpha",
+  "format": "btc_alpha.pkl + btc_alpha_0.5_0.{01,05,1}.csv (one CSV per negative-sample ratio)",
+  "files": [
+    {
+      "name": "btc_alpha_0.5_0.01.csv",
+      "url": "https://drive.google.com/drive/folders/1nJGwX0QaWZY3RH8JfqogJYMbq9PXkYhC",
+      "members": ["btc_alpha_0.5_0.01.csv"]
+    },
+    {
+      "name": "btc_alpha_0.5_0.05.csv",
+      "url": "https://drive.google.com/drive/folders/1nJGwX0QaWZY3RH8JfqogJYMbq9PXkYhC",
+      "members": ["btc_alpha_0.5_0.05.csv"]
+    },
+    {
+      "name": "btc_alpha_0.5_0.1.csv",
+      "url": "https://drive.google.com/drive/folders/1nJGwX0QaWZY3RH8JfqogJYMbq9PXkYhC",
+      "members": ["btc_alpha_0.5_0.1.csv"]
+    }
+  ],
+  "notes": "Preprocessed CSVs are distributed on Google Drive by the GeneralDyG authors; graflag_data fetches them via gdown (install with `pip install graflag_data[gdrive]`). btc_alpha.pkl is regenerated automatically on first run by methods/generaldyg/train_graflag.py (which invokes GeneralDyG's src/generate_datasets.py inside the container)."
+}

@@ -1,0 +1,20 @@
+{
+  "name": "bond_books",
+  "description": "Amazon Books co-purchase graph with organic outliers (PyGOD BOND benchmark).",
+  "source": "https://github.com/pygod-team/pygod",
+  "source_repo": "https://github.com/pygod-team/data",
+  "compatible_methods": [
+    "bond_*"
+  ],
+  "format": "PyTorch-Geometric Data object (.pt)",
+  "files": [
+    {
+      "name": "bond_books.pt",
+      "url": "https://github.com/pygod-team/data/raw/main/books.pt.zip",
+      "extract": "zip",
+      "members": [
+        "books.pt"
+      ]
+    }
+  ]
+}

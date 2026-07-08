@@ -1,0 +1,21 @@
+{
+  "name": "bond_reddit",
+  "description": "Reddit subreddit-subreddit graph with injected outliers (PyGOD BOND benchmark).",
+  "source": "https://github.com/pygod-team/pygod",
+  "source_repo": "https://github.com/pygod-team/data",
+  "license": "See PyGOD license",
+  "compatible_methods": [
+    "bond_*"
+  ],
+  "format": "PyTorch-Geometric Data object (.pt)",
+  "files": [
+    {
+      "name": "bond_reddit.pt",
+      "url": "https://github.com/pygod-team/data/raw/main/reddit.pt.zip",
+      "extract": "zip",
+      "members": [
+        "reddit.pt"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+{
+  "name": "uci",
+  "description": "UC Irvine online community message network (temporal directed graph).",
+  "source": "http://konect.cc/networks/opsahl-ucsocial/",
+  "license": "CC BY-SA 4.0 (KONECT)",
+  "format": "Edge list: source target weight timestamp",
+  "files": [
+    {
+      "name": "uci",
+      "url": "http://konect.cc/files/download.tsv.opsahl-ucsocial.tar.bz2",
+      "extract": "tar.bz2",
+      "members": ["opsahl-ucsocial/out.opsahl-ucsocial"]
+    }
+  ],
+  "notes": "KONECT archive extracts to 'opsahl-ucsocial/out.opsahl-ucsocial'; we copy that member to the file 'uci' used by methods."
+}

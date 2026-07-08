@@ -1,0 +1,13 @@
+{
+  "name": "slade_synthetic_hijack",
+  "description": "Synthetic SLADE dataset with Type 1 & 3 (account hijacking) anomalies.",
+  "source_repo": "https://github.com/jhsk777/SLADE",
+  "compatible_methods": ["slade"],
+  "format": "CSV columns: u,i,ts,label,idx",
+  "files": [
+    {
+      "name": "ml_synthetic_hijack.csv",
+      "url": "https://raw.githubusercontent.com/jhsk777/SLADE/main/data/ml_synthetic_hijack.csv"
+    }
+  ]
+}

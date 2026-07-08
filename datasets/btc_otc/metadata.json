@@ -1,0 +1,14 @@
+{
+  "name": "btc_otc",
+  "description": "Who-trusts-whom network of Bitcoin OTC users (signed temporal trust graph).",
+  "source": "https://snap.stanford.edu/data/soc-sign-bitcoin-otc.html",
+  "license": "SNAP research license (see source page)",
+  "format": "CSV: source,target,rating,timestamp",
+  "files": [
+    {
+      "name": "soc-sign-bitcoinotc.csv",
+      "url": "https://snap.stanford.edu/data/soc-sign-bitcoinotc.csv.gz",
+      "extract": "gunzip"
+    }
+  ]
+}

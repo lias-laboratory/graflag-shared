@@ -1,0 +1,20 @@
+{
+  "name": "bond_inj_flickr",
+  "description": "Flickr user-interest graph with injected outliers (PyGOD BOND benchmark).",
+  "source": "https://github.com/pygod-team/pygod",
+  "source_repo": "https://github.com/pygod-team/data",
+  "compatible_methods": [
+    "bond_*"
+  ],
+  "format": "PyTorch-Geometric Data object (.pt)",
+  "files": [
+    {
+      "name": "bond_inj_flickr.pt",
+      "url": "https://github.com/pygod-team/data/raw/main/inj_flickr.pt.zip",
+      "extract": "zip",
+      "members": [
+        "inj_flickr.pt"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "name": "anograph_darpa",
+  "description": "DARPA 1998 intrusion-detection edge stream (preprocessed for AnoGraph).",
+  "source": "https://www.ll.mit.edu/r-d/datasets/1998-darpa-intrusion-detection-evaluation-dataset",
+  "source_repo": "https://github.com/Stream-AD/AnoGraph",
+  "license": "MIT Lincoln Laboratory public dataset",
+  "compatible_methods": ["anograph", "anographk", "anoedgeg", "anoedgel"],
+  "format": "Data.csv: src,dst,timestamp; Label.csv: 0=normal, 1=anomaly",
+  "files": [
+    {
+      "name": "Data.csv",
+      "url": "https://raw.githubusercontent.com/Stream-AD/AnoGraph/master/data/DARPA/Data.csv"
+    },
+    {
+      "name": "Label.csv",
+      "url": "https://raw.githubusercontent.com/Stream-AD/AnoGraph/master/data/DARPA/Label.csv"
+    }
+  ],
+  "notes": "URLs point at the preprocessed copy in the AnoGraph reference repo. If removed upstream, rebuild from the original MIT/Lincoln Lab DARPA 1998 tcpdump traces."
+}

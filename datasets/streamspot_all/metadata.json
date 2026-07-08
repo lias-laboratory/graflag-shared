@@ -1,0 +1,18 @@
+{
+  "name": "streamspot_all",
+  "description": "StreamSpot system provenance graphs (600 graphs, 6 scenarios including drive-by-download attacks).",
+  "source": "https://github.com/sbustreamspot/sbustreamspot-data",
+  "source_repo": "https://github.com/sbustreamspot/sbustreamspot-data",
+  "license": "Academic use (see authors' page)",
+  "compatible_methods": ["streamspot"],
+  "format": "TSV: source-id\\tsource-type\\tdestination-id\\tdestination-type\\tedge-type\\tgraph-id",
+  "files": [
+    {
+      "name": "all.tsv",
+      "url": "https://github.com/sbustreamspot/sbustreamspot-data/raw/master/all.tar.gz",
+      "extract": "tar.gz",
+      "members": ["all.tsv"]
+    }
+  ],
+  "notes": "Sourced from the authors' sbustreamspot-data repo (~84MB download, ~2.2GB uncompressed). The original Stony Brook CS homepage URL is no longer reachable."
+}

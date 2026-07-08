@@ -1,0 +1,70 @@
+name: Publish Libraries to PyPI
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      library:
+        description: 'Library to publish (graflag_runner, graflag_evaluator, graflag_bond, graflag_data, or all)'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - graflag_runner
+          - graflag_evaluator
+          - graflag_bond
+          - graflag_data
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        library:
+          - name: graflag_runner
+            path: libs/graflag_runner
+          - name: graflag_evaluator
+            path: libs/graflag_evaluator
+          - name: graflag_bond
+            path: libs/graflag_bond
+          - name: graflag_data
+            path: libs/graflag_data
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check if library should be published
+        id: check
+        run: |
+          if [ "${{ github.event_name }}" = "release" ]; then
+            echo "should_publish=true" >> $GITHUB_OUTPUT
+          elif [ "${{ inputs.library }}" = "all" ] || [ "${{ inputs.library }}" = "${{ matrix.library.name }}" ]; then
+            echo "should_publish=true" >> $GITHUB_OUTPUT
+          else
+            echo "should_publish=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Set up Python
+        if: steps.check.outputs.should_publish == 'true'
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install build tools
+        if: steps.check.outputs.should_publish == 'true'
+        run: pip install build
+
+      - name: Build package
+        if: steps.check.outputs.should_publish == 'true'
+        working-directory: ${{ matrix.library.path }}
+        run: python -m build
+
+      - name: Publish to PyPI
+        if: steps.check.outputs.should_publish == 'true'
+        working-directory: ${{ matrix.library.path }}
+        env:
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
+        run: pip install twine && twine upload dist/*

@@ -1,0 +1,13 @@
+{
+  "name": "slade_synthetic_new",
+  "description": "Synthetic SLADE dataset with Type 2 & 3 (new-account) anomalies.",
+  "source_repo": "https://github.com/jhsk777/SLADE",
+  "compatible_methods": ["slade"],
+  "format": "CSV columns: u,i,ts,label,idx",
+  "files": [
+    {
+      "name": "ml_synthetic_new.csv",
+      "url": "https://raw.githubusercontent.com/jhsk777/SLADE/main/data/ml_synthetic_new.csv"
+    }
+  ]
+}

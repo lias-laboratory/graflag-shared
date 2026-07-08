@@ -1,0 +1,17 @@
+{
+  "name": "email_snapshot_005",
+  "description": "Variant of the StrGNN email snapshot dataset with a 5% anomaly ratio (instead of 1%).",
+  "source_repo": "https://github.com/KnowledgeDiscovery/StrGNN",
+  "derived": true,
+  "derived_from": "email_snapshot",
+  "format": "acc_email.npy, sta_email.npy, split.npz (= email0.05.npz)",
+  "files": [],
+  "build": {
+    "command": [
+      "python3", "-c",
+      "import shutil; shutil.copy('../email_snapshot/acc_email.npy', 'acc_email.npy'); shutil.copy('../email_snapshot/sta_email.npy', 'sta_email.npy'); shutil.copy('../email_snapshot/email0.05.npz', 'split.npz')"
+    ],
+    "produces": ["acc_email.npy", "sta_email.npy", "split.npz"]
+  },
+  "notes": "Derived from email_snapshot by copying its acc/sta arrays and using the 5% anomaly split (email0.05.npz) as split.npz."
+}

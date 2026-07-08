@@ -1,0 +1,20 @@
+{
+  "name": "uci_snapshot",
+  "description": "UCI messages network converted to the STRGNN/AddGraph temporal-snapshot format.",
+  "source_repo": "https://github.com/KnowledgeDiscovery/StrGNN",
+  "derived": true,
+  "derived_from": "uci",
+  "format": "acc_graph.npy (T,N,N), split.npz",
+  "files": [],
+  "build": {
+    "command": [
+      "python3",
+      "../convert_to_strgnn.py",
+      "../uci/uci",
+      ".",
+      "--format", "uci"
+    ],
+    "produces": ["acc_graph.npy", "sta_graph.npy", "split.npz"]
+  },
+  "notes": "Regenerated locally by ../convert_to_strgnn.py from the base uci dataset."
+}

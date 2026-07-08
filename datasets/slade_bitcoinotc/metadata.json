@@ -1,0 +1,14 @@
+{
+  "name": "slade_bitcoinotc",
+  "description": "Bitcoin OTC trust network preprocessed for SLADE (temporal, with anomaly labels).",
+  "source": "http://snap.stanford.edu/data/soc-sign-bitcoin-otc.html",
+  "source_repo": "https://github.com/jhsk777/SLADE",
+  "compatible_methods": ["slade"],
+  "format": "CSV columns: u,i,ts,label,idx",
+  "files": [
+    {
+      "name": "ml_bitcoinotc.csv",
+      "url": "https://raw.githubusercontent.com/jhsk777/SLADE/main/data/ml_bitcoinotc.csv"
+    }
+  ]
+}

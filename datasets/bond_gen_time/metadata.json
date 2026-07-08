@@ -1,0 +1,20 @@
+{
+  "name": "bond_gen_time",
+  "description": "Synthetic BOND graph for runtime/scalability benchmarking.",
+  "source": "https://github.com/pygod-team/pygod",
+  "source_repo": "https://github.com/pygod-team/data",
+  "compatible_methods": [
+    "bond_*"
+  ],
+  "format": "PyTorch-Geometric Data object (.pt)",
+  "files": [
+    {
+      "name": "bond_gen_time.pt",
+      "url": "https://github.com/pygod-team/data/raw/main/gen_time.pt.zip",
+      "extract": "zip",
+      "members": [
+        "gen_time.pt"
+      ]
+    }
+  ]
+}

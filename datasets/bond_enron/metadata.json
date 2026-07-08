@@ -1,0 +1,20 @@
+{
+  "name": "bond_enron",
+  "description": "Enron email graph with organic outliers (PyGOD BOND benchmark).",
+  "source": "https://github.com/pygod-team/pygod",
+  "source_repo": "https://github.com/pygod-team/data",
+  "compatible_methods": [
+    "bond_*"
+  ],
+  "format": "PyTorch-Geometric Data object (.pt)",
+  "files": [
+    {
+      "name": "bond_enron.pt",
+      "url": "https://github.com/pygod-team/data/raw/main/enron.pt.zip",
+      "extract": "zip",
+      "members": [
+        "enron.pt"
+      ]
+    }
+  ]
+}

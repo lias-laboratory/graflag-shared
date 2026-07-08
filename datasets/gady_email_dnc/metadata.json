@@ -1,0 +1,16 @@
+{
+  "name": "gady_email_dnc",
+  "description": "DNC email communication network (2016 Democratic National Committee leak) preprocessed for GADY.",
+  "source": "http://networkrepository.com/email-dnc.html",
+  "license": "Network Repository terms of use",
+  "compatible_methods": ["gady"],
+  "format": "CSV: source,destination,timestamp",
+  "files": [
+    {
+      "name": "email-dnc.edges",
+      "url": "http://nrvis.com/download/data/dynamic/email-dnc.zip",
+      "extract": "zip",
+      "members": ["email-dnc.edges"]
+    }
+  ]
+}
