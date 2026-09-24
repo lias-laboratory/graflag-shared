@@ -40,10 +40,17 @@ Starting point for integrating new Graph Anomaly Detection (GAD) methods into Gr
      variables, lowercases them, coerces them to the constructor's annotated
      types and drops what the constructor does not accept
    - Implement training and prediction logic
+   - Fit on the training part and publish scores for the test part only. The
+     template cuts the stream in time at `_TRAIN_FRACTION`; when upstream has
+     its own split, use that. Record `scored_split`, `scored_samples` and the
+     method's own AUC in the summary -- the contract tests require the first
+     two, and `graflag verify` compares the third with the evaluator's
 
 5. **Test your method:**
    ```bash
    graflag run -m your_method_name -d your_dataset --build
+   graflag evaluate -e <experiment>
+   graflag verify -e <experiment>
    ```
 
 ## File Structure
@@ -112,8 +119,13 @@ writer.save_scores(
     ground_truth=[0, 1, 0],
 )
 
-# Add metadata
-writer.add_metadata(method_name="your_method", dataset="cora")
+# Add metadata. Record which split the scores cover and how many there are,
+# and the method's own AUC over exactly those scores: `graflag verify` reads
+# all three.
+writer.add_metadata(method_name="your_method", dataset="cora", summary={
+    "dataset_info": {"scored_split": "test", "scored_samples": 3},
+    "results": {"test_auc": 1.0},
+})
 
 # Resource metrics -- rarely needed. graflag_runner measures execution time,
 # peak memory and peak GPU from outside the method, and its numbers win;

@@ -177,3 +177,12 @@ order. For a graph algorithm, `graph_ids` is the window index — there is no
 edge to attach a window score to. `metadata.summary.results.auc_published_scores`
 is the AUC of exactly what was published, and
 `metadata.summary.scores_are` names the file it was read from.
+
+## Scored split
+
+The whole stream: `scored_split` is `all_windows` for the graph algorithms and
+`all_edges` for the edge algorithms, and `scored_samples` counts them. That is
+the method, not a shortcut. AnoGraph is an online sketch method: it fits
+nothing, and each window is scored from the sketches of the stream up to it,
+so there is no training split to hold out. `graflag verify` warns that the
+split is not `test`; for AnoGraph that warning is expected.

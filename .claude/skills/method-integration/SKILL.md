@@ -20,7 +20,7 @@ gate 4 compares against the AUC gate 3 computes.
 
 | Gate | Command | Catches |
 |---|---|---|
-| 1. Contract | `cd graflag-shared && python3 -m unittest discover -s tests` | The `.env`/Dockerfile schema, unpinned clones, `sed -i` on cloned source, COPY paths, GPU conventions, provenance, a README with no `## Verification` |
+| 1. Contract | `cd graflag-shared && python3 -m unittest discover -s tests` | The `.env`/Dockerfile schema, unpinned clones, `sed -i` on cloned source, COPY paths, GPU conventions, provenance, a README with no `## Verification`, a summary with no `scored_split` / `scored_samples` |
 | 2. Build and run | `graflag sync` then `graflag run -m NAME -d DATASET --build` | Anything that only exists on the share |
 | 3. Evaluation | `graflag evaluate -e EXP` | Metrics and plots, from the scores exactly as published |
 | 4. Result integrity | `graflag verify -e EXP` | Empty/one-class/constant scores, length mismatch, an undeclared or non-test split, the published scores disagreeing with the method's own AUC |
@@ -77,7 +77,10 @@ number is not a clean held-out measurement.
 4. **Write `train_graflag.py`** against `graflag_runner` --- see
    `reference/sdk.md`. Do not hand-roll parameter parsing, device selection,
    `sys.path` juggling or psutil sampling; all four are in the library, and
-   the runner's resource numbers win over anything a method reports.
+   the runner's resource numbers win over anything a method reports. Record
+   `scored_split` and `scored_samples` in the summary (gate 1 refuses a
+   script that does not) and the method's own AUC over exactly the published
+   scores, which is what gate 4 compares against.
 5. **Record the dataset** under `datasets/<name>/` if it is new, and hydrate
    it with `graflag-data fetch <name>`.
 6. **Write `README.md`.** Required by gate 1. It must state what upstream does

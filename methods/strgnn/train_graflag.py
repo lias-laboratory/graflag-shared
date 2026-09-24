@@ -420,6 +420,8 @@ def main():
                 "num_nodes": net[0].shape[0] if net.dtype == object else net.shape[1],
                 "train_edges": len(train_pos) + len(train_neg),
                 "test_edges": len(test_pos) + len(test_neg),
+                "scored_split": "test",
+                "scored_samples": len(all_scores),
             },
             "training_info": {
                 "best_auc": float(best_auc),

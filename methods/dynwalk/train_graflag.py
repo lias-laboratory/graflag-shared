@@ -318,6 +318,10 @@ def main():
                 "num_edges": num_edges,
                 "num_nodes": num_nodes,
                 "num_anomalies": num_anomalies,
+                # Every edge, the first _INIT_PERCENT it was fitted on
+                # included: this method draws no test split (see its README).
+                "scored_split": "all_edges",
+                "scored_samples": len(all_scores),
             },
             "results": {
                 "auc": auc,

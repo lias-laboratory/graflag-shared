@@ -459,6 +459,36 @@ class IntegrationScripts(unittest.TestCase):
             with self.subTest(method=d.name):
                 ast.parse(f.read_text(errors="replace"))
 
+    def test_every_script_declares_what_it_scored(self):
+        """`scored_split` and `scored_samples` in the summary, always.
+
+        They are what `graflag verify` reads to tell a test-split AUC from a
+        whole-stream one, and the scored count from the published count.
+        Missing, it can only warn that it cannot tell -- which it did for 24
+        of the 33 methods, the annotated template included, while that
+        template's own comment said the scores must come from the test split
+        and its code scored every edge. `graflag_bond` writes the summary for
+        the seventeen PyGOD methods, so it is held to the same rule.
+        """
+        sources = [(d.name, f) for d, f in self.scripts()]
+        sources.append(("graflag_bond", ROOT / "libs" / "graflag_bond" / "train.py"))
+        for name, f in sources:
+            tree = ast.parse(f.read_text(errors="replace"))
+            keys = {
+                key.value
+                for call in ast.walk(tree)
+                if isinstance(call, ast.Call)
+                and getattr(call.func, "attr", None) == "add_metadata"
+                for node in ast.walk(call)
+                if isinstance(node, ast.Dict)
+                for key in node.keys
+                if isinstance(key, ast.Constant)
+            }
+            with self.subTest(method=name):
+                self.assertTrue({"scored_split", "scored_samples"} <= keys,
+                                "add_metadata(summary=...) must record "
+                                "scored_split and scored_samples")
+
     def test_result_types_are_valid(self):
         """Every result type a script can publish has to be a real one.
 

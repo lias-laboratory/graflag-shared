@@ -605,6 +605,15 @@ def save_results(method_obj, writer, run, dataset, config):
         method_name="TADDY",
         dataset=dataset.name,
         method_parameters=asdict(config),
+        summary={
+            "dataset_info": {
+                # The test snapshots only; the training snapshots carry no
+                # anomalies (see _generate_final_predictions).
+                "scored_split": "test",
+                "scored_samples": sum(len(s) for s in scores),
+                "test_snapshots": [int(s) for s in method_obj.snap_ids],
+            },
+        },
     )
 
     info(f"[OK] Results written to {writer.finalize()}")

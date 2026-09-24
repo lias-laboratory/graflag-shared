@@ -100,6 +100,14 @@ evaluated without a per-dataset special case.
 `threshold` in the metadata is null; see `_CONTAMINATION` above for why there
 is no meaningful one to report.
 
+## Scored split
+
+Every node: `scored_split` is `all_nodes`. PyGOD's detectors are unsupervised
+and transductive -- each fits on the graph it scores, reading no label -- and
+BOND evaluates them the same way. `graflag verify` warns that the split is not
+`test`; for these methods that is the protocol, and the number is not an
+estimate of performance on unseen nodes.
+
 ## What is not measured here
 
 The trainer records the duration of `model.fit()` to `training.csv` as a spot

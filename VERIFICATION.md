@@ -80,7 +80,7 @@ only way either becomes visible.
 | `addgraph` | `email_snapshot` | completed | 0.8143 | 0.0304 | reimplementation, not the cited repository; `NUM_EPOCHS=2` |
 | `anograph` | `anograph_iscx` | completed | 0.9480 | 0.5230 | upstream's binary, reproduced exactly (see below) |
 | `dynwalk` | `email_snapshot` | completed | 0.8378 | 0.0030 | reimplementation, not the cited repository; `EPOCHS=2` |
-| `example` | `email_snapshot` | completed | 0.5435 | 0.0007 | `EPOCHS=2` |
+| `example` | `email_snapshot` | completed | 0.4812 | 0.0008 | `EPOCHS=2`; placeholder random scores over the held-out half (18,837 edges, 10 anomalous), `graflag verify` 0 failed, 0 warned |
 | `gady` | `gady_email_dnc` | completed | 0.9770 | 0.8388 | adversarial loop restored; only `_LR` is inert now; `N_EPOCH=2` |
 | `generaldyg` | `generaldyg_btc_alpha` | completed | 0.7806 | 0.0797 | test split, best checkpoint; eval features are re-randomised; `N_EPOCHS=2` |
 | `slade` | `slade_bitcoinalpha` | completed | 0.7588 | 0.1563 | test split (3,618 of 24,186 edges); `N_EPOCH=2` |

@@ -551,6 +551,8 @@ def main():
                 "num_nodes": num_nodes,
                 "train_edges": len(data['train_pos']) + len(data['train_neg']),
                 "test_edges": len(data['test_pos']) + len(data['test_neg']),
+                "scored_split": "test",
+                "scored_samples": len(all_scores),
             },
             "training_info": {
                 "best_auc": float(best_auc),

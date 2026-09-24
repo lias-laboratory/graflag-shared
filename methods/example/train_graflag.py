@@ -121,32 +121,45 @@ def main():
     num_anomalies = int(labels.sum())
     info(f"[INFO] {len(edges)} edges, {num_nodes} nodes, {num_anomalies} anomalies")
 
-    # Scores must come from the test split: evaluation needs both classes
-    # present, and a run that scores only normal edges produces a results.json
-    # the evaluator cannot score.
+    # Scores must come from the test split: scored on the edges it was fitted
+    # to, a model shows what it memorised, not what it detects, and that is why
+    # RESULTS_STANDARD.md asks for the test split. Here the stream is cut in
+    # time -- fit on the first _TRAIN_FRACTION of it, score the rest. When
+    # upstream defines its own split, use that one and say so in the README.
+    order = np.argsort(edges["timestamp"].to_numpy(), kind="stable")
+    edges = edges.iloc[order].reset_index(drop=True)
+    labels = np.asarray(labels)[order]
+    cut = int(len(edges) * float(config.get("train_fraction", 0.5)))
+    train_edges, test_edges = edges.iloc[:cut], edges.iloc[cut:]
+    test_labels = labels[cut:]
+    if not 0 < test_labels.sum() < len(test_labels):
+        # Raise, never warn and carry on: the evaluator cannot score one class,
+        # and a run that "completes" without a usable result hides the cause.
+        raise ValueError(
+            f"the test split ({len(test_labels)} edges) holds one class only; "
+            "move _TRAIN_FRACTION or use the dataset's own split")
+
     model = YourModel(**params(YourModel))
     writer = ResultWriter()
-    model.train(edges, writer=writer)
+    model.train(train_edges, writer=writer)
 
-    scores = np.asarray(model.predict(edges), dtype=float)
+    scores = np.asarray(model.predict(test_edges), dtype=float)
     if scores.max() > scores.min():
         scores = (scores - scores.min()) / (scores.max() - scores.min())
 
-    auc = None
-    if len(labels) == len(scores) and 0 < labels.sum() < len(labels):
-        auc = float(roc_auc_score(labels, scores))
-        info(f"[INFO] AUC {auc:.4f}")
-    else:
-        info("[WARN] Not both classes present; skipping AUC")
+    # The method's own number, over exactly the scores published below.
+    # `graflag verify` checks that the evaluator reproduces it.
+    auc = float(roc_auc_score(test_labels, scores))
+    info(f"[INFO] Test AUC {auc:.4f}")
 
     writer.save_scores(
         # One of the types in graflag_runner/results.py: {NODE,EDGE,GRAPH}_-,
         # TEMPORAL_- and -_STREAM_ANOMALY_SCORES.
         result_type="EDGE_STREAM_ANOMALY_SCORES",
         scores=scores.tolist(),
-        edges=edges[["src", "dst"]].values.tolist(),
-        timestamps=edges["timestamp"].tolist(),
-        ground_truth=labels.tolist(),
+        edges=test_edges[["src", "dst"]].values.tolist(),
+        timestamps=test_edges["timestamp"].tolist(),
+        ground_truth=test_labels.tolist(),
     )
 
     writer.add_metadata(
@@ -160,8 +173,12 @@ def main():
                 "num_edges": len(edges),
                 "num_nodes": num_nodes,
                 "num_anomalies": num_anomalies,
+                # What `graflag verify` reads: which split the scores cover,
+                # and how many scores there are.
+                "scored_split": "test",
+                "scored_samples": len(scores),
             },
-            "results": {"auc": auc},
+            "results": {"test_auc": auc},
         },
     )
 

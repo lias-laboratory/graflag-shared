@@ -422,6 +422,10 @@ def main():
                 "n_anomalies": num_anomalies,
                 "anomaly_ratio": anomaly_ratio,
                 "total_edges": num_edges,
+                # Every graph of the selected scenarios, the benign ones the
+                # bootstrap clusters were drawn from included.
+                "scored_split": "all_graphs",
+                "scored_samples": len(scores),
             },
             "detection_info": {
                 "auc_roc": auc,

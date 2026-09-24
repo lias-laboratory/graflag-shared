@@ -52,3 +52,6 @@ plausibility in [0, 1], so the published score is `1 - plausibility`: higher
 means more anomalous, which is the direction `graflag_evaluator` assumes.
 Ground truth is the split's own labelling -- `test_pos` are normal, `test_neg`
 are the injected anomalies.
+
+Only the test edges are scored (`scored_split` is `test`): the published vector
+is the final model's score for every edge of the split's test snapshots.

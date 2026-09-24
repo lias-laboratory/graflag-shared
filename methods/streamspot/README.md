@@ -105,6 +105,12 @@ cannot parse as a `long`.
 iteration** of the binary's output. Higher is more anomalous, and
 `ground_truth` is 1 for the attack graphs — no inversion is applied or needed.
 
+Every graph of the selected scenarios is scored (`scored_split` is
+`all_graphs`), the benign graphs the bootstrap clusters were drawn from
+included; `detection_info.num_training_graphs` says how many those are.
+`graflag verify` warns that the split is not `test`, and it is right to: those
+graphs shaped the clusters the method scores against.
+
 `metadata.summary.detection_info.auc_roc` is computed here for convenience and
 is `null` when only one class is present. It is not the number to quote:
 `graflag evaluate` recomputes AUC from the published scores, and that is the

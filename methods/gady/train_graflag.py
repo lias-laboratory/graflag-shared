@@ -711,6 +711,8 @@ def main():
                     "name": config.data,
                     "anomaly_rate": config.anomaly_per,
                     "total_test_edges": len(results['scores']),
+                    "scored_split": "test",
+                    "scored_samples": len(results['scores']),
                     "n_anomalies": sum(results['labels']),
                 },
                 "training_info": {

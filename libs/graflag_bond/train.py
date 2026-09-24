@@ -154,6 +154,10 @@ def save_results(model, data, exp_dir, writer, method_name, dataset_name):
                 "num_edges": data.num_edges,
                 "num_features": data.num_features,
                 "num_anomalies": sum(ground_truth),
+                # PyGOD's detectors fit on the graph they score: every node,
+                # the BOND protocol.
+                "scored_split": "all_nodes",
+                "scored_samples": len(scores),
             },
         },
     )

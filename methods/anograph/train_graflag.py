@@ -488,7 +488,11 @@ def main():
                 "name": dataset_name,
                 "num_edges": num_edges,
                 "num_anomalous_edges": num_anomalies,
-                "num_scored": len(scores),
+                # The whole stream: AnoGraph is an online sketch method that
+                # fits nothing, so there is no training split to leave out.
+                "scored_split": ("all_windows" if granularity == 'graph'
+                                 else "all_edges"),
+                "scored_samples": len(scores),
                 "scored_unit": "time_window" if granularity == 'graph' else "edge",
             },
             "results": {
