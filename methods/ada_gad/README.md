@@ -93,7 +93,7 @@ which is the convention `graflag_bond` and the BOND paper use for the AUC.
 ## Scored split: all nodes, and what that does and does not mean
 
 `metadata.summary.dataset_info.scored_split` is `all_nodes`, and
-`verify_run.py` warns about it. The warning is right to ask, so: ADA-GAD *does*
+`graflag verify` warns about it. The warning is right to ask, so: ADA-GAD *does*
 train, and it scores the same nodes it trained on.
 
 That is not label leakage. Training is unsupervised -- reconstruction over a
@@ -120,8 +120,8 @@ Smoke run, `bond_inj_cora`, `MAX_EPOCH=2 MAX_EPOCH_F=2 SEEDS=1`:
 |---|---|
 | 1. Contract | 78 tests pass |
 | 2. Build and run | `completed`, exit 0, 16.6 s, peak 1408 MB / 821 MB GPU |
-| 3. Result integrity | 0 failed, 1 warned (the `all_nodes` note above), 3 passed |
-| 4. Evaluation | `auc_roc` 0.8466, `auc_pr` 0.2017 |
+| 3. Evaluation | `auc_roc` 0.8466, `auc_pr` 0.2017 |
+| 4. Result integrity | 0 failed, 1 warned (the `all_nodes` note above), 3 passed |
 
 The evaluator's 0.8466 equals upstream's own printed `final_auc: 84.66`, which
 is the check that matters: the published scores are the vector the method

@@ -80,7 +80,7 @@ def main():
     if stdout:
         info(stdout)
     # The driver prints upstream's own AUROC over the same score array it
-    # wrote. Recording it lets verify_run.py cross-check the evaluator's AUC
+    # wrote. Recording it lets graflag verify cross-check the evaluator's AUC
     # against the method's; a mismatch means the published vector is not the
     # one the method measured.
     method_auc = None

@@ -218,6 +218,25 @@ class MethodLayout(unittest.TestCase):
     def test_methods_exist_at_all(self):
         self.assertGreater(len(method_dirs()), 0)
 
+    def test_every_method_records_whether_it_was_verified(self):
+        """"Integrated" has to mean something a reader can check.
+
+        A method's README carries a `## Verification` section -- what each
+        gate gave, or why it could not run, or that it has not been run -- or
+        `VERIFICATION.md` has a row for it. Three methods had neither: one had
+        only ever failed on the cluster and two had never been run, and
+        nothing in the repository said so.
+        """
+        matrix = (ROOT / "VERIFICATION.md").read_text()
+        in_matrix = set(re.findall(r"^\| `([a-z0-9_]+)` \|", matrix, re.M))
+        missing = sorted(
+            d.name for d in method_dirs()
+            if d.name not in in_matrix and not re.search(
+                r"^## Verification\b",
+                (d / "README.md").read_text(errors="replace"), re.M))
+        self.assertEqual(missing, [], "no recorded verification status: "
+                         "add a `## Verification` section to their README")
+
 
 class EnvFiles(unittest.TestCase):
     def test_required_keys_present(self):
@@ -638,6 +657,54 @@ class SdkContract(unittest.TestCase):
                     used - members, set(),
                     f"ExperimentPaths has no such attribute; it has "
                     f"{sorted(m for m in members if not m.startswith('_'))}")
+
+
+class SkillReference(unittest.TestCase):
+    """The skill's SDK reference may only name what graflag_runner has.
+
+    An agent follows `reference/sdk.md` literally; a function it names that the
+    library does not export is an ImportError minutes into a cluster run.
+    Checked against the source, so nothing is imported.
+    """
+
+    SDK_MD = ROOT / ".claude" / "skills" / "method-integration" / "reference" / "sdk.md"
+    LIB = ROOT / "libs" / "graflag_runner"
+
+    def exported(self):
+        tree = ast.parse((self.LIB / "__init__.py").read_text())
+        for node in tree.body:
+            if isinstance(node, ast.Assign) and any(
+                    getattr(t, "id", None) == "__all__" for t in node.targets):
+                return set(ast.literal_eval(node.value))
+        self.fail("graflag_runner has no __all__")
+
+    def writer_methods(self):
+        tree = ast.parse((self.LIB / "results.py").read_text())
+        cls = next(n for n in tree.body
+                   if isinstance(n, ast.ClassDef) and n.name == "ResultWriter")
+        return {n.name for n in cls.body if isinstance(n, ast.FunctionDef)}
+
+    def test_every_imported_name_is_exported(self):
+        text = self.SDK_MD.read_text()
+        names = set()
+        for group, line in re.findall(
+                r"from graflag_runner import\s*(?:\(([^)]*)\)|([^\n`]+))", text):
+            names |= {n.strip() for n in (group or line).split(",") if n.strip()}
+        self.assertGreater(len(names), 5, "found no imports to check")
+        self.assertEqual(names - self.exported(), set())
+
+    def test_every_call_in_the_table_is_exported(self):
+        text = self.SDK_MD.read_text()
+        calls = set()
+        for row in re.findall(r"^\|[^|\n]+\|([^|\n]+)\|[^|\n]+\|$", text, re.M):
+            calls |= set(re.findall(r"`([A-Za-z_]+)\(", row))
+        self.assertIn("params", calls, "the table was not parsed")
+        self.assertEqual(calls - self.exported(), set())
+
+    def test_every_writer_method_exists(self):
+        used = set(re.findall(r"writer\.([a-z_]+)\(", self.SDK_MD.read_text()))
+        self.assertIn("finalize", used)
+        self.assertEqual(used - self.writer_methods(), set())
 
 
 class GpuConvention(unittest.TestCase):

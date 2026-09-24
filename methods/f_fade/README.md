@@ -85,10 +85,10 @@ wheel and declares no device.
 
 ## Verification
 
-| Dataset | Params | Gate 2 | Gate 3 | Gate 4 (`auc_roc`) |
+| Dataset | Params | Gate 2 | Gate 3 (`auc_roc`) | Gate 4 |
 |---|---|---|---|---|
-| `anograph_darpa` | upstream defaults | completed, 173 s, 2,389 MB | 0 failed, 1 warned, 3 passed | **0.9186** |
-| `anograph_iscx` | `EPOCHS=1 ONLINE_TRAIN_STEPS=2` | completed, 25 s, 1,146 MB | 0 failed, 2 warned, 2 passed | 0.5023 |
+| `anograph_darpa` | upstream defaults | completed, 173 s, 2,389 MB | **0.9186** | 0 failed, 1 warned, 3 passed |
+| `anograph_iscx` | `EPOCHS=1 ONLINE_TRAIN_STEPS=2` | completed, 25 s, 1,146 MB | 0.5023 | 0 failed, 2 warned, 2 passed |
 
 On DARPA — F-FADE's own paper dataset — `main.py` prints `AUC:
 0.9186416535125347` and the evaluator computes **0.9186** independently from

@@ -81,10 +81,10 @@ edge. The image carries no CUDA base and no torch, which is why it is small.
 
 ## Verification
 
-| Dataset | Gate 1 | Gate 2 | Gate 3 | Gate 4 (`auc_roc`) |
+| Dataset | Gate 1 | Gate 2 | Gate 3 (`auc_roc`) | Gate 4 |
 |---|---|---|---|---|
-| `anograph_darpa` | 78 tests | completed, 2.9 s, 417 MB | 0 failed, 1 warned, 3 passed | **0.9844** |
-| `anograph_iscx` | 78 tests | completed, 2.9 s, 138 MB | 0 failed, 2 warned, 2 passed | 0.3714 |
+| `anograph_darpa` | 78 tests | completed, 2.9 s, 417 MB | **0.9844** | 0 failed, 1 warned, 3 passed |
+| `anograph_iscx` | 78 tests | completed, 2.9 s, 138 MB | 0.3714 | 0 failed, 2 warned, 2 passed |
 
 On DARPA the driver's own C++ `AUROC` prints **0.984358** and the evaluator
 computes **0.9844** independently from the published vector. That agreement is

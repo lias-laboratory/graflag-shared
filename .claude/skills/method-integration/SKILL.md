@@ -1,6 +1,6 @@
 ---
 name: method-integration
-description: Integrate a Graph Anomaly Detection method into GraFlag, or verify one that already exists. Use when adding a GAD method to graflag-shared/methods/, wrapping an upstream paper repository as a GraFlag method, writing or reviewing a train_graflag.py, pinning a method to an upstream commit, or checking whether a finished experiment's AUC is real.
+description: Integrate a Graph Anomaly Detection method into GraFlag, or verify one that already exists. Use when adding a GAD method to graflag-shared/methods/, wrapping an upstream paper repository as a GraFlag method, writing or reviewing a train_graflag.py, pinning a method to an upstream commit, or checking whether a finished experiment's AUC is real (graflag verify).
 ---
 
 # Integrating a GAD method into GraFlag
@@ -15,18 +15,20 @@ So treat "it ran" as the start of the work, not the end.
 ## The four gates
 
 Do not report a method as integrated until all four pass, in order. Each one
-catches things the one before it cannot.
+catches things the one before it cannot, and each needs the one before it:
+gate 4 compares against the AUC gate 3 computes.
 
 | Gate | Command | Catches |
 |---|---|---|
-| 1. Contract | `cd graflag-shared && python3 -m unittest discover -s tests` | The `.env`/Dockerfile schema, unpinned clones, `sed -i` on cloned source, COPY paths, GPU conventions, provenance |
+| 1. Contract | `cd graflag-shared && python3 -m unittest discover -s tests` | The `.env`/Dockerfile schema, unpinned clones, `sed -i` on cloned source, COPY paths, GPU conventions, provenance, a README with no `## Verification` |
 | 2. Build and run | `graflag sync` then `graflag run -m NAME -d DATASET --build` | Anything that only exists on the share |
-| 3. Result integrity | `python3 .claude/skills/method-integration/scripts/verify_run.py EXP` | Empty/one-class/constant scores, length mismatch, the published scores disagreeing with the method's own AUC |
-| 4. Evaluation | `graflag evaluate -e EXP` | Metrics and plots; run it before gate 3 so gate 3 has an `auc_roc` to compare against |
+| 3. Evaluation | `graflag evaluate -e EXP` | Metrics and plots, from the scores exactly as published |
+| 4. Result integrity | `graflag verify -e EXP` | Empty/one-class/constant scores, length mismatch, an undeclared or non-test split, the published scores disagreeing with the method's own AUC |
 
-Gate 3 is the one that does not exist anywhere else. Run
-`graflag evaluate` first, then `verify_run.py`, and read every `[WARN]`
-rather than skimming for `0 failed`.
+Gate 4 is the one that does not exist anywhere else. Read every `[WARN]`
+rather than skimming for `0 failed`; it exits 1 when a check fails.
+`graflag verify` needs graflag 1.2.0 or later; `scripts/verify_run.py EXP`
+is the same check under its old name.
 
 ## Before writing anything
 
@@ -83,6 +85,13 @@ number is not a clean held-out measurement.
    the method inherits that a reader would otherwise mistake for a clean
    measurement.
 7. **Run the gates.**
+8. **Record them** in the README's `## Verification` section: one row per
+   dataset with the parameters, gate 2 (status, run time, peak memory), gate 3
+   (`auc_roc`) and gate 4 (failed / warned / passed). A method that cannot
+   run here gets the same section saying so, with the traceback and what was
+   tried; one never run says that too. Gate 1 fails a README with no
+   `## Verification` section unless `VERIFICATION.md` has a row for the
+   method -- so "integrated" always means something someone can check.
 
 ## Running on the cluster
 
@@ -91,8 +100,16 @@ cd graflag-shared/methods/<name> && graflag sync   # the build reads the share, 
 graflag run -m <name> -d <dataset> --build --params N_EPOCHS=2   # smoke first
 graflag logs -e <exp> -f
 graflag evaluate -e <exp>
-python3 .claude/skills/method-integration/scripts/verify_run.py <exp>
+graflag verify -e <exp>
 ```
+
+**Through MCP.** When the GraFlag MCP server is configured
+(`claude mcp add graflag -- graflag mcp`), gates 2 to 4 are also tools:
+`run_experiment` (with `build: true`) then `wait_for_experiment`, `get_logs`
+while it runs, `evaluate_experiment` then `wait_for_experiment` again, and
+`verify_experiment`. `method_details` shows the parameters `params` can
+override. Gate 1 and `graflag sync` stay on the command line: they read your
+checkout, which the server does not.
 
 Four operational facts that cost real time when forgotten:
 
@@ -105,9 +122,11 @@ Four operational facts that cost real time when forgotten:
   importable. Delete it there too.
 - **Images are reused unless `--build` is passed.** After editing a method,
   no `--build` means the previous image runs again and your edit is untested.
-- **Disk.** A method image is several gigabytes (`bond_base` is ~9.6 GB), and
-  on a devcluster every worker that pulls it keeps its own copy on the same
-  disk. Reclaim with `graflag clear --apply --gc` before a build, not after it
+- **Disk.** Images differ by an order of magnitude -- measured on the
+  devcluster, `anograph` is 1.3 GB, `rare` 9.6 GB and `bond_base` 13.5 GB --
+  and on a devcluster every worker that pulls one keeps its own copy on the
+  same disk. `graflag clear` reports what can be reclaimed and
+  `graflag clear --apply --gc` reclaims it -- before a build, not after it
   fails.
 
 ## Rules that are not negotiable
@@ -147,6 +166,8 @@ method's own log against its published number.
   (templates, a worked `gady` integration, dataset layout, common errors).
 - `tests/test_methods.py` --- the contract as executable rules. When unsure
   whether something is allowed, read the test; it is more current than prose.
+- `graflag/verify.py` in the graflag repository --- what gate 4 checks, and
+  why each check exists. `docs/MCP.md` there covers the MCP tools.
 - Good scripts to copy: `methods/taddy/` (clean Pattern A),
   `methods/generaldyg/` (upstream argparse via `apply_params`),
   `methods/bond_cola/` (Pattern B, shared image).

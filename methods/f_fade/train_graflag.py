@@ -121,7 +121,7 @@ def main():
     if stdout:
         info(stdout[-2000:])
     # main.py prints the AUC it measured over the same score vector it wrote.
-    # Recording it lets verify_run.py cross-check that number against the one
+    # Recording it lets graflag verify cross-check that number against the one
     # the evaluator computes from results.json; a mismatch means the published
     # scores are not the ones the method scored.
     method_auc = None

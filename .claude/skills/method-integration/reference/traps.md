@@ -73,13 +73,19 @@ draws random features by design; drawing them a *third* time was ours.
 
 ## The cluster
 
-- **Run one method at a time.** RAM is the binding resource, not the GPU.
-  An OOM-killed method log just ends with `Killed`; `dmesg -T | grep -i
-  oom-kill` on the manager is what names it.
-- **A method image is ~9.6 GB** on a share that sits above 90%. One `--build`
-  can fill the disk outright, and when it does the host's `/tmp` goes with it,
-  so tool output comes back empty. Reclaim first with `graflag clear --apply
-  --gc`.
+The first two are facts about the development cluster (`graflag devcluster`:
+every node a container on one host), not about GraFlag; on real nodes check
+what binds first.
+
+- **On a devcluster, run one method at a time.** Its nodes share the host's
+  RAM, which runs out before the GPU does. An OOM-killed method log just ends
+  with `Killed`; `dmesg -T | grep -i oom-kill` on the host is what names it.
+- **Images are large and their sizes differ tenfold** -- measured there,
+  `anograph` 1.3 GB, `rare` 9.6 GB, `bond_base` 13.5 GB -- and every worker
+  that pulls one keeps its own copy on the same disk. One `--build` can fill
+  it outright, and when it does the host's `/tmp` goes with it, so tool output
+  comes back empty. `graflag clear` reports what can go; reclaim first with
+  `graflag clear --apply --gc`.
 - **`graflag stop -e <exp> --rm` deletes the experiment directory**, not just
   the service. Without `--rm` it leaves the directory alone.
 - **`graflag cleanup` keeps a service** unless the run is diagnosable from

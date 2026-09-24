@@ -92,8 +92,8 @@ coherent-looking AUC below 0.5.
 
 **Record the split you scored.** `metadata.summary` should carry
 `scored_split` and `scored_samples`, and a `*_auc` for whatever you published.
-`scripts/verify_run.py` compares that AUC against the evaluator's; without it
-there is nothing to compare, and the run passes with a warning instead of a
+`graflag verify` (gate 4) compares that AUC against the evaluator's; without
+it there is nothing to compare, and the run passes with a warning instead of a
 check.
 
 **Do not sample resources yourself.** The runner monitors the whole process

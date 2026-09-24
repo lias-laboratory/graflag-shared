@@ -74,11 +74,18 @@ image whose `selected_scores` is never set.
 
 DiffGAD calls `.cuda()` unconditionally inside its own sampling loop, so
 `_GPU=-1` raises with a message saying so instead of failing later inside the
-authors' code with a CUDA error. `--no-gpu` does not rewrite `_GPU` for
-non-`bond_*` methods, so this is the only place that check can live.
+authors' code with a CUDA error. `graflag run --no-gpu` sets `_GPU=-1` for
+DiffGAD as for every method that declares `_GPU`, so that is the run this
+check stops: one scheduled without a GPU, which DiffGAD cannot use.
 
 ## Labels
 
 BOND encodes the outlier type in the label bits — 1 contextual, 2 structural,
 3 both — so `y` is not binary. The published `ground_truth` is `y > 0`, the
 convention BOND and `graflag_bond` use.
+
+## Verification
+
+**Not verified: never run on a cluster.** The definition passes gate 1 (the
+contract tests); gates 2 to 4 are outstanding, so DiffGAD is defined and
+pinned, not integrated. A run needs a GPU (see "No CPU path").

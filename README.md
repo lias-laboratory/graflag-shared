@@ -43,19 +43,23 @@ python3 -m unittest discover -s tests
 ### Integrating a method with an AI agent
 
 `.claude/skills/method-integration/` is an agent skill that walks a coding agent
-through an integration and its four gates: the contract tests, a build and run
-on the cluster, `graflag evaluate`, and `scripts/verify_run.py`, which checks
-that the published scores reproduce the AUC the method reported. Claude Code
-picks it up when started in this repository (`/method-integration <repository
-URL>`); other agents can be pointed at `SKILL.md`. `verify_run.py` also runs on
-its own:
+through an integration and its four gates, in order: the contract tests, a
+build and run on the cluster, `graflag evaluate`, and `graflag verify`, which
+checks that the published scores reproduce the AUC the method reported. Each
+method's README records what the gates gave in its `## Verification` section
+(or `VERIFICATION.md` does), and the contract tests refuse a method with
+neither. Claude Code picks the skill up when started in this repository
+(`/method-integration <repository URL>`); other agents can be pointed at
+`SKILL.md`. The check also runs on its own, on any finished experiment:
 
 ```bash
-python3 .claude/skills/method-integration/scripts/verify_run.py exp__method__dataset__timestamp
+graflag verify -e exp__method__dataset__timestamp      # graflag 1.2.0 or later
 ```
 
-The [skill's page](https://lias-laboratory.github.io/graflag/AGENT_SKILL.html) in
-the documentation has the details.
+With the GraFlag MCP server configured (`graflag mcp`), an agent can drive
+gates 2 to 4 as tools instead. The [skill's
+page](https://lias-laboratory.github.io/graflag/AGENT_SKILL.html) in the
+documentation has the details.
 
 ## Datasets
 

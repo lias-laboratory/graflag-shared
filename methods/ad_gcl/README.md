@@ -75,3 +75,20 @@ pinned tree apart from the score export.
 `all_nodes`. AD-GCL trains on the graph it scores, unsupervised and
 transductive — the same protocol as the `bond_*` methods and ADA-GAD, and
 comparable with them. It is not an estimate of performance on unseen nodes.
+
+## Verification
+
+**Not verified: no run has completed.** Every attempt on the cluster was on
+`gad_cora`, on 2026-09-22, and each one failed. Each failure led to a change
+in the definition above:
+
+| Run | Failure | Changed since |
+|---|---|---|
+| `exp__ad_gcl__gad_cora__20260922_094340` | `ModuleNotFoundError: No module named 'torch'` while converting the dataset on the manager | datasets are used as stored, and nothing is converted |
+| `exp__ad_gcl__gad_cora__20260922_095231` | `ModuleNotFoundError: No module named 'torch_scatter'` inside the container | the image's dependencies |
+| `exp__ad_gcl__gad_cora__20260922_095947` | `ImportError: Cannot load DGL C++ sparse library` | torch 2.4.0 and DGL 2.4.0 pinned together, checked by an import at build time |
+| `exp__ad_gcl__gad_cora__20260922_100322` | `TypeError: can't convert cuda:0 device type tensor to numpy` | `patches/gpu-compat.patch` |
+| `exp__ad_gcl__gad_cora__20260922_100645` | interrupted: the development cluster lost its images during the run | -- |
+
+The definition as it stands has not been run. It passes gate 1; gates 2 to 4
+are outstanding, so AD-GCL is defined and pinned, not integrated.

@@ -131,6 +131,17 @@ the configuration upstream's README lists as its benchmark run:
 | `bond_inj_amazon` | `inj_amazon` | `amazon_order_glass_canon` |
 | `bond_inj_flickr` | `inj_flickr` | `flickr_order_glass_v2` |
 
+The other `bond_*` datasets are not supported. Upstream has no configuration
+for them, and the organic ones (`bond_weibo`, `bond_reddit`, `bond_disney`,
+`bond_enron`, `bond_books`) carry a single 0/1 label, so the structural bit
+RARE is evaluated against is never set there.
+
+The `.pt` files on the share come from the same PyGOD archives upstream's
+loader downloads (`github.com/pygod-team/data`). The configurations are the
+authors' per-dataset settings; nothing here re-tunes them.
+
+## Verification
+
 One `graflag run` of each, at the default seed, through all four gates of the
 integration checklist:
 
@@ -143,15 +154,6 @@ integration checklist:
 Most of Flickr's time goes before the search: its configuration samples
 175,000 neighbourhoods (Cora's samples 10,000), and scoring them against each
 other took 220 s of the run.
-
-The `.pt` files on the share come from the same PyGOD archives upstream's
-loader downloads (`github.com/pygod-team/data`). The configurations are the
-authors' per-dataset settings; nothing here re-tunes them.
-
-The other `bond_*` datasets are not supported. Upstream has no configuration
-for them, and the organic ones (`bond_weibo`, `bond_reddit`, `bond_disney`,
-`bond_enron`, `bond_books`) carry a single 0/1 label, so the structural bit
-RARE is evaluated against is never set there.
 
 ## Scores
 
@@ -170,14 +172,14 @@ raises if it is not.
 Ground truth is the label vector upstream evaluates against in that same
 call. `metadata.summary.detection_info` carries upstream's own metrics
 (`rare_auc_roc`, `rare_ap`, precision, recall and F1 of the verified set), so
-`verify_run.py` can check that the evaluator reproduces them.
+`graflag verify` can check that the evaluator reproduces them.
 
 ## What the published number means
 
 **Every node is scored, and that is the protocol.** RARE is unsupervised and
 transductive: the matcher was trained on synthetic graphs and nothing is fitted
 on the target graph, so there is no split to hold out. `scored_split` is `all`,
-and `verify_run.py` warns about it. That warning is expected here.
+and `graflag verify` warns about it. That warning is expected here.
 
 **The positives are the structural anomalies only.** With the default
 `_TASK=struct-anomaly` the ground truth is bit 1 of PyGOD's `y`, the task

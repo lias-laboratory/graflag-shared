@@ -70,3 +70,9 @@ the authors wrote against rather than editing their code.
 
 `all_nodes` — unsupervised and transductive, the same protocol as the `bond_*`
 methods, ADA-GAD and AD-GCL, and comparable with them.
+
+## Verification
+
+**Not verified: never run on a cluster.** The definition passes gate 1 (the
+contract tests); gates 2 to 4 are outstanding, so HUGE-GAD is defined and
+pinned, not integrated.
