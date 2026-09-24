@@ -4,16 +4,22 @@ System provenance graphs dataset for graph-level anomaly detection.
 
 ## Source
 - Original: [StreamSpot Data Repository](https://github.com/sbustreamspot/sbustreamspot-data)
-- Download: http://www3.cs.stonybrook.edu/~emanzoor/streamspot/
 - Paper: "StreamSpot: Detecting Anomalies in Information Flows" (DSN 2016)
 
 ## Download
-The `all.tsv` file (~2.2GB) exceeds GitHub's LFS size limit and must be downloaded separately:
+The `all.tsv` file (~2.2GB extracted, ~84MB compressed) exceeds GitHub's LFS
+size limit and is fetched on demand, from the URL in `metadata.json`:
+
 ```bash
-cd datasets/streamspot_all/
-wget http://www3.cs.stonybrook.edu/~emanzoor/streamspot/all.tsv.gz
-gunzip all.tsv.gz
+graflag-data fetch streamspot_all
 ```
+
+`graflag run` does this for you -- `_ensure_dataset()` runs the fetch on the
+manager so the download lands directly on the NFS share.
+
+The authors' Stony Brook homepage that earlier revisions of this file pointed
+at (`www3.cs.stonybrook.edu/~emanzoor/streamspot/`) is no longer reachable;
+`metadata.json` uses the `sbustreamspot-data` repository instead.
 
 ## Format
 Tab-separated file with one edge per line:

@@ -3,47 +3,46 @@ GraFlag-integrated training script for GeneralDyG.
 This wrapper runs the full dataset (train+test) to get anomaly scores for all nodes.
 """
 
-import sys
+import gc
 import os
-import time
+import subprocess
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "src"))
-
+import numpy as np
+import pandas as pd
 import torch
 import torch.nn.functional as F
-import datasets as dataset
 import torch.utils.data
 from sklearn.metrics import roc_auc_score
-import numpy as np
-import psutil
 
-from model.CensNet import CensNet
-from model.Combine import CombinedModel
-from model.Transformer import TransformerBinaryClassifier
-from option import args
-from utils import EarlyStopMonitor
-import random
+from graflag_runner import (
+    ResultWriter, apply_params, device, info, paths, seed_all, upstream,
+)
 
-# GraFlag integration
-from graflag_runner import ResultWriter
+# The GeneralDyG clone, and the only place this script says where it is.
+# upstream() anchors on this file's directory and raises if the checkout is
+# missing, instead of failing later with an unexplained ImportError.
+upstream("src")
 
-# Import patched dataset for loading all data
-from dataset_all import DygDatasetAll
-
-from pathlib import Path
+import datasets as dataset                                  # noqa: E402
+from model.CensNet import CensNet                           # noqa: E402
+from model.Combine import CombinedModel                     # noqa: E402
+from model.Transformer import TransformerBinaryClassifier   # noqa: E402
+from option import args                                     # noqa: E402
+from utils import EarlyStopMonitor                          # noqa: E402
 
 
 def set_seed(seed):
-    random.seed(seed)
-    np.random.seed(seed)
-    torch.manual_seed(seed)
-    torch.cuda.manual_seed(seed)
-    torch.cuda.manual_seed_all(seed)
+    """Seed everything, then ask torch for bit-reproducible kernels.
+
+    seed_all() covers random/numpy/torch and PYTHONHASHSEED for every method;
+    what follows is specific to GeneralDyG, which trades throughput for exact
+    reproducibility.
+    """
+    seed_all(seed)
     torch.use_deterministic_algorithms(True)
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
     torch.backends.cudnn.enabled = False
-    os.environ["PYTHONHASHSEED"] = str(seed)
     os.environ["CUBLAS_WORKSPACE_CONFIG"] = ":4096:8"
 
 
@@ -53,7 +52,7 @@ def criterion(logits, labels):
     return loss_classify
 
 
-def eval_epoch(data_loader, model, device):
+def eval_epoch(data_loader, model, dev):
     """Evaluate and return predictions and labels."""
     m_loss, m_pred, m_label = np.array([]), np.array([]), np.array([])
     with torch.no_grad():
@@ -68,22 +67,22 @@ def eval_epoch(data_loader, model, device):
             eadjs = batch_sample["eadjs"]
             mask_edge = batch_sample["mask_edge"]
 
-            input_nodes_feature = [tensor.to(device) for tensor in input_nodes_feature]
-            input_edges_feature = [tensor.to(device) for tensor in input_edges_feature]
-            Tmats = [tensor.to(device) for tensor in Tmats]
-            adjs = [tensor.to(device) for tensor in adjs]
-            eadjs = [tensor.to(device) for tensor in eadjs]
+            input_nodes_feature = [tensor.to(dev) for tensor in input_nodes_feature]
+            input_edges_feature = [tensor.to(dev) for tensor in input_edges_feature]
+            Tmats = [tensor.to(dev) for tensor in Tmats]
+            adjs = [tensor.to(dev) for tensor in adjs]
+            eadjs = [tensor.to(dev) for tensor in eadjs]
 
             logits = model(
                 input_nodes_feature,
                 input_edges_feature,
-                input_edges_pad.to(device),
+                input_edges_pad.to(dev),
                 eadjs,
                 adjs,
                 Tmats,
-                mask_edge.to(device),
+                mask_edge.to(dev),
             )
-            y = labels.to(device)
+            y = labels.to(dev)
             y = y.to(torch.float32)
 
             c_loss = np.array([criterion(logits, y).cpu()])
@@ -97,68 +96,31 @@ def eval_epoch(data_loader, model, device):
     return np.mean(m_loss), auc_roc, m_pred, m_label
 
 
-def get_all_predictions(data_loader, model, device):
-    """Get predictions for entire dataset."""
-    all_preds = []
-    all_labels = []
-    all_node_ids = []
-
-    with torch.no_grad():
-        model.eval()
-        for batch_sample in data_loader:
-            input_nodes_feature = batch_sample["input_nodes_feature"]
-            input_edges_feature = batch_sample["input_edges_feature"]
-            input_edges_pad = batch_sample["input_edges_pad"]
-            labels = batch_sample["labels"]
-            Tmats = batch_sample["Tmats"]
-            adjs = batch_sample["adjs"]
-            eadjs = batch_sample["eadjs"]
-            mask_edge = batch_sample["mask_edge"]
-
-            input_nodes_feature = [tensor.to(device) for tensor in input_nodes_feature]
-            input_edges_feature = [tensor.to(device) for tensor in input_edges_feature]
-            Tmats = [tensor.to(device) for tensor in Tmats]
-            adjs = [tensor.to(device) for tensor in adjs]
-            eadjs = [tensor.to(device) for tensor in eadjs]
-
-            logits = model(
-                input_nodes_feature,
-                input_edges_feature,
-                input_edges_pad.to(device),
-                eadjs,
-                adjs,
-                Tmats,
-                mask_edge.to(device),
-            )
-
-            pred_score = logits.cpu().numpy().flatten()
-            y = labels.cpu().numpy().flatten()
-
-            all_preds.extend(pred_score.tolist())
-            all_labels.extend(y.tolist())
-
-    return np.array(all_preds), np.array(all_labels)
-
-
 def main():
+    run = paths()
+
+    # GeneralDyG configures itself from upstream's own argparse namespace, so
+    # unlike the other methods it has no Config of its own: the accepted names
+    # and their defaults are upstream's, and the .env lists only what GraFlag
+    # overrides. apply_params() writes those onto the namespace directly.
+    #
+    # It used to go through --pass-env-args instead, which is unsafe here:
+    # upstream declares --gpus and no --gpu, so argparse's abbreviation
+    # matching turned _GPU=0 into gpus=0.
     config = args
+    injected = apply_params(config, ignore={"gpu"})   # _GPU is read by device()
+    config.dir_data = str(run.data)
 
-    config.dir_data = os.environ.get("DATA")
-    skip_pkl = False
-
-    dir_data = Path(config.dir_data)
+    # The dataset directory names itself after the method; upstream's loaders
+    # want the bare name.
+    dir_data = run.data
     if dir_data.name == "generaldyg_btc_alpha":
         config.data_set = "btc_alpha"
     elif dir_data.name == "generaldyg_btc_otc":
         config.data_set = "btc_otc"
 
-    pkl_path = dir_data / f"{config.data_set}.pkl"
-    if pkl_path.exists():
-        skip_pkl = True
-    
-
-    if not skip_pkl:
-        import subprocess
+    if not (dir_data / f"{config.data_set}.pkl").exists():
+        info(f"[INFO] Building {config.data_set}.pkl")
         subprocess.run(
             [
                 "python3",
@@ -175,33 +137,12 @@ def main():
 
     set_seed(config.seed)
 
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    print(f"Using device: {device}")
+    # This used to be a hardcoded "cuda:0", so a service Swarm scheduled
+    # without reserving a GPU still took one and `graflag run --no-gpu` had no
+    # effect. device() reads _GPU, where -1 means CPU.
+    dev = device()
 
-    # Start tracking execution time
-    start_time = time.time()
-
-    # Initialize resource tracking
-    process = psutil.Process()
-    peak_memory_mb = 0.0
-    peak_gpu_memory_mb = None
-
-    # Initialize GraFlag ResultWriter
     writer = ResultWriter()
-
-    # Add metadata
-    writer.add_metadata(
-        method_name="generaldyg",
-        dataset=config.data_set,
-        seed=config.seed,
-        n_epochs=config.n_epochs,
-        batch_size=config.batch_size,
-        learning_rate=config.learning_rate,
-        hidden_dim=config.hidden_dim,
-        n_heads=config.n_heads,
-        n_layer=config.n_layer,
-        drop_out=config.drop_out,
-    )
 
     # Load datasets
     print("Loading datasets...")
@@ -231,10 +172,10 @@ def main():
     print("Building model...")
     GNN = CensNet(config.input_dim, config.drop_out)
     transformer = TransformerBinaryClassifier(
-        config, device, hidden_size=config.hidden_dim
+        config, dev, hidden_size=config.hidden_dim
     )
     backbone = CombinedModel(GNN, transformer)
-    model = backbone.to(device)
+    model = backbone.to(dev)
 
     optimizer = torch.optim.Adam(model.parameters(), lr=config.learning_rate)
 
@@ -245,20 +186,6 @@ def main():
     early_stopper = EarlyStopMonitor(higher_better=True)
 
     for epoch in range(config.n_epochs):
-        # Track memory usage
-        current_memory_mb = process.memory_info().rss / (1024 * 1024)
-        peak_memory_mb = max(peak_memory_mb, current_memory_mb)
-
-        # Track GPU memory if available
-        if torch.cuda.is_available():
-            current_gpu_memory_mb = torch.cuda.max_memory_allocated(device) / (
-                1024 * 1024
-            )
-            if peak_gpu_memory_mb is None:
-                peak_gpu_memory_mb = current_gpu_memory_mb
-            else:
-                peak_gpu_memory_mb = max(peak_gpu_memory_mb, current_gpu_memory_mb)
-
         # Training
         model.train()
         train_loss = 0.0
@@ -274,23 +201,23 @@ def main():
             eadjs = batch_sample["eadjs"]
             mask_edge = batch_sample["mask_edge"]
 
-            input_nodes_feature = [tensor.to(device) for tensor in input_nodes_feature]
-            input_edges_feature = [tensor.to(device) for tensor in input_edges_feature]
-            Tmats = [tensor.to(device) for tensor in Tmats]
-            adjs = [tensor.to(device) for tensor in adjs]
-            eadjs = [tensor.to(device) for tensor in eadjs]
+            input_nodes_feature = [tensor.to(dev) for tensor in input_nodes_feature]
+            input_edges_feature = [tensor.to(dev) for tensor in input_edges_feature]
+            Tmats = [tensor.to(dev) for tensor in Tmats]
+            adjs = [tensor.to(dev) for tensor in adjs]
+            eadjs = [tensor.to(dev) for tensor in eadjs]
 
             optimizer.zero_grad()
             logits = model(
                 input_nodes_feature,
                 input_edges_feature,
-                input_edges_pad.to(device),
+                input_edges_pad.to(dev),
                 eadjs,
                 adjs,
                 Tmats,
-                mask_edge.to(device),
+                mask_edge.to(dev),
             )
-            y = labels.to(device).to(torch.float32)
+            y = labels.to(dev).to(torch.float32)
             loss = criterion(logits, y)
             loss.backward()
             optimizer.step()
@@ -300,11 +227,15 @@ def main():
 
         avg_train_loss = train_loss / n_batches
 
-        # Validation
-        test_loss, test_auc, _, _ = eval_epoch(loader_test, model, device)
+        # Not validation: loader_test is upstream's test split, and
+        # GeneralDyG has no third one. Upstream prints these as `val loss` and
+        # `val auc` (train.py:181-192) and this integration followed it, so
+        # training.csv carried a val_auc column -- and training_curves.png a
+        # legend entry -- for the test AUC under another name.
+        test_loss, test_auc, _, _ = eval_epoch(loader_test, model, dev)
 
         print(
-            f"Epoch {epoch+1}/{config.n_epochs} - Train Loss: {avg_train_loss:.4f}, Val Loss: {test_loss:.4f}, Val AUC: {test_auc:.4f}"
+            f"Epoch {epoch+1}/{config.n_epochs} - Train Loss: {avg_train_loss:.4f}, Test Loss: {test_loss:.4f}, Test AUC: {test_auc:.4f}"
         )
 
         # Track metrics with spot()
@@ -312,14 +243,24 @@ def main():
             "training",
             epoch=epoch + 1,
             train_loss=avg_train_loss,
-            val_loss=test_loss,
-            val_auc=test_auc,
+            test_loss=test_loss,
+            test_auc=test_auc,
         )
 
-        # Save best model
+        # Snapshot the best epoch's weights.
+        #
+        # .clone() per tensor, not state_dict().copy(): state_dict() hands back
+        # the live parameter tensors, and copy() copies the dict around them.
+        # The optimizer then updates those same tensors in place, so the
+        # "snapshot" tracked training and load_state_dict below restored the
+        # weights onto themselves -- a no-op that looked like a checkpoint.
+        # The run that exposed it had its best AUC at epoch 1 (0.7806) and
+        # published epoch 2's scores (0.6829), the last epoch's, while
+        # reporting that the best checkpoint had been loaded.
         if test_auc > max_test_auc:
             max_test_auc = test_auc
-            best_model_state = model.state_dict().copy()
+            best_model_state = {k: v.detach().clone()
+                                for k, v in model.state_dict().items()}
             print(f"  [OK] New best AUC: {max_test_auc:.4f}")
             
         # Early stopping
@@ -329,58 +270,79 @@ def main():
             )
             break
 
-    print(f"\nTraining completed! Best validation AUC: {max_test_auc:.4f}")
+    print(f"\nTraining completed! Best test AUC: {max_test_auc:.4f}")
 
     # Load best model
     if best_model_state is not None:
         model.load_state_dict(best_model_state)
         print("Loaded best model for final predictions")
 
-    # Get predictions for ALL data (entire dataset without split)
-    print("\nGenerating predictions for entire dataset...")
+    # Score the test split, using the checkpoint the best-AUC epoch selected.
+    #
+    # This used to score every snapshot, training ones included, through a
+    # local DygDatasetAll that upstream has no equivalent of. Two things were
+    # wrong with that. A result built from the training split is not a held-out
+    # measurement, which RESULTS_STANDARD.md requires ("scores must come from
+    # the test split"). And DygDatasetAll re-read the pickle and drew a third
+    # independent np.random.uniform feature matrix, so the features the model
+    # was scored on were not the ones it had been evaluated against all
+    # through training.
+    #
+    # loader_test is upstream's own DygDataset(config, 'test') and is built
+    # with shuffle=False, so eval_epoch returns its predictions in dataset
+    # order -- which is CSV order, restricted to the tail after split_indices
+    # (upstream datasets.py:71-74). eval_epoch already computed and returned
+    # these scores every epoch; the run simply discarded them.
+    print("\nScoring the test split with the selected checkpoint...")
+
+    # Release the training split first. Each DygDataset is a dense float64
+    # padding of its share of the stream, not a view of the pickle, and the
+    # train split is the larger one. Holding it through the final pass is what
+    # got this run killed with exit code 137 on a 15 GB host: the monitor
+    # recorded 6.3 GB in the last sample before the OOM killer arrived.
+    del loader_train, dataset_train
+    gc.collect()
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
+
+    _, final_auc, all_scores, all_labels = eval_epoch(loader_test, model, dev)
 
     # Load the original CSV to get edge pairs and timestamps
-    import pandas as pd
     csv_path = dir_data / f"{config.data_set}_0.5_0.{config.neg}.csv"
     if not csv_path.exists():
         raise FileNotFoundError(f"CSV file not found: {csv_path}")
-    
+
     graph_df = pd.read_csv(csv_path)
     # Extract edge information: u (source), i (destination), id (timestamp/edge_id)
     edge_list = graph_df[['u', 'i']].values.tolist()  # [[src, dst], ...]
     timestamps = graph_df['id'].values.tolist()  # Edge IDs serve as timestamps
-    
-    print(f"Loaded {len(edge_list)} edges from CSV")
 
-    # Create dataset with all data (no train/test split)
-    dataset_all = DygDatasetAll(config)
-    collate_fn_all = dataset.Collate(config)
+    # Keep the rows the test split covers. Upstream's split is a contiguous
+    # tail, so its length locates it; deriving the boundary from that rather
+    # than from a copy of upstream's split_indices table means a dataset it
+    # splits elsewhere needs no second edit here. The check is fatal on
+    # purpose -- a mismatch would otherwise publish scores against the wrong
+    # edges, which reads as a result rather than as an error.
+    split = len(edge_list) - len(dataset_test)
+    if split < 0 or len(all_scores) != len(dataset_test):
+        raise RuntimeError(
+            f"the test split does not line up with the edge stream: "
+            f"{len(dataset_test)} test snapshots and {len(all_scores)} scores "
+            f"against {len(edge_list)} CSV rows")
+    edge_list = edge_list[split:]
+    timestamps = timestamps[split:]
 
-    loader_all = torch.utils.data.DataLoader(
-        dataset=dataset_all,
-        batch_size=config.batch_size,
-        shuffle=False,  # Keep original order
-        num_workers=config.num_data_workers,
-        collate_fn=collate_fn_all.dyg_collate_fn,
-    )
-
-    # Get predictions for entire dataset
-    all_scores, all_labels = get_all_predictions(loader_all, model, device)
-
-    print(f"Total samples: {len(all_scores)}")
+    print(f"Scored {len(all_scores)} test snapshots "
+          f"(CSV rows {split}..{len(edge_list) + split})")
     print(f"Score range: [{all_scores.min():.4f}, {all_scores.max():.4f}]")
-
-    # Calculate final AUC
-    final_auc = (
-        roc_auc_score(all_labels, all_scores) if len(np.unique(all_labels)) > 1 else 0.0
-    )
-    print(f"Final AUC (all data): {final_auc:.4f}")
+    print(f"Test AUC: {final_auc:.4f}")
 
     print("[OK] Using EDGE_STREAM format (1D) - most memory efficient")
 
     # Save results using GraFlag format
     # GeneralDyG is a temporal edge anomaly detection method for streaming edges
-    # Format: 1D arrays where each index represents one edge occurrence
+    # Format: 1D arrays where each index represents one edge occurrence,
+    # covering the test split only.
     writer.save_scores(
         result_type="EDGE_STREAM_ANOMALY_SCORES",
         scores=all_scores.tolist(),  # 1D array of scores
@@ -389,58 +351,41 @@ def main():
         ground_truth=all_labels.tolist(),
     )
 
-    # Calculate total execution time
-    end_time = time.time()
-    exec_time_seconds = end_time - start_time
+    # The whole effective configuration, not just what the .env overrode:
+    # most of it is upstream's defaults, and a run is only reproducible if
+    # those are on the record too. `injected` names the subset GraFlag set.
+    method_parameters = {
+        name: value for name, value in vars(config).items()
+        if isinstance(value, (int, float, str, bool, type(None)))
+    }
 
-    # Final memory check
-    final_memory_mb = process.memory_info().rss / (1024 * 1024)
-    peak_memory_mb = max(peak_memory_mb, final_memory_mb)
-
-    # Final GPU memory check
-    if torch.cuda.is_available():
-        final_gpu_memory_mb = torch.cuda.max_memory_allocated(device) / (1024 * 1024)
-        if peak_gpu_memory_mb is None:
-            peak_gpu_memory_mb = final_gpu_memory_mb
-        else:
-            peak_gpu_memory_mb = max(peak_gpu_memory_mb, final_gpu_memory_mb)
-
-    print(f"\n[INFO] Resource Usage:")
-    print(f"   [INFO] Total execution time: {exec_time_seconds:.2f}s")
-    print(f"   [INFO] Peak memory: {peak_memory_mb:.2f}MB")
-    if peak_gpu_memory_mb is not None:
-        print(f"   [INFO] Peak GPU memory: {peak_gpu_memory_mb:.2f}MB")
-
-    # Extract all config parameters dynamically for method_parameters
-    method_parameters = {}
-    for attr_name in dir(config):
-        if not attr_name.startswith("_"):  # Skip private attributes
-            attr_value = getattr(config, attr_name)
-            # Only include simple types (not methods or complex objects)
-            if isinstance(attr_value, (int, float, str, bool, type(None))):
-                method_parameters[attr_name] = attr_value
-
-    # Add final metrics to metadata (following result_types.md specification)
+    # graflag_runner measures exec time, peak memory and peak GPU from outside
+    # the method and its numbers win (_merge_runtime_metadata), so the psutil
+    # sampling that used to be here was recorded and then overwritten. psutil
+    # was never in this image's dependencies either -- importing it was a
+    # latent ImportError.
     writer.add_metadata(
-        exp_name=os.path.basename(os.environ.get("EXP", "experiment")),
+        exp_name=run.experiment,
         method_name="generaldyg",
         dataset=config.data_set,
         method_parameters=method_parameters,
+        injected=sorted(injected),
         threshold=None,  # No explicit threshold used
         summary={
             "description": "A Generalizable Anomaly Detection Method in Dynamic Graphs (AAAI 2025)",
             "task": "temporal_edge_anomaly_detection",
             "dataset_info": {
                 "name": config.data_set,
-                "total_samples": len(all_scores),
+                "scored_split": "test",
+                "scored_samples": len(all_scores),
                 "n_anomalies": int(np.sum(all_labels)),
                 "anomaly_ratio": float(np.sum(all_labels) / len(all_labels)),
             },
             "training_info": {
                 "total_epochs": epoch + 1,
                 "early_stopped": epoch + 1 < config.n_epochs,
-                "best_val_auc": float(max_test_auc),
-                "final_auc_all_data": float(final_auc),
+                "best_test_auc": float(max_test_auc),
+                "test_auc": float(final_auc),
             },
             "model_architecture": {
                 "gnn": "CensNet",
@@ -454,18 +399,9 @@ def main():
         },
     )
 
-    # Add resource metrics
-    writer.add_resource_metrics(
-        exec_time_ms=exec_time_seconds * 1000,
-        peak_memory_mb=peak_memory_mb,
-        peak_gpu_mb=peak_gpu_memory_mb,
-    )
-
-    # Finalize and write results.json
-    results_file = writer.finalize()
-    print(f"\n[OK] Results saved to: {results_file}")
-    print(f"Best validation AUC: {max_test_auc:.4f}")
-    print(f"Final AUC (all data): {final_auc:.4f}")
+    info(f"[OK] Best test AUC {max_test_auc:.4f}, test AUC from the "
+         f"selected checkpoint {final_auc:.4f}, results written to "
+         f"{writer.finalize()}")
 
 
 if __name__ == "__main__":

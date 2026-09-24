@@ -24,9 +24,17 @@ class BondDetector:
         # Inspect pygod.detector module for all classes
         for name, obj in inspect.getmembers(pygod.detector, inspect.isclass):
             # Filter to only include classes defined in pygod.detector
-            if obj.__module__.startswith('pygod.detector'):
-                # Store with lowercase name as key
-                cls._detectors[name.lower()] = obj
+            if not obj.__module__.startswith('pygod.detector'):
+                continue
+            # Skip the abstract bases. They live in the same module, so
+            # matching on module alone put Detector and DeepDetector in the
+            # registry -- list_detectors() advertised them as usable and
+            # get_detector_class('detector') handed back a class that cannot
+            # be instantiated.
+            if inspect.isabstract(obj) or name in ('Detector', 'DeepDetector'):
+                continue
+            # Store with lowercase name as key
+            cls._detectors[name.lower()] = obj
     
     @classmethod
     def from_method_name(cls, method_name: str):

@@ -1,0 +1,33 @@
+Export the per-node score vector that run.py already computes.
+
+run.py builds `ano_score_final` -- the mean anomaly score per node over
+`--auc_test_rounds` rounds -- measures an AUC on it, prints the AUC and then
+uses the vector only for a degree-split breakdown it also prints. GraFlag
+publishes the scores a method computed rather than a number it printed, so the
+vector has to leave the process.
+
+Written behind an environment variable so the patched file behaves exactly as
+upstream when GRAFLAG_SCORE_OUT is unset -- running the repository's own
+commands from its README produces byte-identical output to the unpatched tree.
+
+The labels are written beside the scores because run.py's `ano_label` comes
+from its own `load_mat`, and pairing the published scores with a label column
+read separately would depend on both agreeing about node order.
+
+Generated with `git diff` against the tree SOURCE_REF pins.
+
+diff --git a/AD-GCL/run.py b/AD-GCL/run.py
+index 30eabee..d9cac13 100644
+--- a/AD-GCL/run.py
++++ b/AD-GCL/run.py
+@@ -318,6 +318,10 @@ auc = roc_auc_score(ano_label, ano_score_final)
+ 
+ print('AUC:{:.4f}'.format(auc))
+ 
++if os.environ.get('GRAFLAG_SCORE_OUT'):
++    np.savetxt(os.environ['GRAFLAG_SCORE_OUT'], ano_score_final)
++    np.savetxt(os.environ['GRAFLAG_SCORE_OUT'] + '.label', ano_label)
++
+ out_degrees = dgl_graph.out_degrees().numpy()
+ 
+ result = np.column_stack((ano_label, ano_score_final, out_degrees))

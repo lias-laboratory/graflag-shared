@@ -1,0 +1,18 @@
+{
+  "name": "gad_bitotc",
+  "description": "Bitcoin-OTC subgraph as a static attributed graph (4,863 nodes, 128 features, 300 anomalies).",
+  "source": "https://github.com/yimingxu24/AD-GCL",
+  "source_repo": "https://github.com/yimingxu24/AD-GCL/blob/da110446c1a7a8d0b9d52c5f7f91ec104dc1dcf2/Data/bitotc.mat",
+  "compatible_methods": [
+    "ad_gcl"
+  ],
+  "format": "MATLAB .mat (Network sparse adjacency / Attributes / Label)",
+  "files": [
+    {
+      "name": "bitotc.mat",
+      "url": "https://github.com/yimingxu24/AD-GCL/raw/da110446c1a7a8d0b9d52c5f7f91ec104dc1dcf2/Data/bitotc.mat",
+      "sha256": "dfeb80e63c4b27951a123eeec8fff58c154670e6fe5d384e2a4c28558c9e0df5"
+    }
+  ],
+  "notes": "See gad_bitcoinotc: static rendering, not GraFlag's dynamic btc_otc. ada_gad and diffgad are deliberately absent from compatible_methods: each refuses to run on a dataset its authors shipped no tuned configuration for, and inventing one would publish a number from hyperparameters nobody chose. Stored as the upstream .mat rather than converted to a PyG .pt at fetch time: the conversion needs torch and torch_geometric, and the manager is a thin orchestration node that carries neither. The .mat methods read this file directly with no conversion at all; a method wanting PyG calls graflag_runner.read_mat inside its own container, where those libraries exist."
+}

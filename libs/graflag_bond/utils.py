@@ -5,9 +5,10 @@ Dynamically handles parameter extraction from environment variables.
 Converts values to appropriate Python types based on parameter names and values.
 """
 
-import os
 from typing import Dict, Any
+
 import torch.nn.functional as F
+from graflag_runner import params
 
 
 def str_to_bool(value: str) -> bool:
@@ -33,11 +34,17 @@ def get_activation_function(activation_value: str):
         func_name = activation_value
     
     # Get the function from torch.nn.functional
-    if hasattr(F, func_name):
-        return getattr(F, func_name)
-    else:
-        # Default to relu if function not found
-        return F.relu
+    func = getattr(F, func_name, None)
+    if callable(func):
+        return func
+    # Silently falling back to relu would benchmark a different model than the
+    # one requested, which invalidates the comparison the run exists to make.
+    available = sorted(n for n in dir(F) if not n.startswith("_") and callable(getattr(F, n)))
+    raise ValueError(
+        f"Unknown activation '{activation_value}'. "
+        f"Expected a torch.nn.functional name, e.g. one of: "
+        f"{', '.join(available[:8])}, ..."
+    )
 
 
 def get_backbone_class(backbone_value: str):
@@ -65,12 +72,19 @@ def get_backbone_class(backbone_value: str):
         import torch_geometric.nn as pyg_nn
         
         # Get the class dynamically
-        if hasattr(pyg_nn, class_name):
-            return getattr(pyg_nn, class_name)
-        else:
-            return None
-    except ImportError:
-        return None
+        cls = getattr(pyg_nn, class_name, None)
+        if cls is not None:
+            return cls
+        raise ValueError(
+            f"Unknown backbone '{backbone_value}': torch_geometric.nn has no "
+            f"'{class_name}'. Returning None here surfaced later as "
+            f"\"'NoneType' object is not callable\" from inside PyGOD."
+        )
+    except ImportError as exc:
+        raise ImportError(
+            f"Cannot resolve backbone '{backbone_value}': torch_geometric is "
+            f"not installed in this image."
+        ) from exc
 
 
 def convert_env_value(env_name: str, env_value: str, expected_type: type = None) -> Any:
@@ -85,12 +99,16 @@ def convert_env_value(env_name: str, env_value: str, expected_type: type = None)
     Returns:
         Converted value with appropriate type
     """
-    # Handle activation functions (callable)
-    if 'torch.nn.functional' in env_value:
+    # Handle activation functions (callable). Dispatch on the parameter's
+    # expected type as well as the string: gating only on the fully-qualified
+    # name made the short forms ('relu', 'GCN') that both resolvers explicitly
+    # support unreachable, so they were passed through as raw strings and blew
+    # up mid-forward-pass with "'str' object is not callable".
+    if 'torch.nn.functional' in env_value or env_name.upper() == '_ACT':
         return get_activation_function(env_value)
-    
+
     # Handle backbone classes (torch.nn.Module)
-    if 'torch_geometric.nn' in env_value:
+    if 'torch_geometric.nn' in env_value or env_name.upper() == '_BACKBONE':
         return get_backbone_class(env_value)
     
     # Handle None
@@ -131,56 +149,19 @@ def convert_env_value(env_name: str, env_value: str, expected_type: type = None)
 
 
 def get_all_parameters(detector_class=None) -> Dict[str, Any]:
-    """
-    Get all parameters from environment variables.
-    Only reads environment variables prefixed with underscore (_PARAM_NAME).
-    Automatically converts parameter names from _UPPER_CASE to lower_case
-    and values to appropriate Python types based on detector signature.
-    
+    """Read the detector's keyword arguments from the environment.
+
+    The generic half of this -- scanning `_FOO` variables, stripping the
+    prefix, coercing to the signature's types and dropping what the callee
+    does not accept -- now lives in graflag_runner.method.params(), where
+    every method can use it. What stays here is what is specific to PyGOD:
+    resolving `torch.nn.functional.relu` and `torch_geometric.nn.GCN` from
+    their names.
+
     Args:
-        detector_class: Optional detector class to inspect for parameter types
-    
+        detector_class: the PyGOD detector whose __init__ the result must fit.
+
     Returns:
-        Dictionary of all parameters with correct types
+        Keyword arguments for the detector's constructor.
     """
-    import inspect
-    
-    params = {}
-    
-    # Get parameter types from detector signature if available
-    param_types = {}
-    if detector_class is not None:
-        try:
-            sig = inspect.signature(detector_class.__init__)
-            for param_name, param in sig.parameters.items():
-                if param_name in ['self', 'args', 'kwargs']:
-                    continue
-                
-                # First try to get type from annotation
-                if param.annotation != inspect.Parameter.empty:
-                    param_types[param_name] = param.annotation
-                # If no annotation, get type from default value
-                elif param.default != inspect.Parameter.empty and param.default is not None:
-                    param_types[param_name] = type(param.default)
-        except (ValueError, TypeError):
-            pass
-    
-    # Iterate through all environment variables
-    for env_name, env_value in os.environ.items():
-        # Only process variables that start with underscore
-        if not env_name.startswith('_'):
-            continue
-        
-        # Remove underscore prefix and convert to lowercase
-        param_name = env_name[1:].lower()
-        
-        # Get expected type from signature
-        expected_type = param_types.get(param_name)
-        
-        # Convert value to appropriate type
-        param_value = convert_env_value(env_name, env_value, expected_type)
-        
-        # Add to parameters
-        params[param_name] = param_value
-    
-    return params
+    return params(detector_class, convert=convert_env_value)

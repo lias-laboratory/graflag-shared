@@ -5,29 +5,57 @@ NFS-mounted directory shared across all cluster nodes. Contains methods, dataset
 ## Structure
 
 ```
-methods/          GAD method implementations
-datasets/         Benchmark datasets
-experiments/      Experiment outputs
+methods/          GAD method integrations (33, plus the annotated example/)
+images/           Dockerfiles shared by several methods (bond_base: the 17 PyGOD detectors)
+datasets/         Benchmark dataset descriptors (43); files are fetched on demand
+experiments/      Experiment outputs, created at run time
 libs/             Shared Python libraries
     graflag_runner/       Method execution wrapper with resource monitoring
     graflag_evaluator/    Metrics computation and plot generation
     graflag_bond/         PyGOD method integration layer
     graflag_data/         Dataset metadata + on-demand downloader/builder
+tests/            The method contract: checks every method definition
+.claude/skills/method-integration/   Agent skill for integrating methods (see below)
 ```
 
 ## Methods
 
-Each method directory requires at minimum `.env` and `Dockerfile`. Pattern A methods
-(custom training scripts) also include a `train_graflag.py` integration script:
+Each method directory holds a `.env`, a `README.md`, and either its own
+`Dockerfile` or an `IMAGE=` key naming a shared image under `images/`. Methods
+with an integration script also include `train_graflag.py`:
 
 ```
 methods/method_name/
     .env               Method configuration and parameters (required)
-    Dockerfile         Container definition (required)
-    train_graflag.py   Custom integration script (Pattern A only, optional)
+    README.md          What upstream does and what the integration changes (required)
+    Dockerfile         Container definition (unless .env sets IMAGE=)
+    train_graflag.py   Integration script, when COMMAND names one
 ```
 
-See `graflag-docs/METHOD_INTEGRATION_GUIDE.md` for adding new methods.
+See the [method integration guide](https://lias-laboratory.github.io/graflag/METHOD_INTEGRATION_GUIDE.html)
+(`docs/METHOD_INTEGRATION_GUIDE.md` in the graflag repository) for adding new methods,
+and check every definition with the contract tests:
+
+```bash
+python3 -m unittest discover -s tests
+```
+
+### Integrating a method with an AI agent
+
+`.claude/skills/method-integration/` is an agent skill that walks a coding agent
+through an integration and its four gates: the contract tests, a build and run
+on the cluster, `graflag evaluate`, and `scripts/verify_run.py`, which checks
+that the published scores reproduce the AUC the method reported. Claude Code
+picks it up when started in this repository (`/method-integration <repository
+URL>`); other agents can be pointed at `SKILL.md`. `verify_run.py` also runs on
+its own:
+
+```bash
+python3 .claude/skills/method-integration/scripts/verify_run.py exp__method__dataset__timestamp
+```
+
+The [skill's page](https://lias-laboratory.github.io/graflag/AGENT_SKILL.html) in
+the documentation has the details.
 
 ## Datasets
 

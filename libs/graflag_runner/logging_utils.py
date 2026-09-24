@@ -9,11 +9,15 @@ import os
 
 # Configure logging once at module import
 _method_name = os.environ.get("METHOD_NAME", "unknown_method")
-_logging.basicConfig(
-    level=_logging.INFO,
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    force=True
-)
+# force=True removes and closes every existing root handler. This module is
+# imported by graflag_runner/__init__.py, so `from graflag_runner import
+# ResultWriter` silently destroyed the logging a method had already set up --
+# a FileHandler, a DEBUG level. Configure only when nothing else has.
+if not _logging.getLogger().handlers:
+    _logging.basicConfig(
+        level=_logging.INFO,
+        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    )
 _logger = _logging.getLogger(_method_name)
 
 

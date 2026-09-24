@@ -25,6 +25,7 @@ class ResourceMonitor:
             pid: Process ID to monitor (None = current process)
         """
         self.pid = pid or os.getpid()
+        self._stop_requested = False
         self.monitoring = False
         self.peak_memory_mb = 0
         self.peak_gpu_mb = 0
@@ -104,6 +105,18 @@ class ResourceMonitor:
             logger.debug(f"Failed to get GPU memory: {e}")
             return 0
     
+    def arm(self):
+        """Mark the monitor as running, from the *calling* thread.
+
+        start_monitoring() sets this flag as its first statement, but it runs
+        inside the worker thread, so a method that failed in a few milliseconds
+        could be stopped before the thread had executed any bytecode -- the
+        thread then set monitoring=True and the loop never exited. Arming
+        before Thread.start() removes the window.
+        """
+        self._stop_requested = False
+        self.monitoring = True
+
     def start_monitoring(self, interval: float = 1.0):
         """
         Start background monitoring loop.
@@ -111,6 +124,10 @@ class ResourceMonitor:
         Args:
             interval: Monitoring interval in seconds
         """
+        # Do not resurrect a stop that landed before this thread got to run.
+        if self._stop_requested:
+            logger.debug("[INFO] Monitoring stopped before it started")
+            return
         self.monitoring = True
         
         logger.info(f"[INFO] Resource monitoring started (PID: {self.pid})")
@@ -140,6 +157,7 @@ class ResourceMonitor:
     
     def stop_monitoring(self):
         """Stop background monitoring."""
+        self._stop_requested = True
         self.monitoring = False
     
     def get_summary(self) -> Dict[str, float]:

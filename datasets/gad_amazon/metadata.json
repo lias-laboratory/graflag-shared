@@ -1,0 +1,19 @@
+{
+  "name": "gad_amazon",
+  "description": "Amazon review-fraud graph with real labelled fraudsters (10,224 nodes, 25 features, 693 anomalies).",
+  "source": "https://github.com/CampanulaBells/HUGE-GAD",
+  "source_repo": "https://github.com/CampanulaBells/HUGE-GAD/blob/bdf8d2aec6455b48d7322c0713e31d2f6fecc1b7/datasets/Amazon.mat",
+  "compatible_methods": [
+    "huge_gad",
+    "unprompt"
+  ],
+  "format": "MATLAB .mat (Network sparse adjacency / Attributes / Label)",
+  "files": [
+    {
+      "name": "Amazon.mat",
+      "url": "https://github.com/CampanulaBells/HUGE-GAD/raw/bdf8d2aec6455b48d7322c0713e31d2f6fecc1b7/datasets/Amazon.mat",
+      "sha256": "6677b4f17f594c4169df3717fc9da9c6b06d1dfcc28e5f0d42beedf4c7843dd3"
+    }
+  ],
+  "notes": "Not to be confused with bond_inj_amazon, which is PyGOD's Amazon co-purchase graph with *injected* outliers: 13,752 nodes and 767 features. Different graph, same word. ada_gad and diffgad are deliberately absent from compatible_methods: each refuses to run on a dataset its authors shipped no tuned configuration for, and inventing one would publish a number from hyperparameters nobody chose. Stored as the upstream .mat rather than converted to a PyG .pt at fetch time: the conversion needs torch and torch_geometric, and the manager is a thin orchestration node that carries neither. The .mat methods read this file directly with no conversion at all; a method wanting PyG calls graflag_runner.read_mat inside its own container, where those libraries exist."
+}

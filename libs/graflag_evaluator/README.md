@@ -19,7 +19,7 @@ Docker-based evaluation system for graph anomaly detection experiments.
 graflag evaluate -e exp__generaldyg__btc_alpha__20251211_120000
 
 # Copy results locally
-graflag copy --from-remote -s experiments/<exp_name>/eval -d ./eval_results
+graflag copy --from-remote -s experiments/<exp_name>/eval --dest ./eval_results
 ```
 
 ### Manual Docker Usage
@@ -47,13 +47,30 @@ eval_path = evaluator.evaluate()
 
 All result types get:
 - **AUC-ROC**: Area under ROC curve
-- **AUC-PR**: Area under Precision-Recall curve
-- **Precision@K**: Precision at top K predictions
-- **Recall@K**: Recall at top K predictions
-- **F1@K**: F1 score at top K
-- **Best F1**: Best F1 across all thresholds
+- **AUC-PR**: Average precision (`average_precision_score`). Not
+  `auc(recall, precision)`: the trapezoidal rule interpolates linearly between
+  PR operating points, which is not valid because precision does not vary
+  linearly with recall.
+- **Precision@K / Recall@K / F1@K** at cut-off `K`, which is reported alongside
+  them as `k`. `K` defaults to the number of positives, and **at that default
+  precision@K and recall@K are equal by construction** -- both are TP/K when
+  K = |positives|. Pass an explicit `k` for distinct operating-point numbers.
+  Ties spanning the K-th boundary are resolved by expectation over random
+  tie-breaking, so a detector emitting a constant score scores exactly its base
+  rate rather than whatever the array order happened to give.
+- **Best F1**: Best F1 across all thresholds, with the threshold that achieves
+  it (`best_f1_threshold`, which may legitimately be `0.0`).
+- **filtering**: how many samples were excluded and why. Scores equal to the
+  `-1` (unknown) and `-2` (inactive) sentinels from `RESULTS_STANDARD.md`, and
+  any non-finite score, are dropped from the evaluation.
 
-Additional metrics are computed based on result type (edge counts, temporal span, etc.).
+Additional metrics are computed based on result type (edge counts, temporal
+span, etc.). Note that "early detection rate" and "temporal consistency" are
+declared in `compute_temporal_metrics`' docstring but are not implemented.
+
+If a metric is missing from `evaluation.json`, look for an `errors` list in the
+same file: metric and plot failures are recorded there and reflected in the
+exit code rather than passing silently.
 
 ## Output Structure
 
@@ -67,7 +84,8 @@ experiments/exp_name/
     +-- roc_curve.png
     +-- pr_curve.png
     +-- score_distribution.png
-    +-- spot_curves.png (if spot files exist)
+    +-- training_curves.png    (one <key>_curves.png per spot CSV)
+    +-- resources_curves.png
 ```
 
 ### evaluation.json Format
@@ -82,19 +100,25 @@ experiments/exp_name/
     "precision_at_k": 0.8500,
     "recall_at_k": 0.8500,
     "f1_at_k": 0.8500,
+    "k": 345,
     "best_f1": 0.8723,
     "best_f1_threshold": 0.5432,
     "num_anomalies": 345,
     "num_samples": 3783,
-    "anomaly_ratio": 0.0912
+    "anomaly_ratio": 0.0912,
+    "filtering": {
+      "total": 3783, "kept": 3783,
+      "dropped_unknown": 0, "dropped_inactive": 0, "dropped_non_finite": 0
+    }
   },
   "plots": {
     "roc_curve": "roc_curve.png",
     "pr_curve": "pr_curve.png",
     "score_distribution": "score_distribution.png",
-    "spot_curves": "spot_curves.png"
+    "training_curves": "training_curves.png",
+    "resources_curves": "resources_curves.png"
   },
-  "spot_files": ["training", "validation"]
+  "spot_files": ["training", "resources"]
 }
 ```
 

@@ -1,0 +1,18 @@
+{
+  "name": "gad_pubmed",
+  "description": "PubMed citation graph with injected outliers (19,717 nodes, 500 features, 600 anomalies).",
+  "source": "https://github.com/yimingxu24/AD-GCL",
+  "source_repo": "https://github.com/yimingxu24/AD-GCL/blob/da110446c1a7a8d0b9d52c5f7f91ec104dc1dcf2/Data/pubmed.mat",
+  "compatible_methods": [
+    "ad_gcl"
+  ],
+  "format": "MATLAB .mat (Network sparse adjacency / Attributes / Label)",
+  "files": [
+    {
+      "name": "pubmed.mat",
+      "url": "https://github.com/yimingxu24/AD-GCL/raw/da110446c1a7a8d0b9d52c5f7f91ec104dc1dcf2/Data/pubmed.mat",
+      "sha256": "1f63bd873fcdef55e87c50e731ea58e8fe1372e89829a6fce6f7f559c83d14f5"
+    }
+  ],
+  "notes": "ada_gad and diffgad are deliberately absent from compatible_methods: each refuses to run on a dataset its authors shipped no tuned configuration for, and inventing one would publish a number from hyperparameters nobody chose. Stored as the upstream .mat rather than converted to a PyG .pt at fetch time: the conversion needs torch and torch_geometric, and the manager is a thin orchestration node that carries neither. The .mat methods read this file directly with no conversion at all; a method wanting PyG calls graflag_runner.read_mat inside its own container, where those libraries exist."
+}

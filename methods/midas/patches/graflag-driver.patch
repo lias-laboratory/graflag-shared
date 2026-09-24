@@ -1,0 +1,221 @@
+Parameterise the demo driver so it can score a GraFlag dataset and emit the
+scores.
+
+Upstream's example/Demo.cpp hardcodes the DARPA paths under SOLUTION_DIR,
+selects a core by editing two commented lines, and has its score-writing block
+commented out -- so it can only benchmark the one dataset the repository ships,
+and it prints an AUC without emitting the scores that AUC came from. GraFlag
+publishes the scores a method computed rather than a number it printed, so the
+driver has to take paths and write the vector.
+
+The algorithm is untouched. MIDAS is header-only: NormalCore.hpp,
+RelationalCore.hpp and FilteringCore.hpp *are* the method, this patch does not
+go near them, and they are used with exactly the constructors upstream defines.
+example/Demo.cpp is a driver, which is all it was before.
+
+Two behaviours change deliberately, and both are recorded in README.md:
+  - the seed comes in as an argument instead of time(nullptr), so re-running an
+    experiment reruns the same experiment;
+  - a short or malformed data file is now an error. fopen() succeeding says
+    nothing about shape, and upstream ignores fscanf's return value by compiler
+    flag (-Wno-unused-result), so a truncated file left the tail of the arrays
+    uninitialised and scored garbage silently.
+
+The AUROC print is kept from upstream's Demo, now optional on a label path.
+GraFlag records it so the AUC the method measured on its own scores can be
+checked against the one the evaluator computes from the published vector --
+two numbers that disagree mean the published scores are not the scored ones.
+
+Generated with `git diff` against the tree SOURCE_REF pins.
+
+diff --git a/example/Demo.cpp b/example/Demo.cpp
+index 0b7168a..fde9162 100644
+--- a/example/Demo.cpp
++++ b/example/Demo.cpp
+@@ -14,7 +14,20 @@
+ // limitations under the License.
+ // -----------------------------------------------------------------------------
+ 
++// Parameterised for GraFlag. Upstream's Demo hardcodes the DARPA paths under
++// SOLUTION_DIR, picks a core by editing two commented lines, and has its
++// score-writing block commented out -- so it can only ever benchmark the one
++// dataset the repository ships, and it prints an AUC without emitting the
++// scores that AUC was computed from.
++//
++// Nothing about the algorithm changes here: NormalCore, RelationalCore and
++// FilteringCore are used exactly as upstream defines them, from headers this
++// patch does not touch. MIDAS is header-only, so those headers *are* the
++// method; this file is a driver, which is all upstream's Demo.cpp is too.
++
+ #include <cstdio>
++#include <cstdlib>
++#include <cstring>
+ #include <chrono>
+ 
+ #include "NormalCore.hpp"
+@@ -25,88 +38,94 @@
+ using namespace std::chrono;
+ 
+ int main(int argc, char* argv[]) {
+-	// Parameter
+-	// --------------------------------------------------------------------------------
+-
+-	const auto pathMeta = SOLUTION_DIR"data/DARPA/darpa_shape.txt";
+-	const auto pathData = SOLUTION_DIR"data/DARPA/darpa_processed.csv";
+-	const auto pathLabel = SOLUTION_DIR"data/DARPA/darpa_ground_truth.csv";
+-
+-	// Random seed
+-	// --------------------------------------------------------------------------------
+-
+-	const unsigned seed = time(nullptr);
+-	printf("Seed = %u\t// In case of reproduction\n", seed);
+-	srand(seed); // Many rand(), need to init
+-
+-	// Read meta (total number of records)
+-	// --------------------------------------------------------------------------------
+-	// PreprocessData.py will generate those meta files
+-
+-	const auto fileMeta = fopen(pathMeta, "r");
+-	int n;
+-	fscanf(fileMeta, "%d", &n);
+-	fclose(fileMeta);
+-
+-	// Read dataset
+-	// --------------------------------------------------------------------------------
++	if (argc < 8) {
++		fprintf(stderr,
++		        "usage: %s <data.csv> <n> <out.txt> <core> <numRow> <numColumn> <factor> [threshold]\n"
++		        "  core: normal | relational | filtering\n", argv[0]);
++		return 2;
++	}
++
++	const auto pathData = argv[1];
++	const auto n = atoi(argv[2]);
++	const auto pathScore = argv[3];
++	const auto core = argv[4];
++	const auto numRow = atoi(argv[5]);
++	const auto numColumn = atoi(argv[6]);
++	const auto factor = (float)atof(argv[7]);
++	const auto threshold = argc > 8 ? (float)atof(argv[8]) : 1e3f;
++
++	if (n <= 0) { fprintf(stderr, "[ERROR] record count must be positive, got %d\n", n); return 1; }
++
++	// Upstream seeds with time(nullptr) and prints the value "in case of
++	// reproduction". GraFlag seeds deliberately instead, so a re-run of the
++	// same experiment is the same run; _SEED carries it in.
++	const auto seed = argc > 9 ? (unsigned)strtoul(argv[9], nullptr, 10) : 0u;
++	const auto pathLabel = argc > 10 ? argv[10] : nullptr;
++	printf("Seed = %u\n", seed);
++	srand(seed);
+ 
+ 	const auto fileData = fopen(pathData, "r");
++	if (!fileData) { fprintf(stderr, "[ERROR] cannot open data file %s\n", pathData); return 1; }
+ 	const auto source = new int[n];
+ 	const auto destination = new int[n];
+ 	const auto timestamp = new int[n];
+-	for (int i = 0; i < n; i++)
+-		fscanf(fileData, "%d,%d,%d", &source[i], &destination[i], &timestamp[i]);
++	for (int i = 0; i < n; i++) {
++		// fopen succeeding says nothing about the file being the right shape.
++		// A short or malformed file used to leave the tail of these arrays
++		// uninitialised and the run scored garbage without any error.
++		if (fscanf(fileData, "%d,%d,%d", &source[i], &destination[i], &timestamp[i]) != 3) {
++			fprintf(stderr, "[ERROR] %s: expected %d records, parse failed at record %d\n", pathData, n, i);
++			fclose(fileData);
++			return 1;
++		}
++	}
+ 	fclose(fileData);
+-	printf("# Records = %d\t// Dataset is loaded\n", n);
+-
+-	// Do the magic
+-	// --------------------------------------------------------------------------------
+-	// Of course, I can merge loading and processing together, but this demo is also for benchmarking.
++	printf("# Records = %d\n", n);
+ 
+-	// MIDAS::NormalCore midas(2, 1024);
+-	// MIDAS::RelationalCore midas(2, 1024);
+-	MIDAS::FilteringCore midas(2, 1024, 1e3f);
+ 	const auto score = new float[n];
+-	const auto time = high_resolution_clock::now();
+-	for (int i = 0; i < n; i++)
+-		score[i] = midas(source[i], destination[i], timestamp[i]);
+-	printf("Time = %lldms\t\t// Algorithm is finished\n", duration_cast<milliseconds>(high_resolution_clock::now() - time).count());
+-
+-	// Evaluate scores (experimental)
+-	// --------------------------------------------------------------------------------
+-
+-	const auto label = new float[n];
+-	const auto fileLabel = fopen(pathLabel, "r");
+-	for (int i = 0; i < n; i++)
+-		fscanf(fileLabel, "%f", &label[i]);
+-	fclose(fileLabel);
+-
+-	printf("ROC-AUC = %.4f\t// Experimental impl is used\n", AUROC(label, score, n));
+-	delete[] label;
+-
+-	// Write output scores
+-	// --------------------------------------------------------------------------------
+-
+-	// const auto pathScore = SOLUTION_DIR"temp/Score.txt";
+-	// const auto fileScore = fopen(pathScore, "w");
+-	// for (int i = 0; i < n; i++)
+-	// 	fprintf(fileScore, "%f\n", score[i]);
+-	// fclose(fileScore);
+-	// printf("// Raw anomaly scores are exported to\n// " SOLUTION_DIR"temp/Score.txt\n");
+-
+-	// Evaluate scores
+-	// --------------------------------------------------------------------------------
+-
+-	// char command[1024];
+-	// sprintf(command, "python %s %s %s", SOLUTION_DIR"util/EvaluateScore.py", pathLabel, pathScore);
+-	// system(command);
+-
+-	// Clean up
+-	// --------------------------------------------------------------------------------
++	const auto begin = high_resolution_clock::now();
++	if (!strcmp(core, "normal")) {
++		MIDAS::NormalCore midas(numRow, numColumn);
++		for (int i = 0; i < n; i++) score[i] = midas(source[i], destination[i], timestamp[i]);
++	} else if (!strcmp(core, "relational")) {
++		MIDAS::RelationalCore midas(numRow, numColumn, factor);
++		for (int i = 0; i < n; i++) score[i] = midas(source[i], destination[i], timestamp[i]);
++	} else if (!strcmp(core, "filtering")) {
++		MIDAS::FilteringCore midas(numRow, numColumn, threshold, factor);
++		for (int i = 0; i < n; i++) score[i] = midas(source[i], destination[i], timestamp[i]);
++	} else {
++		fprintf(stderr, "[ERROR] unknown core '%s' (normal|relational|filtering)\n", core);
++		return 1;
++	}
++	printf("Time = %lldms\n", (long long)duration_cast<milliseconds>(high_resolution_clock::now() - begin).count());
++
++	const auto fileScore = fopen(pathScore, "w");
++	if (!fileScore) { fprintf(stderr, "[ERROR] cannot write scores to %s\n", pathScore); return 1; }
++	for (int i = 0; i < n; i++) fprintf(fileScore, "%.9g\n", score[i]);
++	fclose(fileScore);
++	printf("Scores written to %s\n", pathScore);
++
++	// Upstream's Demo prints this and GraFlag records it, so that the AUC
++	// the method measured on its own scores can be checked against the one
++	// the evaluator computes from the published vector. Two numbers that
++	// disagree mean the published scores are not the ones that were scored.
++	if (pathLabel) {
++		const auto fileLabel = fopen(pathLabel, "r");
++		if (!fileLabel) { fprintf(stderr, "[ERROR] cannot open label file %s\n", pathLabel); return 1; }
++		const auto label = new float[n];
++		for (int i = 0; i < n; i++)
++			if (fscanf(fileLabel, "%f", &label[i]) != 1) {
++				fprintf(stderr, "[ERROR] %s: parse failed at label %d\n", pathLabel, i);
++				fclose(fileLabel); return 1;
++			}
++		fclose(fileLabel);
++		printf("ROC-AUC = %.6f\n", AUROC(label, score, n));
++		delete[] label;
++	}
+ 
+ 	delete[] source;
+ 	delete[] destination;
+ 	delete[] timestamp;
+ 	delete[] score;
++	return 0;
+ }

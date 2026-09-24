@@ -70,24 +70,38 @@ def run_with_realtime_output(
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,  # Merge stderr into stdout
         text=True,
+        # Methods print progress bars, C-extension output and tracebacks that
+        # are not always valid UTF-8. Strict decoding raised out of the read
+        # loop below, which skipped process.wait() (orphaning the training
+        # process), recorded a run that would have exited 0 as failed, and
+        # skipped writing the very method_output.txt the error told the
+        # operator to read.
+        errors='replace',
         bufsize=1,  # Line buffered
         universal_newlines=True,
         env=env,
         cwd=cwd
     )
-    
-    # Capture output while streaming it in real-time
+
+    # Capture output while streaming it in real-time. The try/finally
+    # guarantees the child is waited on and the pipe closed even if the
+    # consumer raises or the operator interrupts.
     captured_output = []
-    for line in process.stdout:
-        # Print to console (forwarded to parent)
-        print(line, end='', flush=True)
-        sys.stdout.flush()  # Force flush
-        # Capture for later use
-        captured_output.append(line)
-    
-    # Wait for process to complete
-    return_code = process.wait()
-    
+    try:
+        for line in process.stdout:
+            # Print to console (forwarded to parent)
+            print(line, end='', flush=True)
+            sys.stdout.flush()  # Force flush
+            # Capture for later use
+            captured_output.append(line)
+    except BaseException:
+        process.kill()
+        raise
+    finally:
+        if process.stdout is not None:
+            process.stdout.close()
+        return_code = process.wait()
+
     return return_code, captured_output
 
 

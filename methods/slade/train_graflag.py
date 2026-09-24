@@ -5,39 +5,27 @@ SLADE: Detecting Dynamic Anomalies in Edge Streams without Labels via Self-Super
 
 import math
 import logging
-import time
-import sys
-import random
-import os
-import argparse
+from dataclasses import dataclass, asdict
 from pathlib import Path
 
 import torch
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
-import psutil
 
-# Add source directory to path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "src"))
+from graflag_runner import (
+    ResultWriter, device, info, params, paths, seed_all, upstream,
+)
 
-from model.SLADE_TGN import SLADE_TGN
-from utils.utils import get_neighbor_finder
-from utils.data_processing import Data
-from evaluation.evaluation import eval_anomaly_node_detection
+# The SLADE clone. upstream() anchors on this file's directory and raises if
+# the checkout is missing, instead of failing later with an unexplained
+# ImportError.
+upstream("src")
 
-# GraFlag integration
-from graflag_runner import ResultWriter
-
-
-def set_seed(seed):
-    """Set random seed for reproducibility."""
-    random.seed(seed)
-    np.random.seed(seed)
-    torch.manual_seed(seed)
-    if torch.cuda.is_available():
-        torch.cuda.manual_seed(seed)
-        torch.cuda.manual_seed_all(seed)
+from model.SLADE_TGN import SLADE_TGN                            # noqa: E402
+from utils.utils import get_neighbor_finder                      # noqa: E402
+from utils.data_processing import Data                           # noqa: E402
+from evaluation.evaluation import eval_anomaly_node_detection    # noqa: E402
 
 
 def load_data(data_path, training_ratio=0.85):
@@ -107,120 +95,71 @@ def load_data(data_path, training_ratio=0.85):
         edge_idxs[test_mask], labels[test_mask]
     )
 
-    return full_data, train_data, test_data, graph_df
+    # test_mask is returned, not recomputed by the caller: it is what says
+    # which rows of full_data the published scores may cover, and a second
+    # copy of `timestamps > np.quantile(...)` elsewhere is a boundary that can
+    # drift from this one without anything failing.
+    return full_data, train_data, test_data, graph_df, test_mask
 
 
-def parse_args():
-    """Parse command line arguments (passed by graflag_runner --pass-env-args)."""
-    parser = argparse.ArgumentParser(description='SLADE Training')
-    parser.add_argument('--bs', type=int, default=100, help='Batch size')
-    parser.add_argument('--n_degree', type=int, default=20, help='Number of neighbors to sample')
-    parser.add_argument('--n_head', type=int, default=2, help='Number of attention heads')
-    parser.add_argument('--n_epoch', type=int, default=10, help='Number of epochs')
-    parser.add_argument('--lr', type=float, default=3e-6, help='Learning rate')
-    parser.add_argument('--n_runs', type=int, default=1, help='Number of runs')
-    parser.add_argument('--seed', type=int, default=0, help='Random seed')
-    parser.add_argument('--drop_out', type=float, default=0.1, help='Dropout rate')
-    parser.add_argument('--gpu', type=int, default=0, help='GPU device')
-    parser.add_argument('--message_dim', type=int, default=128, help='Message dimension')
-    parser.add_argument('--memory_dim', type=int, default=256, help='Memory dimension')
-    parser.add_argument('--agg_type', type=str, default='TGAT', help='Aggregation type')
-    parser.add_argument('--negative_memory_type', type=str, default='train', help='Negative memory type')
-    parser.add_argument('--message_updater', type=str, default='mlp', help='Message updater type')
-    parser.add_argument('--memory_updater', type=str, default='gru', help='Memory updater type')
-    parser.add_argument('--training_ratio', type=float, default=0.85, help='Training ratio')
-    parser.add_argument('--lr_decay', type=float, default=0.8, help='Learning rate decay')
-    parser.add_argument('--weight_decay', type=float, default=0.0001, help='Weight decay')
-    parser.add_argument('--srf', type=float, default=0.1, help='Source recovery factor')
-    parser.add_argument('--drf', type=float, default=0.1, help='Drift recovery factor')
-    parser.add_argument('--only_drift_loss_score', type=int, default=0, help='Only drift loss score')
-    parser.add_argument('--only_recovery_loss_score', type=int, default=0, help='Only recovery loss score')
-    parser.add_argument('--only_drift_score', type=int, default=0, help='Only drift score')
-    parser.add_argument('--only_rec_score', type=int, default=0, help='Only rec score')
-    return parser.parse_args()
+@dataclass
+class Config:
+    """The parameters this method accepts, and their defaults.
 
+    Replaces an argparse parser plus a get_config_from_args() that restated
+    every key a third time. The four score-selection switches are the only
+    values that are not read as declared -- .env can only say 0 or 1, and the
+    model wants booleans, so __post_init__ does that one translation.
+    """
 
-def get_config_from_args(args):
-    """Convert parsed args to config dict."""
-    return {
-        'bs': args.bs,
-        'n_degree': args.n_degree,
-        'n_head': args.n_head,
-        'n_epoch': args.n_epoch,
-        'lr': args.lr,
-        'n_runs': args.n_runs,
-        'seed': args.seed,
-        'drop_out': args.drop_out,
-        'gpu': args.gpu,
-        'message_dim': args.message_dim,
-        'memory_dim': args.memory_dim,
-        'agg_type': args.agg_type,
-        'negative_memory_type': args.negative_memory_type,
-        'message_updater': args.message_updater,
-        'memory_updater': args.memory_updater,
-        'training_ratio': args.training_ratio,
-        'lr_decay': args.lr_decay,
-        'weight_decay': args.weight_decay,
-        'srf': args.srf,
-        'drf': args.drf,
-        'only_drift_loss_score': args.only_drift_loss_score == 1,
-        'only_recovery_loss_score': args.only_recovery_loss_score == 1,
-        'only_drift_score': args.only_drift_score == 1,
-        'only_rec_score': args.only_rec_score == 1,
-    }
+    bs: int = 100                              # batch size
+    n_degree: int = 20                         # neighbours sampled per node
+    n_head: int = 2
+    n_epoch: int = 10
+    lr: float = 3e-6
+    n_runs: int = 1
+    seed: int = 0
+    drop_out: float = 0.1
+    gpu: int = 0                               # GPU index; -1 means CPU
+    message_dim: int = 128
+    memory_dim: int = 256
+    agg_type: str = "TGAT"
+    negative_memory_type: str = "train"
+    message_updater: str = "mlp"
+    memory_updater: str = "gru"
+    training_ratio: float = 0.85
+    lr_decay: float = 0.8
+    weight_decay: float = 0.0001
+    srf: float = 0.1                           # source recovery factor
+    drf: float = 0.1                           # drift recovery factor
+    only_drift_loss_score: int = 0             # 1 to enable
+    only_recovery_loss_score: int = 0          # 1 to enable
+    only_drift_score: int = 0                  # 1 to enable
+    only_rec_score: int = 0                    # 1 to enable
+
+    def __post_init__(self):
+        for switch in ("only_drift_loss_score", "only_recovery_loss_score",
+                       "only_drift_score", "only_rec_score"):
+            setattr(self, switch, getattr(self, switch) == 1)
 
 
 def main():
-    # Get configuration
-    args = parse_args()
-    config = get_config_from_args(args)
-    data_path = os.environ.get("DATA")
+    run = paths()
+    config = asdict(Config(**params(Config)))
 
-    print(f"SLADE Configuration:")
-    for key, value in config.items():
-        print(f"  {key}: {value}")
+    info(f"[INFO] SLADE on {run.dataset}: {config}")
 
-    # Set random seed
-    set_seed(config['seed'])
+    seed_all(config['seed'])
+    dev = device(config['gpu'])
 
-    # Setup device
-    device_string = f"cuda:{config['gpu']}" if torch.cuda.is_available() else 'cpu'
-    device = torch.device(device_string)
-    print(f"Using device: {device}")
-
-    # Initialize resource tracking
-    start_time = time.time()
-    process = psutil.Process()
-    peak_memory_mb = 0.0
-    peak_gpu_memory_mb = None
-
-    # Initialize GraFlag ResultWriter
     writer = ResultWriter()
 
-    # Extract dataset name from path
-    data_dir = Path(data_path)
-    dataset_name = data_dir.name.replace('slade_', '')
+    # The dataset directory names itself after the method; report the bare name.
+    dataset_name = run.dataset.replace('slade_', '')
 
-    # Add initial metadata
-    writer.add_metadata(
-        method_name="slade",
-        dataset=dataset_name,
-        seed=config['seed'],
-        n_epochs=config['n_epoch'],
-        batch_size=config['bs'],
-        learning_rate=config['lr'],
-        message_dim=config['message_dim'],
-        memory_dim=config['memory_dim'],
-        n_degree=config['n_degree'],
-        n_head=config['n_head'],
-        training_ratio=config['training_ratio'],
-        srf=config['srf'],
-        drf=config['drf'],
-    )
-
-    # Load data
     print("\nLoading data...")
-    full_data, train_data, test_data, graph_df = load_data(data_path, config['training_ratio'])
+    full_data, train_data, test_data, graph_df, test_mask = load_data(
+        run.data, config['training_ratio'])
 
     print(f"Full data: {full_data.n_interactions} interactions, {full_data.n_unique_nodes} unique nodes")
     print(f"Train data: {train_data.n_interactions} interactions")
@@ -257,7 +196,7 @@ def main():
             neighbor_finder=train_ngh_finder,
             n_nodes=full_data.n_unique_nodes,
             n_edges=full_data.n_interactions,
-            device=device,
+            device=dev,
             n_layers=1,  # Only 1 hop neighbor aggregation
             n_heads=config['n_head'],
             dropout=config['drop_out'],
@@ -273,16 +212,16 @@ def main():
             only_drift_loss=config['only_drift_loss_score'],
             only_recovery_loss=config['only_recovery_loss_score']
         )
-        model = model.to(device)
+        model = model.to(dev)
 
         # Prepare training data tensors
-        train_data_sources = torch.from_numpy(train_data.sources).long().to(device)
-        train_data_destinations = torch.from_numpy(train_data.destinations).long().to(device)
-        train_data_timestamps = torch.from_numpy(train_data.timestamps).float().to(device)
-        train_data_src_neighbors = torch.from_numpy(src_neighbors).long().to(device)
-        train_data_dst_neighbors = torch.from_numpy(dst_neighbors).long().to(device)
-        train_data_src_neighbors_time = torch.from_numpy(src_neighbors_time).long().to(device)
-        train_data_dst_neighbors_time = torch.from_numpy(dst_neighbors_time).long().to(device)
+        train_data_sources = torch.from_numpy(train_data.sources).long().to(dev)
+        train_data_destinations = torch.from_numpy(train_data.destinations).long().to(dev)
+        train_data_timestamps = torch.from_numpy(train_data.timestamps).float().to(dev)
+        train_data_src_neighbors = torch.from_numpy(src_neighbors).long().to(dev)
+        train_data_dst_neighbors = torch.from_numpy(dst_neighbors).long().to(dev)
+        train_data_src_neighbors_time = torch.from_numpy(src_neighbors_time).long().to(dev)
+        train_data_dst_neighbors_time = torch.from_numpy(dst_neighbors_time).long().to(dev)
 
         num_instance = len(train_data.sources)
         num_batch = math.ceil(num_instance / config['bs'])
@@ -292,23 +231,16 @@ def main():
 
         negative_train_nodes = torch.from_numpy(
             np.array(list(set(train_data.destinations) | set(train_data.sources)))
-        ).long().to(device)
+        ).long().to(dev)
 
-        best_val_auc = 0.0
-        val_aucs = []
+        # Named for the split it is measured on. SLADE has two splits, not
+        # three: eval_anomaly_node_detection below is handed test_data, so a
+        # column called val_auc in training.csv -- and in the legend of
+        # training_curves.png -- would be the test AUC under another name.
+        best_test_auc = 0.0
+        test_aucs = []
 
         for epoch in range(config['n_epoch']):
-            # Track memory
-            current_memory_mb = process.memory_info().rss / (1024 * 1024)
-            peak_memory_mb = max(peak_memory_mb, current_memory_mb)
-
-            if torch.cuda.is_available():
-                current_gpu_mb = torch.cuda.max_memory_allocated(device) / (1024 * 1024)
-                if peak_gpu_memory_mb is None:
-                    peak_gpu_memory_mb = current_gpu_mb
-                else:
-                    peak_gpu_memory_mb = max(peak_gpu_memory_mb, current_gpu_mb)
-
             # Reset memory at start of each epoch
             model.memory.__init_memory__()
             model.set_neighbor_finder(train_ngh_finder)
@@ -353,22 +285,22 @@ def main():
             # Evaluation
             model.set_neighbor_finder(full_ngh_finder)
 
-            val_auc, pred_score, _ = eval_anomaly_node_detection(
+            test_auc, pred_score, _ = eval_anomaly_node_detection(
                 model, test_data, config['bs'],
                 n_neighbors=config['n_degree'],
-                device=device,
+                device=dev,
                 only_rec_score=config['only_rec_score'] or config['only_recovery_loss_score'],
                 only_drift_score=config['only_drift_loss_score'] or config['only_drift_score']
             )
 
             avg_loss = sum(m_loss) / len(m_loss) if m_loss else 0.0
-            print(f"Epoch {epoch+1} - Loss: {avg_loss:.4f}, Val AUC: {val_auc:.4f}")
+            print(f"Epoch {epoch+1} - Loss: {avg_loss:.4f}, Test AUC: {test_auc:.4f}")
 
-            val_aucs.append(val_auc)
+            test_aucs.append(test_auc)
 
-            if val_auc > best_val_auc:
-                best_val_auc = val_auc
-                print(f"  -> New best AUC: {best_val_auc:.4f}")
+            if test_auc > best_test_auc:
+                best_test_auc = test_auc
+                print(f"  -> New best AUC: {best_test_auc:.4f}")
 
             # Track training metrics
             writer.spot(
@@ -376,18 +308,34 @@ def main():
                 epoch=epoch + 1,
                 run=run_idx + 1,
                 loss=avg_loss,
-                val_auc=val_auc,
+                test_auc=test_auc,
             )
 
         # Final evaluation on test data
-        final_auc = val_aucs[-1] if val_aucs else 0.0
+        # The last epoch's, not the best: no checkpoint is restored, so the
+        # model that produces the published scores is the one training ended
+        # on. best_test_auc is reported, never selected on.
+        final_auc = test_aucs[-1] if test_aucs else 0.0
         all_test_aucs.append(final_auc)
 
         print(f"\nRun {run_idx + 1} - Final Test AUC: {final_auc:.4f}")
 
-    # Get predictions for ALL data using the last model
+    # Replay the whole stream with the last model, then publish the test
+    # tail alone.
+    #
+    # The replay has to cover every edge: SLADE is a streaming method whose
+    # memory is updated by each interaction it sees, so a test edge scored
+    # without the training prefix ahead of it would be scored against an empty
+    # memory. That part is deliberate, and it is the same reason gady swaps in
+    # full_ngh_finder for evaluation.
+    #
+    # What was wrong was publishing the result of the whole replay. The
+    # training edges are the ones the model was fitted on, so scores over them
+    # are not a held-out measurement, and RESULTS_STANDARD.md asks for the test
+    # split. With training_ratio=0.8 that made four fifths of every published
+    # score and of every AUC computed from it in-sample.
     print("\n" + "="*60)
-    print("Generating predictions for entire dataset...")
+    print("Generating predictions for the full stream (scoring the test split)...")
     print("="*60)
 
     # Re-initialize model memory and use full neighbor finder
@@ -405,9 +353,9 @@ def main():
             s_idx = k * config['bs']
             e_idx = min(num_instance, s_idx + config['bs'])
 
-            sources_batch = torch.from_numpy(full_data.sources[s_idx:e_idx]).long().to(device)
-            destinations_batch = torch.from_numpy(full_data.destinations[s_idx:e_idx]).long().to(device)
-            timestamps_batch = torch.from_numpy(full_data.timestamps[s_idx:e_idx]).float().to(device)
+            sources_batch = torch.from_numpy(full_data.sources[s_idx:e_idx]).long().to(dev)
+            destinations_batch = torch.from_numpy(full_data.destinations[s_idx:e_idx]).long().to(dev)
+            timestamps_batch = torch.from_numpy(full_data.timestamps[s_idx:e_idx]).float().to(dev)
 
             # Get neighbors
             src_neighbors_np, _, src_neighbors_time_np = full_ngh_finder.get_temporal_neighbor(
@@ -417,10 +365,10 @@ def main():
                 full_data.destinations[s_idx:e_idx], full_data.timestamps[s_idx:e_idx], config['n_degree']
             )
 
-            src_neighbors_batch = torch.from_numpy(src_neighbors_np).long().to(device)
-            dst_neighbors_batch = torch.from_numpy(dst_neighbors_np).long().to(device)
-            src_neighbors_time_batch = torch.from_numpy(src_neighbors_time_np).long().to(device)
-            dst_neighbors_time_batch = torch.from_numpy(dst_neighbors_time_np).long().to(device)
+            src_neighbors_batch = torch.from_numpy(src_neighbors_np).long().to(dev)
+            dst_neighbors_batch = torch.from_numpy(dst_neighbors_np).long().to(dev)
+            src_neighbors_time_batch = torch.from_numpy(src_neighbors_time_np).long().to(dev)
+            dst_neighbors_time_batch = torch.from_numpy(dst_neighbors_time_np).long().to(dev)
 
             positive_memory_score, drift_score, _, _ = model.compute_anomaly_score(
                 sources_batch, destinations_batch, timestamps_batch,
@@ -439,18 +387,26 @@ def main():
 
             pred_scores[s_idx:e_idx] = batch_scores
 
-    # Prepare edge list and timestamps
-    edge_list = [[int(s), int(d)] for s, d in zip(full_data.sources, full_data.destinations)]
-    timestamps_list = full_data.timestamps.tolist()
-    ground_truth = full_data.labels.tolist()
+    # Keep the test split. test_mask indexes full_data row for row, so this
+    # selects the same edges test_data holds however the stream is ordered --
+    # it does not assume the split is a contiguous tail the way slicing would.
+    if len(test_mask) != len(pred_scores):
+        raise RuntimeError(
+            f"the split mask ({len(test_mask)}) does not cover the scored "
+            f"stream ({len(pred_scores)})")
+    pred_scores = pred_scores[test_mask]
+    edge_list = [[int(s), int(d)] for s, d in
+                 zip(full_data.sources[test_mask], full_data.destinations[test_mask])]
+    timestamps_list = full_data.timestamps[test_mask].tolist()
+    ground_truth = full_data.labels[test_mask].tolist()
 
-    print(f"\nTotal samples: {len(pred_scores)}")
+    print(f"\nTest samples: {len(pred_scores)} of {len(test_mask)} in the stream")
     print(f"Score range: [{pred_scores.min():.4f}, {pred_scores.max():.4f}]")
 
     # Calculate final metrics
     from sklearn.metrics import roc_auc_score
-    final_auc_all = roc_auc_score(ground_truth, pred_scores) if len(np.unique(ground_truth)) > 1 else 0.0
-    print(f"Final AUC (all data): {final_auc_all:.4f}")
+    final_test_auc = roc_auc_score(ground_truth, pred_scores) if len(np.unique(ground_truth)) > 1 else 0.0
+    print(f"Final AUC (test split): {final_test_auc:.4f}")
 
     # Save results using EDGE_STREAM format
     print("\nSaving results in EDGE_STREAM_ANOMALY_SCORES format...")
@@ -462,32 +418,14 @@ def main():
         ground_truth=ground_truth,
     )
 
-    # Calculate execution time and resource usage
-    end_time = time.time()
-    exec_time_seconds = end_time - start_time
-
-    # Final memory check
-    final_memory_mb = process.memory_info().rss / (1024 * 1024)
-    peak_memory_mb = max(peak_memory_mb, final_memory_mb)
-
-    if torch.cuda.is_available():
-        final_gpu_mb = torch.cuda.max_memory_allocated(device) / (1024 * 1024)
-        if peak_gpu_memory_mb is not None:
-            peak_gpu_memory_mb = max(peak_gpu_memory_mb, final_gpu_mb)
-
-    print(f"\nResource Usage:")
-    print(f"  Total execution time: {exec_time_seconds:.2f}s")
-    print(f"  Peak memory: {peak_memory_mb:.2f}MB")
-    if peak_gpu_memory_mb is not None:
-        print(f"  Peak GPU memory: {peak_gpu_memory_mb:.2f}MB")
-
-    # Compute statistics across runs
     mean_auc = np.mean(all_test_aucs)
     std_auc = np.std(all_test_aucs) if len(all_test_aucs) > 1 else 0.0
 
-    # Add final metadata
+    # Execution time and memory are measured by graflag_runner around this
+    # process and merged into metadata afterwards -- see the runner's
+    # _merge_runtime_metadata.
     writer.add_metadata(
-        exp_name=os.path.basename(os.environ.get("EXP", "experiment")),
+        exp_name=run.experiment,
         method_name="slade",
         dataset=dataset_name,
         method_parameters=config,
@@ -497,7 +435,8 @@ def main():
             "task": "edge_stream_anomaly_detection",
             "dataset_info": {
                 "name": dataset_name,
-                "total_samples": len(pred_scores),
+                "scored_split": "test",
+                "scored_samples": len(pred_scores),
                 "n_anomalies": int(np.sum(ground_truth)),
                 "anomaly_ratio": float(np.mean(ground_truth)),
                 "n_unique_nodes": full_data.n_unique_nodes,
@@ -506,7 +445,7 @@ def main():
                 "n_runs": config['n_runs'],
                 "mean_test_auc": float(mean_auc),
                 "std_test_auc": float(std_auc),
-                "final_auc_all_data": float(final_auc_all),
+                "final_test_auc": float(final_test_auc),
             },
             "model_architecture": {
                 "type": "SLADE_TGN",
@@ -519,18 +458,9 @@ def main():
         },
     )
 
-    # Add resource metrics
-    writer.add_resource_metrics(
-        exec_time_ms=exec_time_seconds * 1000,
-        peak_memory_mb=peak_memory_mb,
-        peak_gpu_mb=peak_gpu_memory_mb,
-    )
-
-    # Finalize and write results
-    results_file = writer.finalize()
-    print(f"\nResults saved to: {results_file}")
-    print(f"Mean Test AUC: {mean_auc:.4f} +/- {std_auc:.4f}")
-    print(f"Final AUC (all data): {final_auc_all:.4f}")
+    info(f"[OK] Mean test AUC {mean_auc:.4f} +/- {std_auc:.4f}, AUC over the "
+         f"published test split {final_test_auc:.4f}, results written to "
+         f"{writer.finalize()}")
 
 
 if __name__ == "__main__":

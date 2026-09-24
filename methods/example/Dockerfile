@@ -56,8 +56,7 @@ RUN pip install --no-cache-dir \
     scikit-learn \
     scipy \
     networkx \
-    tqdm \
-    psutil
+    tqdm
 
 # ------------------------------------------------------------------------------
 # Step 5: Set working directory
@@ -68,10 +67,34 @@ WORKDIR /app
 # ------------------------------------------------------------------------------
 # Step 6: (Optional) Clone external source code
 # ------------------------------------------------------------------------------
-# If your method wraps an existing implementation:
+# If your method wraps an existing implementation, pin it. A floating clone
+# means today's image and next month's image are different experiments, and
+# nothing in the results records which one ran. Put the SHA in .env as
+# SOURCE_REF; graflag forwards it and SOURCE_CODE as --build-arg, so the
+# Dockerfile names neither and the two cannot drift apart:
 #
-# RUN git clone https://github.com/author/method.git src
-# RUN cd src && pip install -e .
+# ARG SOURCE_CODE
+# ARG SOURCE_REF
+# RUN test -n "${SOURCE_CODE}" && test -n "${SOURCE_REF}" \
+#     && git clone ${SOURCE_CODE} src \
+#     && git -C src checkout --detach ${SOURCE_REF}
+#
+# The `test -n` is what makes an unset SOURCE_REF a failed build: without it,
+# `git checkout --detach` with no argument exits 0 and the pin is silently gone.
+#
+# Local fixes to the clone go in methods/<name>/patches/ and are applied with
+# `git apply`, never `sed -i`. sed exits 0 when it matches nothing, so a patch
+# that stops applying after a SOURCE_REF bump disappears without a word; git
+# apply refuses the patch and stops the build:
+#
+# COPY methods/example/patches/ /patches/
+# RUN git -C src apply --verbose /patches/*.patch
+#
+# Then reach it from train_graflag.py with `upstream()`, which anchors on the
+# script's own directory instead of a hardcoded /app:
+#
+#     from graflag_runner import upstream
+#     upstream("src")            # adds /app/src to sys.path, or raises
 
 # ------------------------------------------------------------------------------
 # Step 7: Copy your method files
@@ -89,18 +112,39 @@ COPY methods/example/train_graflag.py ./train_graflag.py
 # ------------------------------------------------------------------------------
 # The graflag_runner library provides ResultWriter and execution framework
 
-RUN pip install --no-cache-dir graflag-runner
+# Where the GraFlag libraries come from. `local` (the default) installs the
+# copy on the share, `pypi` the published wheel; graflag passes the choice as
+# --build-arg from GRAFLAG_LIBS in its config. Until this existed, testing a
+# change to graflag_runner meant hand-editing this file on the manager -- which
+# is what happened, three different ways across eight methods, and `graflag
+# sync --lib` meanwhile reported success while changing nothing that ran.
+#
+# The unknown arm exits non-zero on purpose: an if/else would read a typo as
+# "pypi" and build an image whose libraries are not the ones that were asked
+# for, which is the silent success this file's `test -n` guards also exist to
+# prevent.
+ARG GRAFLAG_LIBS=local
+COPY libs/graflag_runner /tmp/graflag_libs/graflag_runner
+RUN case "${GRAFLAG_LIBS}" in \
+      local) pip install --no-cache-dir /tmp/graflag_libs/graflag_runner ;; \
+      pypi)  pip install --no-cache-dir graflag-runner ;; \
+      *) echo "[ERROR] GRAFLAG_LIBS must be local or pypi, got '${GRAFLAG_LIBS}'" >&2; exit 1 ;; \
+    esac && rm -rf /tmp/graflag_libs
 
 # ------------------------------------------------------------------------------
 # Step 9: Set the entry point (REQUIRED)
 # ------------------------------------------------------------------------------
 # This runs graflag_runner which:
-#   1. Sets up environment (DATA, EXP paths)
-#   2. Converts _PARAM env vars to --param CLI args (--pass-env-args)
-#   3. Executes your COMMAND from .env
-#   4. Monitors resources and captures output
+#   1. Sets up the environment (DATA, EXP, and every _PARAM from .env)
+#   2. Executes your COMMAND from .env
+#   3. Monitors CPU, memory and GPU, and captures output
+#
+# Add --pass-env-args only if the command you run parses CLI arguments --
+# typically when you are driving an upstream argparse entry point you cannot
+# change. It converts _BATCH_SIZE=128 into --batch_size 128 (lowercased). A
+# script written against the SDK reads them with params() and does not need it.
 
-CMD ["python3", "-m", "graflag_runner", "--pass-env-args"]
+CMD ["python3", "-m", "graflag_runner"]
 
 # ==============================================================================
 # NOTES:

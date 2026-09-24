@@ -37,6 +37,8 @@ def _install_fake_gdown(folder_files: dict, file_writes: dict | None = None):
     def download(url, output, quiet=True, fuzzy=True):
         data = (file_writes or {}).get(url, b"")
         Path(output).write_bytes(data)
+        # Real gdown returns the output path on success, None on failure.
+        return str(output) if data else None
 
     fake.download_folder = download_folder
     fake.download = download

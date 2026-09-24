@@ -131,6 +131,37 @@ def missing_files(dataset_dir: os.PathLike, meta: Optional[DatasetMetadata] = No
     return [f for f in meta.files if not (base / f.name).exists()]
 
 
+def corrupt_files(dataset_dir: os.PathLike,
+                  meta: Optional[DatasetMetadata] = None) -> List[DatasetFile]:
+    """Resident files whose contents no longer match their declared ``sha256``.
+
+    ``missing_files`` asks only whether a file exists, and ``_verify_sha256``
+    runs only against a fresh download -- so a file that was corrupted after it
+    landed, or replaced with a different graph of the same name, passed every
+    check the library made. That is the opposite of what pinning a checksum is
+    for: the pin exists to detect substitution, and substitution is exactly the
+    case that happens after the download.
+
+    Not called from :func:`fetch`, deliberately. Hashing every resident file on
+    every run would re-read gigabytes before each experiment; this is what
+    ``graflag-data verify`` calls, so the cost is paid when it is asked for.
+
+    Files with no declared ``sha256`` are skipped -- unverifiable, not corrupt.
+    """
+    meta = meta or load_metadata(dataset_dir)
+    base = Path(dataset_dir)
+    bad = []
+    for f in meta.files:
+        path = base / f.name
+        if not f.sha256 or not path.exists():
+            continue
+        try:
+            _verify_sha256(path, f.sha256)
+        except DatasetNotReadyError:
+            bad.append(f)
+    return bad
+
+
 def is_ready(dataset_dir: os.PathLike) -> bool:
     try:
         meta = load_metadata(dataset_dir)
@@ -152,6 +183,7 @@ def fetch(
     dataset_dir: os.PathLike,
     force: bool = False,
     verbose: bool = True,
+    _seen: Optional[set] = None,
 ) -> List[str]:
     """Download any missing files listed in ``metadata.json`` and, if the
     dataset declares a ``build`` step, run it once its inputs are available.
@@ -160,10 +192,20 @@ def fetch(
     downloaded and build-step ``produces`` entries generated.
     Raises ``DatasetNotReadyError`` if a required file has no download URL,
     a build command fails, or a build step doesn't produce its declared files.
+
+    ``_seen`` is internal: ``derived_from`` is followed recursively, and two
+    datasets naming each other used to recurse until RecursionError.
     """
     meta = load_metadata(dataset_dir)
     base = Path(dataset_dir).resolve()
     base.mkdir(parents=True, exist_ok=True)
+
+    _seen = set() if _seen is None else _seen
+    if base in _seen:
+        raise DatasetNotReadyError(
+            f"circular derived_from chain involving {base.name!r}"
+        )
+    _seen.add(base)
     produced: List[str] = []
 
     # 1. Ensure the upstream dataset is ready (for derived datasets with a
@@ -174,7 +216,8 @@ def fetch(
             if force or not is_ready(upstream):
                 produced.extend(
                     f"{meta.derived_from}/{n}"
-                    for n in fetch(upstream, force=force, verbose=verbose)
+                    for n in fetch(upstream, force=force, verbose=verbose,
+                                   _seen=_seen)
                 )
 
     # 2. Download declared files (direct-download datasets).
@@ -304,9 +347,29 @@ def _download_file(f: DatasetFile, base: Path, verbose: bool) -> None:
 
 
 def _urlretrieve(url: str, dest: Path) -> None:
+    """Download `url` to `dest`, verifying the transfer completed.
+
+    Readiness elsewhere is existence-only, so a short read used to be moved
+    into place and then treated as a valid dataset forever. No dataset in this
+    repo declares a sha256, so this length check is the only integrity signal
+    there is.
+    """
     req = urllib.request.Request(url, headers={"User-Agent": "graflag-data/1.0"})
     with urllib.request.urlopen(req) as resp, dest.open("wb") as out:
         shutil.copyfileobj(resp, out)
+        expected = resp.headers.get("Content-Length")
+
+    if expected is not None:
+        try:
+            expected_bytes = int(expected)
+        except (TypeError, ValueError):
+            return
+        actual = dest.stat().st_size
+        if actual != expected_bytes:
+            raise RuntimeError(
+                f"Incomplete download from {url}: got {actual} bytes, "
+                f"expected {expected_bytes}"
+            )
 
 
 def _verify_sha256(path: Path, expected: str) -> None:
@@ -332,19 +395,19 @@ def _extract(archive: Path, base: Path, f: DatasetFile) -> None:
 
     if kind == "zip":
         with zipfile.ZipFile(archive) as zf:
-            _extract_archive_member(zf.namelist(), f, target, lambda m: zf.read(m))
+            _extract_archive_member(zf.namelist(), f, target, lambda m: zf.open(m))
         return
 
     if kind in ("tar", "tar.gz", "tgz", "tar.bz2"):
         mode = {"tar": "r", "tar.gz": "r:gz", "tgz": "r:gz", "tar.bz2": "r:bz2"}[kind]
         with tarfile.open(archive, mode) as tf:
             names = tf.getnames()
-            def _read(m: str) -> bytes:
+            def _open(m: str):
                 fobj = tf.extractfile(m)
                 if fobj is None:
                     raise DatasetNotReadyError(f"archive member {m!r} is not a file")
-                return fobj.read()
-            _extract_archive_member(names, f, target, _read)
+                return fobj
+            _extract_archive_member(names, f, target, _open)
         return
 
     raise DatasetNotReadyError(f"unknown extract kind: {f.extract!r}")
@@ -401,6 +464,17 @@ def _download_gdrive(f: DatasetFile, base: Path, verbose: bool) -> None:
         tmp_path = Path(tmp.name)
     try:
         gdown.download(url=url, output=str(tmp_path), quiet=not verbose, fuzzy=True)
+        # gdown returns None on failure (quota, permission change, the HTML
+        # virus-scan interstitial) rather than raising, and NamedTemporaryFile
+        # has already created tmp_path -- so the empty file was moved onto the
+        # target and the dataset was "ready" at 0 bytes forever. Checking the
+        # artifact rather than the return value catches that however gdown
+        # chooses to report it.
+        if not tmp_path.exists() or tmp_path.stat().st_size == 0:
+            raise RuntimeError(
+                f"Google Drive download failed for {f.name} ({url}). "
+                f"The file may be quota-limited or no longer shared."
+            )
         if f.sha256:
             _verify_sha256(tmp_path, f.sha256)
         if not f.extract:
@@ -426,19 +500,25 @@ def _find_in_tree(root: Path, name: str) -> Optional[Path]:
     return None
 
 
-def _extract_archive_member(names, f, target, read_fn) -> None:
-    """Copy one member out of an archive into ``target``.
+def _extract_archive_member(names, f, target, open_fn) -> None:
+    """Copy the declared archive member(s) out into ``target``'s directory.
 
-    If ``f.members`` is set, use its first entry; otherwise pick the
-    member whose basename matches ``f.name``; otherwise pick the only
-    regular file.
+    ``open_fn(member)`` returns a readable binary stream, which is copied with
+    ``shutil.copyfileobj``. It used to return ``bytes``, so the whole member was
+    materialised in memory first -- ``streamspot_all`` is ~2.2 GB uncompressed,
+    which meant a MemoryError or an OOM kill on the swarm manager.
+
+    Every entry in ``members`` is extracted. Only ``members[0]`` used to be,
+    so a metadata author following the documented schema ("names inside the
+    archive to copy out") silently lost every file after the first, and the
+    dataset was then marked ready.
     """
     if f.members:
-        member = f.members[0]
+        members = list(f.members)
     else:
         matches = [n for n in names if Path(n).name == f.name]
         if matches:
-            member = matches[0]
+            members = [matches[0]]
         else:
             regulars = [n for n in names if not n.endswith("/")]
             if len(regulars) != 1:
@@ -446,8 +526,26 @@ def _extract_archive_member(names, f, target, read_fn) -> None:
                     f"cannot infer which archive member to extract for {f.name!r}; "
                     f"set 'members' in metadata.json"
                 )
-            member = regulars[0]
+            members = [regulars[0]]
 
-    data = read_fn(member)
-    with target.open("wb") as dst:
-        dst.write(data)
+    for i, member in enumerate(members):
+        if member not in names:
+            raise DatasetNotReadyError(
+                f"archive member {member!r} not found (declared for {f.name!r})"
+            )
+        # The first member keeps f.name; any others keep their own basename,
+        # so a multi-member entry cannot overwrite itself.
+        dest = target if i == 0 else target.parent / Path(member).name
+        _reject_escaping_path(dest, target.parent)
+        with open_fn(member) as src, dest.open("wb") as dst:
+            shutil.copyfileobj(src, dst)
+
+
+def _reject_escaping_path(dest: Path, root: Path) -> None:
+    """Refuse a destination outside `root` (metadata is not fully trusted)."""
+    try:
+        dest.resolve().relative_to(root.resolve())
+    except ValueError:
+        raise DatasetNotReadyError(
+            f"refusing to write {dest} outside the dataset directory {root}"
+        )

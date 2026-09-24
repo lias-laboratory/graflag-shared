@@ -13,12 +13,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-def _flatten_ragged(arr: np.ndarray) -> np.ndarray:
-    """Flatten array, handling ragged/object arrays properly."""
-    if arr.dtype == object or (arr.ndim == 1 and len(arr) > 0 and isinstance(arr[0], (list, np.ndarray))):
-        # Ragged array - concatenate all elements
-        return np.concatenate([np.asarray(x).flatten() for x in arr])
-    return arr.flatten()
+from .preprocessing import flatten_ragged as _flatten_ragged, prepare_pairs
 
 
 class PlotGenerator:
@@ -36,13 +31,7 @@ class PlotGenerator:
             output_path: Path to save plot
             title: Plot title
         """
-        scores_flat = _flatten_ragged(scores)
-        gt_flat = _flatten_ragged(ground_truth)
-        
-        # Remove invalid scores
-        valid_mask = scores_flat > -2
-        scores_valid = scores_flat[valid_mask]
-        gt_valid = gt_flat[valid_mask]
+        scores_valid, gt_valid, _ = prepare_pairs(scores, ground_truth)
         
         if len(np.unique(gt_valid)) < 2:
             logger.warning("Cannot plot ROC: only one class present")
@@ -77,19 +66,16 @@ class PlotGenerator:
             output_path: Path to save plot
             title: Plot title
         """
-        scores_flat = _flatten_ragged(scores)
-        gt_flat = _flatten_ragged(ground_truth)
-        
-        valid_mask = scores_flat > -2
-        scores_valid = scores_flat[valid_mask]
-        gt_valid = gt_flat[valid_mask]
+        scores_valid, gt_valid, _ = prepare_pairs(scores, ground_truth)
         
         if len(np.unique(gt_valid)) < 2:
             logger.warning("Cannot plot PR: only one class present")
             return
         
         precision, recall, thresholds = metrics.precision_recall_curve(gt_valid, scores_valid)
-        auc_score = metrics.auc(recall, precision)
+        # Match metrics.py: average precision, not the trapezoidal rule, so the
+        # number in this legend equals the one in evaluation.json.
+        auc_score = metrics.average_precision_score(gt_valid, scores_valid)
         
         plt.figure(figsize=(8, 6))
         plt.plot(recall, precision, label=f'AUC-PR = {auc_score:.4f}', linewidth=2)
@@ -116,12 +102,7 @@ class PlotGenerator:
             output_path: Path to save plot
             title: Plot title
         """
-        scores_flat = _flatten_ragged(scores)
-        gt_flat = _flatten_ragged(ground_truth)
-        
-        valid_mask = scores_flat > -2
-        scores_valid = scores_flat[valid_mask]
-        gt_valid = gt_flat[valid_mask]
+        scores_valid, gt_valid, _ = prepare_pairs(scores, ground_truth)
         
         normal_scores = scores_valid[gt_valid == 0]
         anomaly_scores = scores_valid[gt_valid == 1]

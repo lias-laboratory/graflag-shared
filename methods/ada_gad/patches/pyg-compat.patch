@@ -1,0 +1,37 @@
+Import three PyG utilities from where modern PyG exports them.
+
+ADA-GAD pins torch_geometric==2.2.0, where torch_geometric.utils.degree,
+.sort_edge_index and .subgraph were importable submodules. PyG removed those
+submodules; the three names are still exported from torch_geometric.utils
+itself and are the same functions. Without this the image imports nothing at
+all -- the run died at `from main import build_args` with
+ModuleNotFoundError: No module named 'torch_geometric.utils.degree'.
+
+maybe_num_nodes and torch_geometric.nn.inits are untouched on purpose: both
+still resolve at their original paths, so rewriting them would be churn that
+could drift.
+
+This changes where three functions are imported from, not what they compute.
+Pinning PyG back to 2.2.0 was the alternative and would have dragged torch and
+the CUDA build back with it, for the whole image, to avoid three import lines.
+
+Generated with `git diff` against the tree SOURCE_REF pins.
+
+diff --git a/model/models/drop_graph.py b/model/models/drop_graph.py
+index d348a75..c46934e 100644
+--- a/model/models/drop_graph.py
++++ b/model/models/drop_graph.py
+@@ -11,10 +11,10 @@ from torch import Tensor
+ 
+ from torch_geometric.deprecation import deprecated
+ from torch_geometric.typing import OptTensor
+-from torch_geometric.utils.degree import degree
++from torch_geometric.utils import degree
+ from torch_geometric.utils.num_nodes import maybe_num_nodes
+-from torch_geometric.utils.sort_edge_index import sort_edge_index
+-from torch_geometric.utils.subgraph import subgraph
++from torch_geometric.utils import sort_edge_index
++from torch_geometric.utils import subgraph
+ 
+ def dropout_subgraph(edge_index: Tensor, p: float = 0.2, walks_per_node: int = 1,
+                  walk_length: int = 3, num_nodes: Optional[int] = None,

@@ -1,0 +1,18 @@
+{
+  "name": "gad_yelpchi",
+  "description": "YelpChi review-fraud graph (23,831 nodes, 32 features, 1,217 anomalies).",
+  "source": "https://github.com/CampanulaBells/HUGE-GAD",
+  "source_repo": "https://github.com/CampanulaBells/HUGE-GAD/blob/bdf8d2aec6455b48d7322c0713e31d2f6fecc1b7/datasets/YelpChi.mat",
+  "compatible_methods": [
+    "huge_gad"
+  ],
+  "format": "MATLAB .mat (Network sparse adjacency / Attributes / Label)",
+  "files": [
+    {
+      "name": "YelpChi.mat",
+      "url": "https://github.com/CampanulaBells/HUGE-GAD/raw/bdf8d2aec6455b48d7322c0713e31d2f6fecc1b7/datasets/YelpChi.mat",
+      "sha256": "61eae7fd894b54840eb7038d52bbf9e3802704ccd16a74526dd2fff3cbff72ca"
+    }
+  ],
+  "notes": "The largest graph in this family; real fraud labels rather than injected outliers. ada_gad and diffgad are deliberately absent from compatible_methods: each refuses to run on a dataset its authors shipped no tuned configuration for, and inventing one would publish a number from hyperparameters nobody chose. Stored as the upstream .mat rather than converted to a PyG .pt at fetch time: the conversion needs torch and torch_geometric, and the manager is a thin orchestration node that carries neither. The .mat methods read this file directly with no conversion at all; a method wanting PyG calls graflag_runner.read_mat inside its own container, where those libraries exist."
+}

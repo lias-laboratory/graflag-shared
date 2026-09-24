@@ -9,156 +9,133 @@ This script integrates GADY with the GraFlag benchmarking framework by:
 2. Running GADY's data preparation and preprocessing
 3. Running GADY training and evaluation
 4. Outputting results in GraFlag format using ResultWriter
+
+The training loop follows upstream's generator/discriminator alternation
+(train.py:244-272). It is reproduced here rather than imported because
+upstream's own train.py does not run: it reads args.alpha, args.betaa and
+args.gamma at lines 100-102 without declaring the flags, so the module raises
+AttributeError before it trains. What this file imports is upstream's model,
+generator, losses, samplers and data pipeline -- which is what SOURCE_REF pins.
+README.md lists every place this loop and upstream's differ.
 """
 
-import os
+import logging
+import math
 import sys
 import time
-import math
-import logging
-import argparse
+from dataclasses import asdict, dataclass, fields
 from pathlib import Path
 
 import numpy as np
 import torch
-import psutil
+from sklearn.metrics import average_precision_score, roc_auc_score
 
-# Add GADY source to path
-sys.path.insert(0, 'src')
+from graflag_runner import (
+    ResultWriter, device, info, params, paths, seed_all, upstream, warning,
+)
 
-# GraFlag integration
-from graflag_runner import ResultWriter
+# The GADY clone. upstream() anchors on this file's directory and raises if the
+# checkout is missing, instead of failing later with an unexplained ImportError.
+# data_loader.py runs src/prepare_data.py and src/preproc_new.py as subprocesses
+# against the same directory.
+upstream("src")
 
-from data_loader import (
-    DATASET_CONFIG,
+from data_loader import (                                       # noqa: E402
+    ensure_data_ready,
     get_dataset_name_from_path,
-    setup_data_directories,
-    run_prepare_data,
-    run_preproc_positional_features
 )
 
 
-def str2bool(v):
-    """Convert string to boolean for argparse compatibility with GraFlag runner."""
-    if isinstance(v, bool):
-        return v
-    if v.lower() in ('yes', 'true', 't', 'y', '1', ''):
-        return True
-    elif v.lower() in ('no', 'false', 'f', 'n', '0'):
-        return False
-    else:
-        raise argparse.ArgumentTypeError('Boolean value expected.')
+@dataclass
+class Config:
+    """Every parameter GADY accepts, with the default it takes when unset.
 
+    This replaces three competing paths that used to decide one value: an
+    argparse parser fed by ``--pass-env-args``, a 30-key ``env_mappings`` dict,
+    and a loop in ``main()`` copying the second over the first. The dict read
+    ``ANOMALY_PER`` where GraFlag injects ``_ANOMALY_PER``, so all 30 lookups
+    returned None and the entire path was dead -- two of its entries were
+    additionally misspelled (``BATCH_SIZE`` for ``_BS``, ``lr_G`` for the
+    ``lr_g`` argparse produced), which nothing could reveal while it never ran.
 
-def parse_args():
-    """Parse command line arguments."""
-    parser = argparse.ArgumentParser('GADY GraFlag Integration')
-    
-    # GraFlag standard args
-    parser.add_argument('--data', type=str, help='Dataset name', default='uci')
-    
-    # GADY training args
-    parser.add_argument('--seed', type=int, default=142, help='Random seed')
-    parser.add_argument('--bs', type=int, default=200, help='Batch size')
-    parser.add_argument('--n_degree', type=int, default=10, help='Number of neighbors')
-    parser.add_argument('--n_epoch', type=int, default=50, help='Number of epochs')
-    parser.add_argument('--n_layer', type=int, default=2, help='Number of layers')
-    parser.add_argument('--lr', type=float, default=0.0001, help='Learning rate')
-    parser.add_argument('--patience', type=int, default=5, help='Early stopping patience')
-    parser.add_argument('--n_runs', type=int, default=1, help='Number of runs')
-    parser.add_argument('--gpu', type=int, default=0, help='GPU index')
-    
+    ``params(Config)`` is now the single route in, and a field's annotation is
+    what types the value.
+
+    ``data`` is a field because upstream's helpers read it by attribute off
+    the same object -- ``get_data`` and ``get_data_settings`` both take the
+    dataset name that way.
+    """
+
+    # Filled from the DATA mount in main(), not from a `_DATA` parameter.
+    data: str = 'uci'
+
+    # Data
+    anomaly_per: float = 0.1
+    train_per: float = 0.7
+    bs: int = 200
+
     # Model architecture
-    parser.add_argument('--node_dim', type=int, default=100, help='Node embedding dim')
-    parser.add_argument('--time_dim', type=int, default=1, help='Time embedding dim')
-    parser.add_argument('--memory_dim', type=int, default=172, help='Memory dim')
-    parser.add_argument('--message_dim', type=int, default=100, help='Message dim')
-    
-    # Memory settings (use str2bool for GraFlag runner compatibility)
-    parser.add_argument('--use_memory', type=str2bool, nargs='?', const=True, default=False, help='Use memory')
-    parser.add_argument('--memory_update_at_end', type=str2bool, nargs='?', const=True, default=False)
-    parser.add_argument('--message_function', type=str, default='identity')
-    parser.add_argument('--memory_updater', type=str, default='gru')
-    parser.add_argument('--aggregator', type=str, default='last')
-    
-    # GADY specific
-    parser.add_argument('--mode', type=int, default=0, help='GADY mode (0=normal, 1=ablation)')
-    parser.add_argument('--alpha', type=float, default=0.1, help='Alpha parameter')
-    parser.add_argument('--betaa', type=float, default=10, help='Beta parameter')
-    parser.add_argument('--gamma', type=float, default=0.1, help='Gamma parameter')
-    parser.add_argument('--beta', type=float, default=0.00001, help='Positional feature beta')
-    parser.add_argument('--r_dim', type=int, default=4, help='Positional feature dim')
-    parser.add_argument('--lr_g', '--lr_G', type=float, default=0.000001, help='Generator LR')
-    parser.add_argument('--lr_d', '--lr_D', type=float, default=0.000001, help='Discriminator LR')
-    
-    # Data settings
-    parser.add_argument('--anomaly_per', type=float, default=0.1, help='Anomaly rate')
-    parser.add_argument('--train_per', type=float, default=0.7, help='Train split')
-    
-    # Other flags (use str2bool for GraFlag runner compatibility)
-    parser.add_argument('--uniform', type=str2bool, nargs='?', const=True, default=False)
-    parser.add_argument('--randomize_features', type=str2bool, nargs='?', const=True, default=False)
-    parser.add_argument('--use_destination_embedding_in_message', type=str2bool, nargs='?', const=True, default=False)
-    parser.add_argument('--use_source_embedding_in_message', type=str2bool, nargs='?', const=True, default=False)
-    parser.add_argument('--different_new_nodes', type=str2bool, nargs='?', const=True, default=False)
-    parser.add_argument('--prefix', type=str, nargs='?', const='', default='')
-    
-    return parser.parse_args()
+    n_layer: int = 2
+    n_degree: int = 10
+    memory_dim: int = 172
+    message_dim: int = 100
+    node_dim: int = 100
+    time_dim: int = 1
+
+    # Memory
+    use_memory: bool = False
+    memory_update_at_end: bool = False
+    message_function: str = 'identity'
+    memory_updater: str = 'gru'
+    aggregator: str = 'last'
+
+    # Positional features
+    r_dim: int = 4
+    beta: float = 0.00001
+
+    # Training
+    n_epoch: int = 50
+    n_runs: int = 1
+    lr: float = 0.0001
+    patience: int = 5
+    seed: int = 142
+    gpu: int = 0
+
+    # GAN loss
+    alpha: float = 0.1
+    betaa: float = 10.0
+    gamma: float = 0.1
+    lr_g: float = 0.000001
+    lr_d: float = 0.000001
+
+    # Mode and sampling
+    mode: int = 0
+    uniform: bool = False
+    randomize_features: bool = False
+    use_destination_embedding_in_message: bool = False
+    use_source_embedding_in_message: bool = False
+    different_new_nodes: bool = False
+    prefix: str = ''
 
 
-def get_graflag_env_config():
-    """Get configuration from GraFlag environment variables."""
-    config = {}
-    
-    # Data path from GraFlag
-    data_path = os.environ.get('DATA')
-    if data_path:
-        config['data_path'] = Path(data_path)
-        config['dataset'] = get_dataset_name_from_path(config['data_path'])
-    
-    # Map environment variables to arguments
-    env_mappings = {
-        'ANOMALY_PER': ('anomaly_per', float),
-        'TRAIN_PER': ('train_per', float),
-        'BATCH_SIZE': ('bs', int),
-        'N_LAYER': ('n_layer', int),
-        'N_DEGREE': ('n_degree', int),
-        'MEMORY_DIM': ('memory_dim', int),
-        'MESSAGE_DIM': ('message_dim', int),
-        'NODE_DIM': ('node_dim', int),
-        'TIME_DIM': ('time_dim', int),
-        'USE_MEMORY': ('use_memory', lambda x: x.lower() == 'true'),
-        'MEMORY_UPDATE_AT_END': ('memory_update_at_end', lambda x: x.lower() == 'true'),
-        'MESSAGE_FUNCTION': ('message_function', str),
-        'MEMORY_UPDATER': ('memory_updater', str),
-        'AGGREGATOR': ('aggregator', str),
-        'R_DIM': ('r_dim', int),
-        'BETA': ('beta', float),
-        'N_EPOCH': ('n_epoch', int),
-        'LR': ('lr', float),
-        'LR_G': ('lr_G', float),
-        'LR_D': ('lr_D', float),
-        'PATIENCE': ('patience', int),
-        'SEED': ('seed', int),
-        'ALPHA': ('alpha', float),
-        'BETAA': ('betaa', float),
-        'GAMMA': ('gamma', float),
-        'MODE': ('mode', int),
-        'USE_DESTINATION_EMBEDDING_IN_MESSAGE': ('use_destination_embedding_in_message', lambda x: x.lower() == 'true'),
-        'USE_SOURCE_EMBEDDING_IN_MESSAGE': ('use_source_embedding_in_message', lambda x: x.lower() == 'true'),
-        'RANDOMIZE_FEATURES': ('randomize_features', lambda x: x.lower() == 'true'),
-        'UNIFORM': ('uniform', lambda x: x.lower() == 'true'),
-    }
-    
-    for env_key, (arg_key, converter) in env_mappings.items():
-        value = os.environ.get(env_key)
-        if value is not None:
-            try:
-                config[arg_key] = converter(value)
-            except (ValueError, TypeError):
-                pass
-    
-    return config
+# Parameters this integration accepts but never reads. Keeping them typed and
+# recorded is deliberate -- they are GADY's own knobs, and silently dropping
+# them would make a `--params LR=...` sweep look like it worked while every run
+# came back identical. Warning on each one that is actually moved off its
+# default is what makes that visible. Delete an entry when it gets wired up --
+# _LR_G, _LR_D and _BETAA left this dict when the adversarial loop was restored.
+INERT_PARAMS = {
+    'lr': "GADY trains two optimizers, on _LR_D and _LR_G; upstream declares "
+          "--lr (train.py:33) and never reads it either",
+}
+
+
+def warn_about_inert_params(config: Config) -> None:
+    """Say out loud which parameters were changed but will not be used."""
+    defaults = {f.name: f.default for f in fields(Config)}
+    for name, reason in INERT_PARAMS.items():
+        if getattr(config, name) != defaults[name]:
+            warning(f"[WARN] _{name.upper()} was set but has no effect: {reason}")
 
 
 def setup_logging(data_name: str, anomaly_per: float):
@@ -181,6 +158,103 @@ def setup_logging(data_name: str, anomaly_per: float):
     return logger
 
 
+def load_positional_features(path: str, dev=None):
+    """Load one savepoint of GADY's positional encodings.
+
+    ``preproc_new.py`` writes V and R as a list of sparse tensors, one per
+    batch, under ``pos_features/``. Training reads one file per partition,
+    evaluation one file for the whole test split.
+
+    A missing file used to be caught per batch and skipped with ``continue``,
+    which turned a preprocessing step that had not run into an epoch that
+    quietly trained on nothing. It is an error.
+    """
+    try:
+        V, R = torch.load(path)
+    except FileNotFoundError:
+        raise FileNotFoundError(
+            f"positional features missing: {path}. They are written by "
+            f"upstream's preproc_new.py, which data_loader.py runs before "
+            f"training -- a run cannot proceed without them.") from None
+    if dev is not None:
+        V = [v.to(dev) for v in V]
+        R = [r.to(dev) for r in R]
+    return V, R
+
+
+def evaluate_test_split(model, test_data, test_V, test_R, n_neighbors, batch_size):
+    """Score the test split, returning the metrics *and* the scores.
+
+    This is upstream's ``eval_edge_prediction`` (evaluation/evaluation.py:8)
+    with the per-edge probabilities kept instead of discarded, and it is local
+    for two reasons.
+
+    Upstream's signature is ``(model, negative_edge_sampler, data, n_neighbors,
+    batch_size=200, vs=None, rs=None)`` and it returns ``(ap, auc, vs, rs)``.
+    The call this integration made passed ``test_data=``, ``train_data=``,
+    ``args=``, ``test_rand_sampler=``, ``partition_size=`` and ``device=`` and
+    unpacked two values in the order ``(auc, ap)`` -- so it raised TypeError on
+    the first epoch that reached it, and would have reported AP as AUC if it
+    had not.
+
+    And results.json needs the scores themselves. Deriving them in a second
+    pass would score a different V/R state than the AUC reported beside them;
+    one pass is what keeps the two consistent.
+
+    The score is the discriminator's output, unmodified. DiscFGANLoss drives a
+    real edge toward 0 and a generated one toward 1, so higher means more
+    anomalous -- which is the direction ``test_data.labels`` uses and the one
+    upstream evaluates, ``roc_auc_score(true_label, pos_prob)``. The previous
+    code published ``1 - prob``, inverting every score it produced.
+    """
+    scores, labels, edges, timestamps = [], [], [], []
+    batch_aps, batch_aucs = [], []
+
+    num_test = len(test_data.sources)
+    num_test_batch = math.ceil(num_test / batch_size)
+    # test_V holds one entry per evaluation batch, and upstream stops one batch
+    # short of the end -- which is where it runs out.
+    usable = min(num_test_batch, len(test_V))
+
+    with torch.no_grad():
+        model.eval()
+        for k in range(usable):
+            s_idx = k * batch_size
+            e_idx = min(num_test, s_idx + batch_size)
+            src_np = test_data.sources[s_idx:e_idx]
+            dst_np = test_data.destinations[s_idx:e_idx]
+            ts_np = test_data.timestamps[s_idx:e_idx]
+            true_label = np.asarray(test_data.labels[s_idx:e_idx]).reshape(-1)
+
+            pos_prob = model.compute_edge_probabilities(
+                torch.tensor(src_np), torch.tensor(dst_np), torch.tensor(ts_np),
+                test_data.edge_idxs[s_idx:e_idx], n_neighbors,
+                update_memory=True,
+                next_V=model.V + test_V[k].to_dense().to(model.device),
+                next_R=model.R + test_R[k].to_dense().to(model.device),
+            )
+            pred = pos_prob.squeeze().cpu().numpy().reshape(-1)
+
+            scores.extend(pred.tolist())
+            labels.extend(true_label.tolist())
+            edges.extend([[int(s), int(d)] for s, d in zip(src_np, dst_np)])
+            timestamps.extend(np.asarray(ts_np).reshape(-1).tolist())
+
+            # A batch holding one class has no AUC. Upstream raises on it;
+            # averaging over the batches that do hold both is the metric it
+            # reports when it does not.
+            if len(np.unique(true_label)) > 1:
+                batch_aps.append(average_precision_score(true_label, pred))
+                batch_aucs.append(roc_auc_score(true_label, pred))
+
+    if not scores:
+        return 0.0, 0.0, None, None, None, None
+
+    ap = float(np.mean(batch_aps)) if batch_aps else 0.0
+    auc = float(np.mean(batch_aucs)) if batch_aucs else 0.0
+    return ap, auc, scores, labels, edges, timestamps
+
+
 def run_gady_training(args, logger, writer):
     """
     Run GADY training and evaluation.
@@ -195,16 +269,15 @@ def run_gady_training(args, logger, writer):
     """
     # Import GADY modules
     from modules.GAN import Generator
-    from evaluation.evaluation import eval_edge_prediction
     from model.tgn import TGN
     from utils.utils import (EarlyStopMonitor, RandEdgeSampler,
                              get_neighbor_finder, get_data_settings,
                              GenFGANLoss, DiscFGANLoss)
     from utils.data_processing import get_data, compute_time_statistics
 
-    # Set seeds
-    torch.manual_seed(args.seed)
-    np.random.seed(args.seed)
+    # One call seeds `random`, numpy and torch; the two lines here left
+    # `random` unseeded, so upstream's negative sampling was never repeatable.
+    seed_all(args.seed)
     
     logger.info(args)
     
@@ -215,237 +288,340 @@ def run_gady_training(args, logger, writer):
         randomize_features=args.randomize_features,
         anomaly_per=args.anomaly_per
     )
-    
+
+    # Upstream numbers edges from 1 -- `prepare_data.py` appends
+    # `idx_list = [int(x)+1 for x in range(np.size(all_data, 0))]` as the edge
+    # index column -- but sizes the edge feature matrix to one row per edge,
+    # `edge_features = np.zeros((data_full.shape[0], 172))`. The last edge's
+    # index is therefore exactly one past the end of the array that
+    # `tgn.py:421` indexes with it.
+    #
+    # The train split stops at 70% and never reaches that index, so training
+    # runs clean; the first evaluation pass reaches it in its final batch. The
+    # out-of-bounds read is a CUDA kernel, and CUDA kernels report
+    # asynchronously, so it surfaced as `device-side assert triggered` raised
+    # against the *next* indexing operation -- the memory lookup two lines
+    # later -- which is why the traceback named `memory.py:40` and nothing in
+    # it pointed at the edge features. On 38,544 edges it took one full epoch
+    # and 62 evaluation batches to arrive.
+    #
+    # Sizing the matrix from the indices that will actually be used fixes it
+    # for any split. The features are all zeros, so the added row changes
+    # nothing this method computes -- it only makes the last edge indexable.
+    needed = int(np.max(full_data.edge_idxs)) + 1
+    if needed > edge_features.shape[0]:
+        info(f"[INFO] Edge features sized {edge_features.shape[0]} for edge "
+             f"indices up to {needed - 1}; padding to {needed} rows")
+        edge_features = np.vstack([
+            edge_features,
+            np.zeros((needed - edge_features.shape[0], edge_features.shape[1]),
+                     dtype=edge_features.dtype),
+        ])
+
     # Initialize neighbor finders
     train_ngh_finder = get_neighbor_finder(train_data, args.uniform)
     full_ngh_finder = get_neighbor_finder(full_data, args.uniform)
+    # Only the ablation (--mode 1) draws random negatives; mode 0 gets them
+    # from the generator. The sampler was built twice, once unconditionally and
+    # once again inside `if args.mode == 1`, with the same arguments.
     train_rand_sampler = RandEdgeSampler(train_data.sources, train_data.destinations)
-    test_rand_sampler = RandEdgeSampler(full_data.sources, full_data.destinations, seed=2)
-    
-    if args.mode == 1:  # Ablation study
-        train_rand_sampler = RandEdgeSampler(train_data.sources, train_data.destinations)
-    
-    # Set device
-    device_string = f'cuda:{args.gpu}' if torch.cuda.is_available() else 'cpu'
-    device = torch.device(device_string)
-    logger.info(f'Using device: {device}')
+
+    # device() is the shared resolver: a negative index means CPU -- which is
+    # what `graflag run --no-gpu` sets -- and so does CUDA being unavailable.
+    dev = device(args.gpu)
+    logger.info(f'Using device: {dev}')
     
     # Compute time statistics
     mean_time_shift_src, std_time_shift_src, mean_time_shift_dst, std_time_shift_dst = \
         compute_time_statistics(full_data.sources, full_data.destinations, full_data.timestamps)
     
     # Store best results across runs
-    best_auc = 0
-    best_ap = 0
+    # -1 rather than 0: an AP of exactly 0 is a legitimate (if dire)
+    # result, and starting at 0 would discard the scores that produced it
+    # and then report "no epoch produced test scores".
+    best_auc = -1.0
+    best_ap = -1.0
+    best_scores = None
+    best_labels = None
+    best_edges = None
+    best_timestamps = None
     all_results = []
-    
-    # Training loop
-    train_generator = Generator(n_neighbors=args.n_degree, batch_size=args.bs, device=device)
-    
+
+    num_instance = len(train_data.sources)
+    num_batch = math.ceil(num_instance / args.bs)
+    partition_size, _ = get_data_settings(args.data)
+
+    # Positional features for the test split. One file for the whole split,
+    # indexed per evaluation batch, so it is read once rather than per epoch.
+    # They are left on the CPU: the evaluation pass moves one batch at a time,
+    # which is what upstream does and what keeps a long test split off the GPU.
+    test_V, test_R = load_positional_features(
+        f'pos_features/{args.data}_VR_test_bs_{args.bs}'
+        f'_rdim_{args.r_dim}{args.anomaly_per}')
+
+    # GADY's generator is its negative sampler, and it lives *inside* the
+    # discriminator: TGN.__init__ takes it as `Generator` and keeps it as a
+    # submodule (model/tgn.py:28,52), which is how compute_neg_edge_probabilities
+    # reaches it (:231). Building it and not passing it -- which is what this
+    # integration did -- left `discriminator.Generator` as None, so the very
+    # first training batch died on `.eval()`. The method had never run.
+    train_generator = Generator(n_neighbors=args.n_degree, batch_size=args.bs, device=dev)
+
     for run_idx in range(args.n_runs):
         logger.info(f'\n=== Run {run_idx + 1}/{args.n_runs} ===')
-        
-        results_path = f"results/GADY-{args.data}_{run_idx}.pkl" if args.prefix == '' else f"results/{args.prefix}_{run_idx}.pkl"
-        Path("results/").mkdir(parents=True, exist_ok=True)
-        
+
         # Initialize model
         discriminator = TGN(
-            neighbor_finder=train_ngh_finder, 
+            neighbor_finder=train_ngh_finder,
             node_features=node_features,
-            edge_features=edge_features, 
-            device=device,
-            n_layers=args.n_layer, 
+            edge_features=edge_features,
+            device=dev,
+            n_layers=args.n_layer,
             use_memory=args.use_memory,
-            message_dimension=args.message_dim, 
+            message_dimension=args.message_dim,
             memory_dimension=args.memory_dim,
             memory_update_at_start=not args.memory_update_at_end,
             message_function=args.message_function,
             aggregator_type=args.aggregator,
             memory_updater_type=args.memory_updater,
             n_neighbors=args.n_degree,
-            mean_time_shift_src=mean_time_shift_src, 
+            mean_time_shift_src=mean_time_shift_src,
             std_time_shift_src=std_time_shift_src,
-            mean_time_shift_dst=mean_time_shift_dst, 
+            mean_time_shift_dst=mean_time_shift_dst,
             std_time_shift_dst=std_time_shift_dst,
             use_destination_embedding_in_message=args.use_destination_embedding_in_message,
             use_source_embedding_in_message=args.use_source_embedding_in_message,
             beta=args.beta,
             r_dim=args.r_dim,
-            lr_G=args.lr_g,
-            lr_D=args.lr_d
+            Generator=train_generator,
         )
-        
-        # Setup loss functions
-        criterion_gen = GenFGANLoss().to(device)
-        criterion_disc = DiscFGANLoss(args.betaa, args.gamma).to(device)
-        
-        # Optimizer
-        optimizer = torch.optim.Adam(discriminator.parameters(), lr=args.lr)
-        
-        # Early stopping
+        # TGN.__init__ moves the feature matrices and V/R to `device` itself but
+        # not its own parameters, so the module still has to be moved. Without
+        # this the first matmul on a GPU run raises "Expected all tensors to be
+        # on the same device" -- which nothing could reveal while the run died
+        # three lines earlier.
+        discriminator = discriminator.to(dev)
+
+        # Losses, constructed as upstream constructs them (utils/utils.py:146,169).
+        # _ALPHA, _BETAA and _GAMMA are wired to their keyword arguments here.
+        # Upstream names the same three values at train.py:100-102 and then uses
+        # none of them -- and does not declare the flags they read, so
+        # `python train.py` raises AttributeError on line 100 before it trains.
+        # Passing them is therefore the only reading under which the keys mean
+        # anything; the values in .env are GADY's published ones.
+        criterion_gen = GenFGANLoss(alpha_=args.alpha, beta_=args.betaa).to(dev)
+        criterion_disc = DiscFGANLoss(gamma_=args.gamma).to(dev)
+        criterion_bce = torch.nn.BCELoss().to(dev)
+
+        # Two optimizers, not one. GADY is adversarial: the discriminator learns
+        # to separate real edges from generated ones, the generator learns to
+        # fool it. A single optimizer over discriminator.parameters() -- which
+        # now contains the generator, since it is a submodule -- would drive
+        # both toward the same objective, which is not training GADY. Upstream
+        # keeps them apart (train.py:153-154), and that is what makes _LR_D and
+        # _LR_G mean something. The discriminator step detaches the generator's
+        # samples (nograd=True below), so d_optimizer leaves it alone.
+        #
+        # It leaves it alone in the arithmetic, but upstream still hands it the
+        # generator's parameters, and torch 1.9's Adam allocates state for any
+        # parameter whose .grad is not None. zero_grad() there zeroes gradients
+        # rather than clearing them, so from the second batch on the generator's
+        # grads are zero tensors, not None -- and d_optimizer.step() materialises
+        # a full exp_avg/exp_avg_sq pair for all 440,074,746 of them. That is a
+        # second 3.3 GiB copy of the state g_optimizer already holds, and it is
+        # what put this run over an 11.6 GiB card: 9.64 GiB was already allocated
+        # when the step asked for 102 MiB more.
+        #
+        # The duplicate never moved a weight. exp_avg stays identically zero
+        # under a zero gradient, weight_decay is 0 and amsgrad is off, so every
+        # update Adam computed for those parameters was 0/(0 + eps) = 0. Holding
+        # them out of d_optimizer therefore changes no number this method
+        # produces; it only stops the generator being optimised twice over.
+        gen_param_ids = {id(p) for p in discriminator.Generator.parameters()}
+        disc_params = [p for p in discriminator.parameters()
+                       if id(p) not in gen_param_ids]
+        d_optimizer = torch.optim.Adam(disc_params, lr=args.lr_d)
+        g_optimizer = torch.optim.Adam(discriminator.Generator.parameters(), lr=args.lr_g)
+
         early_stopper = EarlyStopMonitor(max_round=args.patience)
-        
-        num_instance = len(train_data.sources)
-        num_batch = math.ceil(num_instance / args.bs)
-        partition_size, _ = get_data_settings(args.data)
-        
-        # Training epochs
+
+        run_auc, run_ap, run_scores = -1.0, -1.0, None
+
         for epoch in range(args.n_epoch):
             logger.info(f'Epoch {epoch + 1}/{args.n_epoch}')
-            
-            discriminator.memory.__init_memory__()
-            
-            epoch_loss = 0
+
+            # V and R accumulate over an epoch; starting the next one on the
+            # previous one's encodings is not what upstream trains (train.py:183).
+            discriminator.reset_VR()
+            if args.use_memory:
+                discriminator.memory.__init_memory__()
+            discriminator.set_neighbor_finder(train_ngh_finder)
+
+            d_losses, g_losses = [], []
+            next_V, next_R = [], []
+
             for batch_idx in range(num_batch):
                 start_idx = batch_idx * args.bs
                 end_idx = min(num_instance, start_idx + args.bs)
-                
-                sources_batch = train_data.sources[start_idx:end_idx]
-                destinations_batch = train_data.destinations[start_idx:end_idx]
+
+                src_np = train_data.sources[start_idx:end_idx]
+                dst_np = train_data.destinations[start_idx:end_idx]
+                sources_batch = torch.tensor(src_np)
+                destinations_batch = torch.tensor(dst_np)
+                timestamps_batch = torch.tensor(train_data.timestamps[start_idx:end_idx])
                 edge_idxs_batch = train_data.edge_idxs[start_idx:end_idx]
-                timestamps_batch = train_data.timestamps[start_idx:end_idx]
-                
-                size = len(sources_batch)
-                
-                with torch.no_grad():
-                    pos_label = torch.zeros(size, dtype=torch.float, device=device)
-                    neg_label = torch.ones(size, dtype=torch.float, device=device)
-                
-                discriminator.train()
-                
-                # Load positional features
-                prt = batch_idx // partition_size
-                try:
-                    next_V, next_R = torch.load(
-                        f'pos_features/{args.data}_nextVR_part_{prt}_bs_{args.bs}_rdim_{args.r_dim}{args.anomaly_per}'
-                    )
-                    for c in range(len(next_V)):
-                        next_V[c] = next_V[c].to(device)
-                        next_R[c] = next_R[c].to(device)
-                except FileNotFoundError:
-                    logger.warning(f'Positional features not found for partition {prt}')
-                    continue
-                
+                size = end_idx - start_idx
+
+                # One file per partition, not one per batch: the previous loop
+                # re-read the same savepoint `partition_size` times per partition.
+                if batch_idx % partition_size == 0:
+                    prt = batch_idx // partition_size
+                    next_V, next_R = load_positional_features(
+                        f'pos_features/{args.data}_nextVR_part_{prt}'
+                        f'_bs_{args.bs}_rdim_{args.r_dim}{args.anomaly_per}', dev)
+
                 idx = batch_idx % partition_size
-                
-                # Forward pass
+                if idx >= len(next_V):
+                    # The last savepoint covers fewer batches than a full
+                    # partition. Say so and end the epoch, rather than index
+                    # past it or skip the batch in silence.
+                    warning(f"[WARN] positional features exhausted at batch "
+                            f"{batch_idx}/{num_batch}; ending epoch {epoch + 1} here")
+                    break
+
+                discriminator.train()
+                d_optimizer.zero_grad()
+
                 if args.mode == 0:
+                    # Discriminator step. nograd=True detaches the generator's
+                    # samples, which is what keeps d_optimizer -- whose parameter
+                    # list contains the generator -- from training it here.
                     discriminator.Generator.eval()
                     pos_prob = discriminator.compute_edge_probabilities(
-                        sources_batch, destinations_batch, timestamps_batch, 
+                        sources_batch, destinations_batch, timestamps_batch,
                         edge_idxs_batch, args.n_degree,
                         update_memory=True,
                         next_V=discriminator.V + next_V[idx].to_dense(),
-                        next_R=discriminator.R + next_R[idx].to_dense()
+                        next_R=discriminator.R + next_R[idx].to_dense(),
                     )
-                    
                     neg_prob2, _ = discriminator.compute_neg_edge_probabilities(
                         sources_batch, destinations_batch, timestamps_batch,
-                        edge_idxs_batch, args.n_degree
+                        edge_idxs_batch, args.n_degree,
+                        update_memory=False,
+                        next_V=discriminator.V + next_V[idx].to_dense(),
+                        next_R=discriminator.R + next_R[idx].to_dense(),
+                        nograd=True,
                     )
-                    
-                    # Discriminator loss
-                    loss = criterion_disc(pos_prob, neg_prob2, args.alpha)
-                    
-                else:  # Ablation mode
+                    # DiscFGANLoss.forward is (d_out_fake, d_out_real) and takes
+                    # nothing else. The call here used to pass three arguments,
+                    # and the two it did pass were the wrong way round -- so it
+                    # raised TypeError the moment the line was reached.
+                    d_loss = criterion_disc(neg_prob2.squeeze(), pos_prob.squeeze())
+                    d_loss.backward()
+                    d_optimizer.step()
+
+                    # Generator step. criterion_gen was constructed and never
+                    # called before this, so the generator was never trained.
+                    discriminator.eval()
+                    discriminator.Generator.train()
+                    neg_prob, neg_samples = discriminator.compute_neg_edge_probabilities(
+                        sources_batch, destinations_batch, timestamps_batch,
+                        edge_idxs_batch, args.n_degree,
+                        update_memory=False,
+                        next_V=discriminator.V + next_V[idx].to_dense(),
+                        next_R=discriminator.R + next_R[idx].to_dense(),
+                    )
+                    g_loss = criterion_gen(neg_prob.squeeze(), neg_samples)
+                    g_optimizer.zero_grad()
+                    g_loss.backward()
+                    g_optimizer.step()
+                    g_losses.append(g_loss.item())
+                else:
+                    # Ablation (--mode 1): random negatives and a plain BCE,
+                    # with real edges as class 0, as upstream runs it
+                    # (train.py:274-289).
+                    edges = np.hstack((src_np.reshape(-1, 1), dst_np.reshape(-1, 1)))
+                    _, negatives_batch = train_rand_sampler.sample(edges)
+                    with torch.no_grad():
+                        pos_label = torch.zeros(size, dtype=torch.float, device=dev)
+                        neg_label = torch.ones(size, dtype=torch.float, device=dev)
                     pos_prob = discriminator.compute_edge_probabilities(
                         sources_batch, destinations_batch, timestamps_batch,
                         edge_idxs_batch, args.n_degree,
-                        update_memory=True
+                        update_memory=True,
+                        next_V=discriminator.V + next_V[idx].to_dense(),
+                        next_R=discriminator.R + next_R[idx].to_dense(),
                     )
-                    loss = -torch.mean(torch.log(pos_prob + 1e-8))
-                
-                # Backward
-                optimizer.zero_grad()
-                loss.backward()
-                optimizer.step()
-                
-                epoch_loss += loss.item()
-                
-                # Detach memory
-                discriminator.memory.detach_memory()
-            
-            avg_loss = epoch_loss / num_batch
-            logger.info(f'Epoch {epoch + 1} Average Loss: {avg_loss:.4f}')
+                    neg_prob = discriminator.compute_edge_probabilities(
+                        sources_batch, torch.tensor(negatives_batch), timestamps_batch,
+                        edge_idxs_batch, args.n_degree,
+                        update_memory=False,
+                        next_V=discriminator.V + next_V[idx].to_dense(),
+                        next_R=discriminator.R + next_R[idx].to_dense(),
+                    )
+                    d_loss = (criterion_bce(pos_prob.squeeze(), pos_label)
+                              + criterion_bce(neg_prob.squeeze(), neg_label))
+                    d_loss.backward()
+                    d_optimizer.step()
 
-            # Evaluation
-            discriminator.eval()
-            discriminator.memory.__init_memory__()
+                d_losses.append(d_loss.item())
 
-            test_auc, test_ap = eval_edge_prediction(
-                model=discriminator,
-                test_data=test_data,
-                train_data=train_data,
-                args=args,
-                test_rand_sampler=test_rand_sampler,
-                partition_size=partition_size,
-                device=device
-            )
+                # Not upstream's, kept deliberately: without it the memory keeps
+                # the previous batch's graph alive and the second backward pass
+                # raises "trying to backward through the graph a second time".
+                if args.use_memory:
+                    discriminator.memory.detach_memory()
+
+            avg_d_loss = float(np.mean(d_losses)) if d_losses else float('nan')
+            logger.info(f'Epoch {epoch + 1} mean discriminator loss: {avg_d_loss:.4f}')
+            if g_losses:
+                logger.info(f'Epoch {epoch + 1} mean generator loss: {np.mean(g_losses):.4f}')
+
+            # Evaluation. The full neighbour finder is what upstream evaluates
+            # against (train.py:304); leaving the training finder in place hides
+            # every test-time neighbour from the model.
+            discriminator.set_neighbor_finder(full_ngh_finder)
+            memory_backup = discriminator.memory.backup_memory() if args.use_memory else None
+
+            test_ap, test_auc, scores, labels, edges_out, ts_out = evaluate_test_split(
+                discriminator, test_data, test_V, test_R, args.n_degree, args.bs)
+
+            if args.use_memory:
+                discriminator.memory.restore_memory(memory_backup)
+            discriminator.set_neighbor_finder(train_ngh_finder)
 
             logger.info(f'Test AUC: {test_auc:.4f}, Test AP: {test_ap:.4f}')
 
-            # Track metrics with spot()
-            writer.spot("training",
-                        epoch=epoch + 1,
-                        loss=avg_loss,
-                        test_auc=test_auc,
-                        test_ap=test_ap)
+            metrics = {'epoch': epoch + 1, 'd_loss': avg_d_loss,
+                       'test_auc': test_auc, 'test_ap': test_ap}
+            if args.mode == 0:
+                metrics['g_loss'] = float(np.mean(g_losses)) if g_losses else float('nan')
+            writer.spot("training", **metrics)
 
-            # Early stopping
-            if early_stopper.early_stop_check(test_auc):
+            # The published scores come from the checkpoint the early stopper
+            # selects on, so `graflag evaluate` and the summary below describe
+            # the same epoch. Reporting a maximum taken from a different epoch
+            # than the scores would make results.json and the summary disagree.
+            if scores is not None and test_ap > run_ap:
+                run_ap, run_auc = test_ap, test_auc
+                run_scores = (scores, labels, edges_out, ts_out)
+
+            if early_stopper.early_stop_check(test_ap):
                 logger.info(f'Early stopping at epoch {epoch + 1}')
                 break
 
-            if test_auc > best_auc:
-                best_auc = test_auc
-                best_ap = test_ap
+        all_results.append({'run': run_idx, 'auc': run_auc, 'ap': run_ap})
+        logger.info(f'Run {run_idx + 1} - AUC: {run_auc:.4f}, AP: {run_ap:.4f}')
 
-        run_result = {
-            'run': run_idx,
-            'auc': test_auc,
-            'ap': test_ap
-        }
-        all_results.append(run_result)
-        logger.info(f'Run {run_idx + 1} - AUC: {test_auc:.4f}, AP: {test_ap:.4f}')
+        if run_scores is not None and run_ap >= best_ap:
+            best_ap, best_auc = run_ap, run_auc
+            best_scores, best_labels, best_edges, best_timestamps = run_scores
 
-    # Collect edge-level scores from test data for results
-    # Generate predictions for all test edges
-    discriminator.eval()
-    discriminator.memory.__init_memory__()
+    if best_scores is None:
+        raise RuntimeError(
+            "no epoch produced test scores -- the evaluation split yielded no "
+            "batch with both classes present, so there is nothing to publish")
 
-    all_scores = []
-    all_labels = []
-    all_edges = []
-    all_timestamps = []
-
-    test_sources = test_data.sources
-    test_destinations = test_data.destinations
-    test_timestamps = test_data.timestamps
-    test_edge_idxs = test_data.edge_idxs
-    test_labels = test_data.labels
-
-    # Process in batches
-    num_test = len(test_sources)
-    for i in range(0, num_test, args.bs):
-        end_idx = min(i + args.bs, num_test)
-        src_batch = test_sources[i:end_idx]
-        dst_batch = test_destinations[i:end_idx]
-        ts_batch = test_timestamps[i:end_idx]
-        edge_idx_batch = test_edge_idxs[i:end_idx]
-
-        with torch.no_grad():
-            prob = discriminator.compute_edge_probabilities(
-                src_batch, dst_batch, ts_batch, edge_idx_batch, args.n_degree
-            )
-            # Anomaly score = 1 - probability (higher prob = normal, lower = anomaly)
-            scores = (1 - prob.cpu().numpy()).tolist()
-
-        all_scores.extend(scores)
-        all_labels.extend(test_labels[i:end_idx].tolist())
-        all_edges.extend([[int(s), int(d)] for s, d in zip(src_batch, dst_batch)])
-        all_timestamps.extend(ts_batch.tolist())
-
-    # Final results
     final_results = {
         'method': 'GADY',
         'dataset': args.data,
@@ -453,102 +629,63 @@ def run_gady_training(args, logger, writer):
         'best_auc': best_auc,
         'best_ap': best_ap,
         'all_runs': all_results,
-        'mean_auc': np.mean([r['auc'] for r in all_results]),
-        'std_auc': np.std([r['auc'] for r in all_results]),
-        'mean_ap': np.mean([r['ap'] for r in all_results]),
-        'std_ap': np.std([r['ap'] for r in all_results]),
-        'scores': all_scores,
-        'labels': all_labels,
-        'edges': all_edges,
-        'timestamps': all_timestamps,
+        'mean_auc': float(np.mean([r['auc'] for r in all_results])),
+        'std_auc': float(np.std([r['auc'] for r in all_results])),
+        'mean_ap': float(np.mean([r['ap'] for r in all_results])),
+        'std_ap': float(np.std([r['ap'] for r in all_results])),
+        'scores': best_scores,
+        'labels': best_labels,
+        'edges': best_edges,
+        'timestamps': best_timestamps,
     }
 
     return final_results
 
 
 def main():
-    """Main entry point for GADY GraFlag integration."""
-    print('=' * 60)
-    print('GADY - Unsupervised Anomaly Detection on Dynamic Graphs')
-    print('GraFlag Integration')
-    print('=' * 60)
+    """Prepare the data GADY expects, train it, and publish the scores."""
+    info('=' * 60)
+    info('GADY - Unsupervised Anomaly Detection on Dynamic Graphs')
+    info('GraFlag Integration')
+    info('=' * 60)
 
-    # Parse args and merge with env config
-    args = parse_args()
-    env_config = get_graflag_env_config()
+    run = paths()
+    config = Config(**params(Config))
+    # The dataset name comes from the mount, not from a parameter: GraFlag
+    # sets DATA, and the folder `gady_uci` is what GADY knows as `uci`.
+    config.data = get_dataset_name_from_path(run.data)
+    warn_about_inert_params(config)
 
-    # Override args with env config
-    for key, value in env_config.items():
-        if hasattr(args, key):
-            setattr(args, key, value)
+    info(f'Dataset: {config.data} (from {run.data})')
+    info(f'Anomaly rate: {config.anomaly_per} | GPU: {config.gpu} | '
+         f'Epochs: {config.n_epoch} | Runs: {config.n_runs}')
+    if config.gpu < 0:
+        warning('[WARN] _GPU=-1 puts training on CPU, but upstream\'s '
+                'preproc_new.py is handed the same -1 and may not honour it')
 
-    # Get data path and dataset name
-    if 'data_path' in env_config:
-        data_path = env_config['data_path']
-        args.data = env_config['dataset']
-    else:
-        # Fallback: assume data is in current directory
-        data_path = Path(os.environ.get('DATA', '.'))
-        args.data = get_dataset_name_from_path(data_path) if data_path.exists() else args.data
-
-    print(f'\nConfiguration:')
-    print(f'  Dataset: {args.data}')
-    print(f'  Data Path: {data_path}')
-    print(f'  Anomaly Rate: {args.anomaly_per}')
-    print(f'  GPU: {args.gpu}')
-    print(f'  Epochs: {args.n_epoch}')
-    print(f'  Runs: {args.n_runs}')
-
-    # Setup logging
-    logger = setup_logging(args.data, args.anomaly_per)
-
-    # Start resource tracking
-    start_time = time.time()
-    process = psutil.Process()
-    peak_memory_mb = 0.0
-
-    # Initialize ResultWriter
+    logger = setup_logging(config.data, config.anomaly_per)
     writer = ResultWriter()
 
     try:
-        # Step 1: Setup data directories
-        print('\n--- Step 1: Setting up data directories ---')
-        setup_data_directories(data_path, args.data)
-
-        # Track memory
-        peak_memory_mb = max(peak_memory_mb, process.memory_info().rss / (1024 * 1024))
-
-        # Step 2: Prepare data with anomaly injection
-        print('\n--- Step 2: Preparing data with anomaly injection ---')
-        run_prepare_data(args.data, args.anomaly_per, args.train_per, args.bs)
-
-        # Track memory
-        peak_memory_mb = max(peak_memory_mb, process.memory_info().rss / (1024 * 1024))
-
-        # Step 3: Compute positional features
-        print('\n--- Step 3: Computing positional features ---')
-        run_preproc_positional_features(
-            args.data, args.anomaly_per, args.r_dim, args.bs, args.gpu
+        # One call for the three steps main() used to inline: symlink the raw
+        # file, run prepare_data.py, run preproc_new.py.
+        ensure_data_ready(
+            run.data, config.data,
+            anomaly_per=config.anomaly_per,
+            train_per=config.train_per,
+            batch_size=config.bs,
+            r_dim=config.r_dim,
+            gpu=config.gpu,
         )
 
-        # Track memory
-        peak_memory_mb = max(peak_memory_mb, process.memory_info().rss / (1024 * 1024))
+        results = run_gady_training(config, logger, writer)
 
-        # Step 4: Run GADY training
-        print('\n--- Step 4: Running GADY training ---')
-        results = run_gady_training(args, logger, writer)
-
-        # Calculate resource metrics
-        end_time = time.time()
-        exec_time_ms = (end_time - start_time) * 1000
-        peak_memory_mb = max(peak_memory_mb, process.memory_info().rss / (1024 * 1024))
-
-        # Track GPU memory if available
-        peak_gpu_mb = None
-        if torch.cuda.is_available():
-            peak_gpu_mb = torch.cuda.max_memory_allocated() / (1024 * 1024)
-
-        # Save scores using ResultWriter
+        # The score is the discriminator's output unmodified: DiscFGANLoss
+        # trains a real edge toward 0 and a generated one toward 1, so it
+        # already rises with anomalousness -- the same direction as the
+        # injected-anomaly labels and as upstream's own AUC. This used to
+        # publish `1 - P(edge)`, which inverted every score. Do not invert
+        # either side.
         writer.save_scores(
             result_type="EDGE_STREAM_ANOMALY_SCORES",
             scores=results['scores'],
@@ -557,47 +694,27 @@ def main():
             ground_truth=results['labels'],
         )
 
-        # Build method parameters dict
-        method_params = {
-            'seed': args.seed,
-            'batch_size': args.bs,
-            'n_degree': args.n_degree,
-            'n_epoch': args.n_epoch,
-            'n_layer': args.n_layer,
-            'lr': args.lr,
-            'patience': args.patience,
-            'n_runs': args.n_runs,
-            'node_dim': args.node_dim,
-            'time_dim': args.time_dim,
-            'memory_dim': args.memory_dim,
-            'message_dim': args.message_dim,
-            'use_memory': args.use_memory,
-            'mode': args.mode,
-            'alpha': args.alpha,
-            'betaa': args.betaa,
-            'gamma': args.gamma,
-            'anomaly_per': args.anomaly_per,
-            'train_per': args.train_per,
-        }
-
-        # Add metadata
+        # asdict() instead of the hand-written dict this replaced: that one
+        # listed 19 of the parameters, so the rest of what a run used went
+        # unrecorded and could not drift back into agreement on its own.
         writer.add_metadata(
-            exp_name=os.path.basename(os.environ.get("EXP", "experiment")),
+            exp_name=run.experiment,
             method_name="gady",
-            dataset=args.data,
-            method_parameters=method_params,
+            dataset=config.data,
+            method_parameters={k: v for k, v in asdict(config).items()
+                               if k != 'data'},
             threshold=None,
             summary={
                 "description": "GADY: Unsupervised Anomaly Detection on Dynamic Graphs (WSDM 2024)",
                 "task": "edge_stream_anomaly_detection",
                 "dataset_info": {
-                    "name": args.data,
-                    "anomaly_rate": args.anomaly_per,
+                    "name": config.data,
+                    "anomaly_rate": config.anomaly_per,
                     "total_test_edges": len(results['scores']),
                     "n_anomalies": sum(results['labels']),
                 },
                 "training_info": {
-                    "n_runs": args.n_runs,
+                    "n_runs": config.n_runs,
                     "best_auc": float(results['best_auc']),
                     "best_ap": float(results['best_ap']),
                     "mean_auc": float(results['mean_auc']),
@@ -608,29 +725,19 @@ def main():
             },
         )
 
-        # Add resource metrics
-        writer.add_resource_metrics(
-            exec_time_ms=exec_time_ms,
-            peak_memory_mb=peak_memory_mb,
-            peak_gpu_mb=peak_gpu_mb,
-        )
-
-        # Finalize results
+        # No add_resource_metrics and no psutil sampling: graflag_runner
+        # measures exec time, peak memory and peak GPU from outside the
+        # method, and _merge_runtime_metadata makes its numbers the ones that
+        # land in results.json.
         results_file = writer.finalize()
 
-        print(f'\n[INFO] Resource Usage:')
-        print(f'   [INFO] Execution time: {exec_time_ms/1000:.2f}s')
-        print(f'   [INFO] Peak memory: {peak_memory_mb:.2f}MB')
-        if peak_gpu_mb is not None:
-            print(f'   [INFO] Peak GPU memory: {peak_gpu_mb:.2f}MB')
+        info('[OK] GADY completed')
+        info(f'   Best AUC: {results["best_auc"]:.4f}')
+        info(f'   Best AP: {results["best_ap"]:.4f}')
+        info(f'   Results saved to: {results_file}')
 
-        print(f'\n[OK] GADY completed successfully!')
-        print(f'   Best AUC: {results["best_auc"]:.4f}')
-        print(f'   Best AP: {results["best_ap"]:.4f}')
-        print(f'   Results saved to: {results_file}')
-
-    except Exception as e:
-        logger.error(f'Error during GADY training: {e}')
+    except Exception as exc:
+        logger.error(f'Error during GADY training: {exc}')
         import traceback
         traceback.print_exc()
         sys.exit(1)

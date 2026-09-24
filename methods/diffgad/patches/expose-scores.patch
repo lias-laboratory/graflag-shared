@@ -1,0 +1,44 @@
+Keep the score vector the sampling loop already computes.
+
+sample() walks 500 diffusion timesteps, computes a per-node score at each one,
+measures an AUC against the labels and keeps only np.max over the 500. GraFlag
+publishes the scores a method computed rather than recomputing them, so the
+vector behind the reported number has to survive the loop.
+
+Stored on self rather than widened into the return tuple, so the call site in
+forward() is untouched.
+
+Nothing about what the method computes changes. The selection rule is still
+upstream's -- argmax over the AUCs it printed, measured against the test
+labels -- and README.md says plainly what that means for the published number.
+
+Generated with `git diff` against the tree SOURCE_REF pins, not written by hand.
+
+diff --git a/DiffGAD.py b/DiffGAD.py
+index b0568e2..e012c10 100644
+--- a/DiffGAD.py
++++ b/DiffGAD.py
+@@ -306,6 +306,7 @@ class DiffGAD(BaseTransform):
+         ###############  forward process  ####################
+         noise = torch.randn_like(Z_0)
+         auc_pygod, ap, rec, auprc = [], [], [], []
++        scores_per_t = []
+ 
+         for i in range(0, self.timesteps):
+             t = torch.tensor([i] * Z_0.size(0)).long().cuda()
+@@ -328,6 +329,7 @@ class DiffGAD(BaseTransform):
+ 
+             p, r, _ = precision_recall_curve(y.numpy(), score.detach().cpu().numpy())
+             auprc.append(auc(r, p))
++            scores_per_t.append(score.detach().cpu().numpy())
+ 
+             print("timestep:{},pyg_AUC: {:.4f}, pyg_AP: {:.4f}, pyg_Recall: {:.4f}, AUPRC: {:.4f}".format(i, pyg_auc, pyg_ap, pyg_rec, auc(r, p)))                      
+ 
+@@ -335,5 +337,7 @@ class DiffGAD(BaseTransform):
+         this_ap = np.max(ap)
+         this_rec = np.max(rec)
+         this_auprc = np.max(auprc)
++        self.selected_timestep = int(np.argmax(auc_pygod))
++        self.selected_scores = scores_per_t[self.selected_timestep]
+         return this_auc, this_ap, this_rec, this_auprc
+ 

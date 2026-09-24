@@ -9,6 +9,7 @@ from typing import List, Dict, Any, Optional, Union, Iterator
 from collections import OrderedDict
 import logging
 
+from .serialization import json_default, sanitize
 from .streaming import StreamableArray, stream_write_json
 
 logger = logging.getLogger(__name__)
@@ -44,14 +45,26 @@ class ResultWriter:
         "GRAPH_STREAM_ANOMALY_SCORES",
     }
     
-    def __init__(self):
+    def __init__(self, output_dir=None):
         """
         Initialize result writer.
-        
+
         Args:
-            output_dir: Directory to save results.json
+            output_dir: Directory to save results.json. Defaults to $EXP.
+
+        The signature used to take no arguments while the docstring
+        documented output_dir, so code following the docstring raised
+        TypeError; and an unset $EXP produced Path(None) -> TypeError:
+        argument should be a str or an os.PathLike, not NoneType.
         """
-        self.output_dir = Path(os.environ.get("EXP"))
+        target = output_dir if output_dir is not None else os.environ.get("EXP")
+        if not target:
+            raise ValueError(
+                "ResultWriter needs an output directory: set the EXP "
+                "environment variable (GraFlag does this for you) or pass "
+                "output_dir explicitly."
+            )
+        self.output_dir = Path(target)
         self.output_dir.mkdir(parents=True, exist_ok=True)
         
         self.results = {
@@ -148,26 +161,62 @@ class ResultWriter:
             Path to results.json
         """
         output_file = self.output_dir / "results.json"
-        
+
         # Validation
         if self.results["result_type"] is None:
             raise ValueError("No scores saved. Call save_scores() first.")
-        
-        # Check if we need streaming
-        has_streamable = isinstance(self.results.get("scores"), StreamableArray)
-        
-        if has_streamable:
-            logger.info("[INFO] Writing results with streaming (large data)...")
-            stream_write_json(self.results, output_file)
-        else:
-            # Regular JSON dump for small data
-            logger.info("[INFO] Writing results (standard)...")
-            with open(output_file, 'w') as f:
-                json.dump(self.results, f, indent=2)
-        
+
+        # Detect streamables anywhere, not just under "scores": the writer
+        # already handles every streamable key, and a StreamableArray passed as
+        # ground_truth or edges used to reach json.dump and raise part-way
+        # through an already-truncated file.
+        has_streamable = any(
+            isinstance(v, StreamableArray) for v in self.results.values()
+        )
+
+        # Write to a sibling temp file and rename. open(..., 'w') truncates
+        # immediately and json.dump streams, so a value it cannot serialize
+        # (a numpy scalar or array, which save_scores stores verbatim) used to
+        # leave a truncated results.json on disk. That file still counted as a
+        # result, so a failed run was reported as completed and the evaluator
+        # then crashed on it. os.replace is atomic within a directory.
+        tmp_file = output_file.with_name(output_file.name + ".tmp")
+        try:
+            if has_streamable:
+                logger.info("[INFO] Writing results with streaming (large data)...")
+                stream_write_json(self.results, tmp_file)
+            else:
+                logger.info("[INFO] Writing results (standard)...")
+                payload, replaced = sanitize(self.results)
+                if replaced:
+                    logger.warning(
+                        f"[WARN] Replaced {replaced} non-finite value(s) with "
+                        f"null; NaN/Infinity are not valid JSON"
+                    )
+                with open(tmp_file, 'w') as f:
+                    json.dump(payload, f, indent=2, default=json_default)
+            os.replace(tmp_file, output_file)
+        except BaseException:
+            tmp_file.unlink(missing_ok=True)
+            raise
+
         logger.info(f"[OK] Results written to: {output_file}")
         return output_file
     
+    @staticmethod
+    def _read_spot_header(csv_file: Path):
+        """Column names of an existing spot CSV (minus 'timestamp'), or None."""
+        if not csv_file.is_file():
+            return None
+        try:
+            with open(csv_file, newline='') as f:
+                header = next(csv.reader(f), None)
+        except OSError:
+            return None
+        if not header:
+            return None
+        return [c for c in header if c != 'timestamp']
+
     def spot(self, metric_key: str, **metrics):
         """
         Track real-time metrics to a CSV file with schema validation.
@@ -209,17 +258,34 @@ class ResultWriter:
         
         # Check if this is the first call for this metric_key
         if metric_key not in self._spot_schemas:
-            # First call - establish schema
-            self._spot_schemas[metric_key] = current_schema
-            
-            # Create CSV file with header
-            with open(csv_file, 'w', newline='') as f:
-                writer = csv.writer(f)
-                header = ['timestamp'] + list(current_schema.keys())
-                writer.writerow(header)
-            
-            logger.debug(f"[INFO] Created spot metric file: {csv_file}")
-            logger.debug(f"   Schema: {list(current_schema.keys())}")
+            # The schema lock is per-instance, so "first call for this object"
+            # is not the same as "file does not exist". Opening with 'w'
+            # unconditionally destroyed every row an earlier writer had
+            # appended -- a second ResultWriter in the same method, or a
+            # re-run into an existing $EXP, silently lost the history.
+            existing_header = self._read_spot_header(csv_file)
+
+            if existing_header is None:
+                self._spot_schemas[metric_key] = current_schema
+                with open(csv_file, 'w', newline='') as f:
+                    writer = csv.writer(f)
+                    writer.writerow(['timestamp'] + list(current_schema.keys()))
+                logger.debug(f"[INFO] Created spot metric file: {csv_file}")
+                logger.debug(f"   Schema: {list(current_schema.keys())}")
+            elif set(existing_header) == set(current_schema.keys()):
+                # Same columns: adopt the file's order and append to it.
+                self._spot_schemas[metric_key] = OrderedDict(
+                    (k, current_schema[k]) for k in existing_header
+                )
+                logger.debug(f"[INFO] Appending to existing spot file: {csv_file}")
+            else:
+                raise ValueError(
+                    f"Schema mismatch for metric '{metric_key}'.\n"
+                    f"Existing file columns: {existing_header}\n"
+                    f"Provided keys: {list(current_schema.keys())}\n"
+                    f"Refusing to overwrite {csv_file}; remove it or use a "
+                    f"different metric_key."
+                )
         else:
             # Validate schema matches
             expected_schema = self._spot_schemas[metric_key]

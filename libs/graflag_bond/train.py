@@ -5,13 +5,19 @@ Generic PyGOD Bond Training Script
 This script trains any PyGOD detector based on METHOD_NAME environment variable.
 """
 
+import fnmatch
 import os
 import sys
 import time
 from pathlib import Path
 
-import psutil
-import torch
+# psutil and torch are gone with the sampling block they fed. The
+# runner measures exec time, peak memory and peak GPU from outside the
+# method and its numbers win (runner._merge_runtime_metadata), so the four
+# point samples taken here were overwritten on every run -- and understated,
+# because they saw only this process, not the tree. `time` stays: it measures
+# the fit itself, which goes to training.csv as a spot metric, not to the
+# metadata fields the runner owns.
 
 # Import graflag_runner utilities
 from graflag_runner import ResultWriter
@@ -28,12 +34,19 @@ from graflag_bond.utils import get_all_parameters
 def load_graph_data(data_dir):
     """Load graph data from PyGOD datasets."""
     
-    supported_data = os.environ.get("SUPPORTED_DATA", "").split(", ")
     dataset_name = data_dir.name
-    
-    if supported_data and dataset_name not in supported_data:
-        warning(f"Dataset '{dataset_name}' may not be officially tested. Supported: {supported_data}")
-    
+
+    # The .env key is SUPPORTED_DATASETS and its values are fnmatch patterns
+    # ("bond_*"), the same dialect tests/test_methods.py validates. Reading
+    # SUPPORTED_DATA and comparing for equality made this warn on every run:
+    # "".split(", ") is [""], which is truthy, and "bond_gen_100" is never
+    # literally equal to "bond_*".
+    patterns = [p.strip() for p in
+                os.environ.get("SUPPORTED_DATASETS", "").split(",") if p.strip()]
+    if patterns and not any(fnmatch.fnmatchcase(dataset_name, p) for p in patterns):
+        warning(f"Dataset '{dataset_name}' may not be officially tested. "
+                f"Supported: {', '.join(patterns)}")
+
     info(f"Loading dataset: {dataset_name} from {data_dir}")
 
     # Load data using PyGOD's load_data
@@ -86,9 +99,13 @@ def train_detector(method_name, data, exp_dir, writer):
     return model
 
 
-def save_results(model, data, exp_dir, writer, method_name, dataset_name,
-                 exec_time_ms, peak_memory_mb, peak_gpu_mb=None):
-    """Save results with metadata and resource metrics."""
+def save_results(model, data, exp_dir, writer, method_name, dataset_name):
+    """Save results with metadata.
+
+    Resource metrics are not written here. graflag_runner records exec time,
+    peak memory and peak GPU for the whole process tree and overwrites
+    whatever the method put in those fields.
+    """
     info("=" * 60)
     info("Generating Results")
     info("=" * 60)
@@ -141,13 +158,6 @@ def save_results(model, data, exp_dir, writer, method_name, dataset_name,
         },
     )
 
-    # Add resource metrics
-    writer.add_resource_metrics(
-        exec_time_ms=exec_time_ms,
-        peak_memory_mb=peak_memory_mb,
-        peak_gpu_mb=peak_gpu_mb,
-    )
-
     # Finalize results
     writer.finalize()
 
@@ -174,11 +184,6 @@ def main():
     # Create experiment directory
     exp_dir.mkdir(parents=True, exist_ok=True)
 
-    # Start resource tracking
-    start_time = time.time()
-    process = psutil.Process()
-    peak_memory_mb = 0.0
-
     # Initialize ResultWriter
     writer = ResultWriter()
 
@@ -186,36 +191,11 @@ def main():
         # Load data
         data = load_graph_data(data_dir)
 
-        # Track memory
-        peak_memory_mb = max(peak_memory_mb, process.memory_info().rss / (1024 * 1024))
-
         # Train model
         model = train_detector(method_name, data, exp_dir, writer)
 
-        # Track memory after training
-        peak_memory_mb = max(peak_memory_mb, process.memory_info().rss / (1024 * 1024))
-
-        # Calculate resource metrics
-        end_time = time.time()
-        exec_time_ms = (end_time - start_time) * 1000
-
-        # Track GPU memory if available
-        peak_gpu_mb = None
-        if torch.cuda.is_available():
-            gpu_bytes = torch.cuda.max_memory_allocated()
-            if gpu_bytes > 0:
-                peak_gpu_mb = gpu_bytes / (1024 * 1024)
-
-        # Save results with metadata and resource metrics
-        save_results(model, data, exp_dir, writer, method_name, data_dir.name,
-                     exec_time_ms, peak_memory_mb, peak_gpu_mb)
-
-        info("")
-        info(f"[INFO] Resource Usage:")
-        info(f"   [INFO] Execution time: {exec_time_ms/1000:.2f}s")
-        info(f"   [INFO] Peak memory: {peak_memory_mb:.2f}MB")
-        if peak_gpu_mb is not None:
-            info(f"   [INFO] Peak GPU memory: {peak_gpu_mb:.2f}MB")
+        # Save results with metadata
+        save_results(model, data, exp_dir, writer, method_name, data_dir.name)
 
         info("")
         info("=" * 60)

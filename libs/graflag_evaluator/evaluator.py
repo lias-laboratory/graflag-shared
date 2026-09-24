@@ -1,6 +1,7 @@
 """Main evaluator orchestrator."""
 
 import json
+import os
 import numpy as np
 from pathlib import Path
 from typing import Dict, Any, Optional
@@ -10,6 +11,16 @@ from .metrics import MetricCalculator
 from .plots import PlotGenerator
 
 logger = logging.getLogger(__name__)
+
+
+def _is_spot_csv(path: Path) -> bool:
+    """True if `path` looks like a ResultWriter.spot() file."""
+    try:
+        with open(path, newline="") as fh:
+            header = fh.readline().strip()
+    except OSError:
+        return False
+    return header.split(",")[:1] == ["timestamp"]
 
 
 class Evaluator:
@@ -49,10 +60,25 @@ class Evaluator:
         if not self.result_type:
             raise ValueError("result_type not found in results.json")
 
-        # Load custom metric plugins (experiment-local and global)
-        global_plugins = Path(__file__).parent / "plugins"
-        experiment_plugins = self.experiment_path / "custom_metrics"
-        MetricCalculator.load_plugins(global_plugins, experiment_plugins)
+        # Load custom metric plugins (experiment-local and global).
+        #
+        # Path(__file__).parent resolves to the copy baked into the image, but
+        # GraFlag.register_metric writes global plugins onto the shared volume,
+        # and only /shared is mounted into the evaluation container -- so a
+        # globally registered metric was written, logged as saved, and never
+        # executed. Look on the shared volume too, derived from the experiment
+        # path (/shared/experiments/<exp> -> /shared/libs/...) and overridable.
+        plugin_dirs = [Path(__file__).parent / "plugins"]
+
+        env_dir = os.environ.get("GRAFLAG_PLUGINS_DIR")
+        if env_dir:
+            plugin_dirs.append(Path(env_dir))
+        else:
+            shared_root = self.experiment_path.parent.parent
+            plugin_dirs.append(shared_root / "libs" / "graflag_evaluator" / "plugins")
+
+        plugin_dirs.append(self.experiment_path / "custom_metrics")
+        MetricCalculator.load_plugins(*plugin_dirs)
 
         logger.info(f"[INFO] Evaluating experiment: {self.experiment_path.name}")
         logger.info(f"   Result type: {self.result_type}")
@@ -89,9 +115,15 @@ class Evaluator:
     def _find_spot_files(self) -> Dict[str, Path]:
         """Find all spot CSV files in experiment directory."""
         spot_files = {}
-        for csv_file in self.experiment_path.glob("*.csv"):
-            metric_key = csv_file.stem  # filename without extension
-            spot_files[metric_key] = csv_file
+        for csv_file in sorted(self.experiment_path.glob("*.csv")):
+            # ResultWriter.spot() always writes 'timestamp' as the first
+            # column. Globbing every CSV picked up unrelated files a method
+            # happened to leave in $EXP and plotted their string columns as
+            # data series.
+            if not _is_spot_csv(csv_file):
+                logger.debug(f"   Skipping non-spot CSV: {csv_file.name}")
+                continue
+            spot_files[csv_file.stem] = csv_file
         
         if spot_files:
             logger.info(f"   Found {len(spot_files)} spot files: {list(spot_files.keys())}")
@@ -168,11 +200,27 @@ class Evaluator:
         Returns:
             Path to evaluation.json
         """
+        errors = []
+
         # Compute metrics
         computed_metrics = self.compute_metrics()
+        if not computed_metrics:
+            errors.append(
+                f"No metrics were produced for result_type "
+                f"{self.result_type!r}. It may be unregistered, or every "
+                f"metric function raised."
+            )
 
-        # Generate plots (returns list of spot curve plot filenames)
-        spot_plot_files = self.generate_plots()
+        # Generate plots. Plotting must not be able to discard metrics that
+        # were already computed: a single +inf score used to crash
+        # plot_roc_curve, and because evaluation.json was written afterwards
+        # the run ended with PNGs missing and no evaluation.json at all.
+        spot_plot_files = []
+        try:
+            spot_plot_files = self.generate_plots()
+        except Exception as exc:
+            logger.error(f"[ERROR] Plot generation failed: {exc}")
+            errors.append(f"Plot generation failed: {type(exc).__name__}: {exc}")
 
         # Build evaluation results
         evaluation = {
@@ -186,6 +234,8 @@ class Evaluator:
                 "score_distribution": "score_distribution.png",
             },
         }
+        if errors:
+            evaluation["errors"] = errors
 
         # Add spot curve plots if available
         spot_files = self._find_spot_files()
@@ -201,7 +251,13 @@ class Evaluator:
         with open(eval_json_path, 'w') as f:
             json.dump(evaluation, f, indent=2)
         
-        logger.info(f"[OK] Evaluation complete!")
+        if errors:
+            logger.error("[FAIL] Evaluation finished with %d problem(s):", len(errors))
+            for err in errors:
+                logger.error("   - %s", err)
+        else:
+            logger.info(f"[OK] Evaluation complete!")
+        self.errors = errors
         logger.info(f"   Results: {eval_json_path}")
         logger.info(f"   Plots: {self.eval_dir}")
         

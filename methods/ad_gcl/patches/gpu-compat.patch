@@ -1,0 +1,33 @@
+Move the degree vector to host memory before calling .numpy() on it.
+
+run.py sets `device = args.gpu_id` -- an int -- and does
+`dgl_graph = dgl_graph.to(device)`, which puts the graph on cuda:0 for any
+non-negative gpu_id. Line 76 then calls `.numpy()` on a tensor derived from
+it, which torch refuses for a CUDA tensor:
+
+    TypeError: can't convert cuda:0 device type tensor to numpy.
+    Use Tensor.cpu() to copy the tensor to host memory first.
+
+So AD-GCL as published cannot complete on a GPU, which is the only mode its
+README documents (`--gpu_id 0` in all six commands). Adding `.cpu()` is the
+fix torch's own error message prescribes.
+
+Nothing about the computation changes: `degree` is the same vector, read on
+the host instead of the device, and it is used only for the high/low-degree
+breakdown printed at the end.
+
+Generated with `git diff` against the tree SOURCE_REF pins.
+
+diff --git a/AD-GCL/run.py b/AD-GCL/run.py
+index 30eabee..33cbe06 100644
+--- a/AD-GCL/run.py
++++ b/AD-GCL/run.py
+@@ -73,7 +73,7 @@ ft_size = features.shape[1]
+ # nb_classes = labels.shape[1]
+ 
+ adj_tensor = dgl_graph.adjacency_matrix().to_dense().clone().detach().requires_grad_(True)
+-degree = adj_tensor.sum(0).detach().numpy().squeeze()
++degree = adj_tensor.sum(0).detach().cpu().numpy().squeeze()
+ 
+ adj_tensor = adj_tensor + torch.eye(adj_tensor.size(0))
+ adj_tensor = adj_tensor.to(device)

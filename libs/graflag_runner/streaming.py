@@ -1,6 +1,8 @@
 """Streaming utilities for handling large result data."""
 
 import json
+
+from .serialization import json_default, to_jsonable
 from typing import Iterator, Any, Union, List
 from pathlib import Path
 import logging
@@ -35,10 +37,25 @@ class StreamableArray:
             generator: Iterator that yields array elements (rows, values, etc.)
         """
         self.generator = generator
+        self._consumed = False
     
     def __iter__(self):
-        """Make this object iterable."""
-        return self.generator
+        """Make this object iterable.
+
+        Returns ``iter(self.generator)``, not the generator itself: the class
+        documents that it accepts "a generator or iterator", but returning a
+        list unchanged violated the iterator protocol
+        (``TypeError: iter() returned non-iterator``) -- and it raised at
+        *write* time, after the output file had already been truncated.
+        """
+        if self._consumed:
+            raise RuntimeError(
+                "StreamableArray has already been consumed. It wraps a "
+                "single-pass iterator, so it cannot be written or iterated "
+                "twice; rebuild it from the source data."
+            )
+        self._consumed = True
+        return iter(self.generator)
 
 
 def stream_write_json(data: dict, output_path: Path, streamable_keys: List[str] = None):
@@ -127,7 +144,7 @@ def _stream_write_array(f, streamable: StreamableArray, indent: int = 0):
         
         # Write element with indentation
         f.write(f'{indent_str}  ')
-        json.dump(element, f)
+        json.dump(to_jsonable(element), f, default=json_default)
         
         first = False
         row_count += 1

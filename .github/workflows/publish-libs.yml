@@ -1,5 +1,12 @@
 name: Publish Libraries to PyPI
 
+# A published GitHub release runs every test suite, then builds the four
+# libraries, validates their metadata and publishes them through PyPI Trusted
+# Publishing (OIDC), so no token is stored in the repository. Each library has
+# its own version: a version PyPI already has is skipped rather than failed,
+# so bump a library's setup.py to release it. workflow_dispatch publishes one
+# library, or all. PyPI must list this repository, this workflow file and the
+# `pypi` environment as a trusted publisher of each of the four projects.
 on:
   release:
     types: [published]
@@ -18,57 +25,80 @@ on:
           - graflag_data
 
 jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: graflag-shared
+      # graflag_data's integration test loads graflag/graflag/core.py from a
+      # checkout beside this one.
+      - uses: actions/checkout@v4
+        with:
+          repository: lias-laboratory/graflag
+          path: graflag
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install
+        run: |
+          pip install torch --index-url https://download.pytorch.org/whl/cpu
+          # PyGOD at the commit the bond_base image pins
+          pip install torch-geometric "git+https://github.com/pygod-team/pygod.git@c84dccafa9bf587cd03cfd3e89b9be7a8f3337e8"
+          pip install ./graflag ./graflag-shared/libs/graflag_runner \
+                      ./graflag-shared/libs/graflag_evaluator ./graflag-shared/libs/graflag_data
+      - name: Library tests
+        working-directory: graflag-shared/libs
+        run: |
+          for lib in graflag_data graflag_runner graflag_evaluator graflag_bond; do
+            PYTHONPATH=. python -m unittest discover -s "$lib/tests"
+          done
+      - name: Method contract tests
+        working-directory: graflag-shared
+        run: python -m unittest discover -s tests
+
   publish:
+    needs: test
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        library:
-          - name: graflag_runner
-            path: libs/graflag_runner
-          - name: graflag_evaluator
-            path: libs/graflag_evaluator
-          - name: graflag_bond
-            path: libs/graflag_bond
-          - name: graflag_data
-            path: libs/graflag_data
+        library: [graflag_runner, graflag_evaluator, graflag_bond, graflag_data]
     environment:
       name: pypi
-      url: https://pypi.org/p/${{ matrix.library.name }}
+      url: https://pypi.org/p/${{ matrix.library }}
     permissions:
-      id-token: write  # OIDC token for PyPI Trusted Publisher
+      id-token: write  # OIDC token for PyPI Trusted Publishing
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
       - name: Check if library should be published
         id: check
         run: |
-          if [ "${{ github.event_name }}" = "release" ]; then
-            echo "should_publish=true" >> $GITHUB_OUTPUT
-          elif [ "${{ inputs.library }}" = "all" ] || [ "${{ inputs.library }}" = "${{ matrix.library.name }}" ]; then
-            echo "should_publish=true" >> $GITHUB_OUTPUT
+          if [ "${{ github.event_name }}" = "release" ] || [ "${{ inputs.library }}" = "all" ] \
+             || [ "${{ inputs.library }}" = "${{ matrix.library }}" ]; then
+            echo "should_publish=true" >> "$GITHUB_OUTPUT"
           else
-            echo "should_publish=false" >> $GITHUB_OUTPUT
+            echo "should_publish=false" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Set up Python
+      - uses: actions/checkout@v4
         if: steps.check.outputs.should_publish == 'true'
-        uses: actions/setup-python@v5
+
+      - uses: actions/setup-python@v5
+        if: steps.check.outputs.should_publish == 'true'
         with:
           python-version: '3.12'
 
-      - name: Install build tools
+      - name: Build and check the distributions
         if: steps.check.outputs.should_publish == 'true'
-        run: pip install build
-
-      - name: Build package
-        if: steps.check.outputs.should_publish == 'true'
-        working-directory: ${{ matrix.library.path }}
-        run: python -m build
+        working-directory: libs/${{ matrix.library }}
+        run: |
+          pip install build twine
+          python -m build
+          twine check dist/*
 
       - name: Publish to PyPI
         if: steps.check.outputs.should_publish == 'true'
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
-          packages-dir: ${{ matrix.library.path }}/dist
+          packages-dir: libs/${{ matrix.library }}/dist
+          skip-existing: true

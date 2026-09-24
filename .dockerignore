@@ -1,0 +1,31 @@
+# The whole shared tree is the Docker build context, because method
+# Dockerfiles reference `methods/<name>/...` relative to its root. Docker tars
+# the entire context before running the first instruction, so without this file
+# every `graflag run --build` moved several GB to deliver a few KB.
+#
+# Measured on a populated checkout: .git 3.0 GB + datasets 3.0 GB, against
+# 12-36 KB actually needed by a method build.
+#
+# Datasets are bind-mounted into the container at run time, never built in, and
+# experiments are outputs. Neither belongs in a build context.
+
+.git/
+.github/
+datasets/
+experiments/
+
+__pycache__/
+**/__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+build/
+dist/
+
+.venv/
+venv/
+.mypy_cache/
+.pytest_cache/
+
+# Keep methods/ and libs/: Dockerfiles COPY from methods/<name>/, and the
+# evaluator image is built from libs/graflag_evaluator/.

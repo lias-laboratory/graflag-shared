@@ -4,9 +4,14 @@ from setuptools import setup
 
 setup(
     name="graflag_data",
-    version="1.0.1",
+    version="1.1.0",
     description="Dataset metadata + downloader for GraFlag benchmarks.",
     author="GraFlag Team",
+    url="https://github.com/lias-laboratory/graflag-shared",
+    project_urls={
+        "Documentation": "https://lias-laboratory.github.io/graflag/",
+        "Source": "https://github.com/lias-laboratory/graflag-shared/tree/main/libs/graflag_data",
+    },
     packages=["graflag_data"],
     package_dir={"graflag_data": "."},
     python_requires=">=3.7",

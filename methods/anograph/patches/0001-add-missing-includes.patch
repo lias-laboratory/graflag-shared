@@ -1,0 +1,39 @@
+AnoGraph's sources use std::max/min and std::numeric_limits without including
+the headers that declare them. It compiled for its authors on an older libstdc++
+that pulled <algorithm> in transitively; on the ubuntu image it does not.
+
+This was three `sed -i '1i ...'` lines in the Dockerfile. `git apply` is not
+cosmetic here: sed inserts blindly, so after a SOURCE_REF bump that adds the
+include upstream it would silently produce a duplicate, while git apply refuses
+a patch whose context no longer matches and the build stops with a diagnostic.
+
+Applies to SOURCE_REF=6e8bcd85a39ac49de01ea58d4d15690add8f69c8.
+
+diff --git a/code/anograph.cpp b/code/anograph.cpp
+index 89b8593..644c0f1 100644
+--- a/code/anograph.cpp
++++ b/code/anograph.cpp
+@@ -1,3 +1,4 @@
++#include <algorithm>
+ #include <iostream>
+ #include <cmath>
+ 
+diff --git a/code/anographk.cpp b/code/anographk.cpp
+index 22ff76a..d0c1a06 100644
+--- a/code/anographk.cpp
++++ b/code/anographk.cpp
+@@ -1,3 +1,4 @@
++#include <algorithm>
+ #include <iostream>
+ #include <cmath>
+ #include <queue>
+diff --git a/code/hcms.cpp b/code/hcms.cpp
+index 57a45b7..6851c27 100644
+--- a/code/hcms.cpp
++++ b/code/hcms.cpp
+@@ -1,3 +1,5 @@
++#include <algorithm>
++#include <limits>
+ #include <iostream>
+ 
+ #include "hcms.hpp"

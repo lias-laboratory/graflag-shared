@@ -436,3 +436,54 @@ class ConvertToStrgnnIntegrationTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
+
+
+class ResidentFileVerification(unittest.TestCase):
+    """sha256 pins the download; nothing re-checked the file afterwards.
+
+    A dataset corrupted or replaced after it landed passed missing_files()
+    (which asks only whether the path exists) and is_ready(), so the pin that
+    exists to detect substitution could not detect substitution.
+    """
+
+    def _dataset(self, content=b"hello graflag"):
+        import hashlib, json, tempfile
+        from pathlib import Path
+        d = Path(tempfile.mkdtemp()) / "ds"
+        d.mkdir()
+        (d / "data.bin").write_bytes(content)
+        digest = hashlib.sha256(content).hexdigest()
+        (d / "metadata.json").write_text(json.dumps({
+            "name": "ds",
+            "files": [{"name": "data.bin", "url": "https://example.invalid/x",
+                       "sha256": digest}],
+        }))
+        return d
+
+    def test_intact_file_reports_no_corruption(self):
+        from graflag_data.downloader import corrupt_files
+        self.assertEqual(corrupt_files(self._dataset()), [])
+
+    def test_corrupted_file_is_detected(self):
+        from graflag_data.downloader import corrupt_files
+        d = self._dataset()
+        (d / "data.bin").write_bytes(b"something else entirely")
+        bad = corrupt_files(d)
+        self.assertEqual([f.name for f in bad], ["data.bin"])
+
+    def test_is_ready_alone_does_not_catch_it(self):
+        """Documents why corrupt_files has to exist: readiness is existence."""
+        from graflag_data.downloader import is_ready, corrupt_files
+        d = self._dataset()
+        (d / "data.bin").write_bytes(b"substituted")
+        self.assertTrue(is_ready(d))            # still "ready"
+        self.assertTrue(corrupt_files(d))       # but not intact
+
+    def test_file_without_a_pinned_checksum_is_skipped_not_failed(self):
+        import json
+        from graflag_data.downloader import corrupt_files
+        d = self._dataset()
+        meta = json.loads((d / "metadata.json").read_text())
+        meta["files"][0].pop("sha256")
+        (d / "metadata.json").write_text(json.dumps(meta))
+        self.assertEqual(corrupt_files(d), [])

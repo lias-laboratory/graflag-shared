@@ -9,43 +9,45 @@ This implementation follows the NetWalk paper's approach:
 4. Distance-based anomaly scoring
 """
 
-import os
-import sys
-import time
-import argparse
 import random
-from pathlib import Path
 from collections import defaultdict
+from dataclasses import dataclass, asdict
 
 import numpy as np
-import pandas as pd
 import networkx as nx
 from sklearn.cluster import KMeans
 from sklearn.metrics import roc_auc_score
 from tqdm import tqdm
-import psutil
 
 import torch
 import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader, TensorDataset
 
-from graflag_runner import ResultWriter
+from graflag_runner import (
+    ResultWriter, device, info, load_dataset, params, paths, seed_all, warning,
+)
 
 
-def parse_args():
-    """Parse command line arguments."""
-    parser = argparse.ArgumentParser(description='DynWalk (NetWalk) Anomaly Detection')
-    parser.add_argument('--representation_size', type=int, default=32, help='Embedding dimension')
-    parser.add_argument('--walk_length', type=int, default=5, help='Random walk length')
-    parser.add_argument('--number_walks', type=int, default=10, help='Number of walks per node')
-    parser.add_argument('--init_percent', type=float, default=0.5, help='Initial graph percentage')
-    parser.add_argument('--learning_rate', type=float, default=0.001, help='Learning rate')
-    parser.add_argument('--epochs', type=int, default=50, help='Training epochs')
-    parser.add_argument('--hidden_size', type=int, default=64, help='Hidden layer size')
-    parser.add_argument('--n_clusters', type=int, default=5, help='Number of K-means clusters')
-    parser.add_argument('--seed', type=int, default=42, help='Random seed')
-    return parser.parse_args()
+@dataclass
+class Config:
+    """The parameters this method accepts, and their defaults.
+
+    This replaces an argparse parser that restated every key in .env. The
+    annotations are what params() coerces to, so _HIDDEN_SIZE=64 arrives as
+    an int, and a stale .env key is dropped here instead of making argparse
+    exit 2 on an unrecognized argument.
+    """
+
+    representation_size: int = 32   # embedding dimension
+    walk_length: int = 5            # random walk length
+    number_walks: int = 10          # walks per node
+    init_percent: float = 0.5       # fraction of the stream used to seed the graph
+    learning_rate: float = 0.001
+    epochs: int = 50
+    hidden_size: int = 64
+    n_clusters: int = 5             # K-means clusters over the embeddings
+    seed: int = 42
 
 
 class Autoencoder(nn.Module):
@@ -146,157 +148,26 @@ def create_node_features(graph, walks, num_nodes, feature_dim=128):
     return features
 
 
-def load_edge_data(data_path):
-    """Load edge data from various formats."""
-    data_dir = Path(data_path)
-
-    # Try edge list format (NetWalk native)
-    for edge_file in ['edges.txt', 'edge_list.txt', 'email-Eu-core-sub.txt']:
-        file_path = data_dir / edge_file
-        if file_path.exists():
-            print(f"Loading edge list from {file_path}")
-            edges = []
-            with open(file_path) as f:
-                for line in f:
-                    if line.startswith('%') or line.startswith('#'):
-                        continue
-                    parts = line.strip().split()
-                    if len(parts) >= 2:
-                        src, dst = int(parts[0]), int(parts[1])
-                        timestamp = int(parts[2]) if len(parts) > 2 else len(edges)
-                        edges.append([src, dst, timestamp])
-            data_df = pd.DataFrame(edges, columns=['src', 'dst', 'timestamp'])
-            labels = np.zeros(len(data_df))
-            return data_df, labels
-
-    # Try Data.csv + Label.csv format (AnoGraph style)
-    data_file = data_dir / 'Data.csv'
-    label_file = data_dir / 'Label.csv'
-    if data_file.exists() and label_file.exists():
-        print(f"Loading Data.csv/Label.csv format from {data_dir}")
-        data = pd.read_csv(data_file, header=None, names=['src', 'dst', 'timestamp'])
-        labels = pd.read_csv(label_file, header=None, names=['label'])
-        return data, labels['label'].values
-
-    # Try snapshot format
-    graph_file = None
-    for pattern in ['acc_*.npy', 'graph.npy']:
-        matches = list(data_dir.glob(pattern))
-        if matches:
-            for m in matches:
-                if 'sta_' not in m.name:
-                    graph_file = m
-                    break
-            if graph_file:
-                break
-
-    split_file = None
-    for pattern in ['split.npz', '*.npz']:
-        matches = list(data_dir.glob(pattern))
-        if matches:
-            split_file = matches[0]
-            break
-
-    if graph_file and split_file:
-        print(f"Loading snapshot format from {data_dir}")
-        return load_snapshot_format(graph_file, split_file)
-
-    raise ValueError(f"Could not find valid data format in {data_path}")
-
-
-def load_snapshot_format(graph_file, split_file):
-    """Load data from snapshot format."""
-    net = np.load(graph_file, allow_pickle=True)
-    split_data = np.load(split_file, allow_pickle=True)
-
-    if net.dtype == object:
-        num_snapshots = len(net)
-    else:
-        num_snapshots = net.shape[0]
-
-    edges = []
-    for t in range(num_snapshots):
-        if net.dtype == object:
-            adj = net[t].toarray() if hasattr(net[t], 'toarray') else net[t]
-        else:
-            adj = net[t]
-
-        rows, cols = np.where(adj > 0)
-        for i, j in zip(rows, cols):
-            if i < j:
-                edges.append([int(i), int(j), t])
-
-    data_df = pd.DataFrame(edges, columns=['src', 'dst', 'timestamp'])
-
-    test_neg = split_data['test_neg']
-    if test_neg.shape[0] == 2:
-        test_neg = test_neg.T
-
-    labels = np.zeros(len(data_df))
-
-    if 'test_neg_id' in split_data:
-        test_neg_id = split_data['test_neg_id']
-    else:
-        test_neg_id = np.full(len(test_neg), num_snapshots - 1)
-
-    for idx, (src, dst) in enumerate(test_neg):
-        t = test_neg_id[idx]
-        mask = (data_df['src'] == src) & (data_df['dst'] == dst) & (data_df['timestamp'] == t)
-        if mask.any():
-            labels[mask.values] = 1
-        else:
-            data_df = pd.concat([data_df, pd.DataFrame([[src, dst, t]],
-                                columns=['src', 'dst', 'timestamp'])], ignore_index=True)
-            labels = np.append(labels, 1)
-
-    return data_df, labels
-
-
 def compute_edge_embedding(node_embeddings, src, dst):
     """Compute edge embedding using Hadamard product."""
     return node_embeddings[src] * node_embeddings[dst]
 
 
 def main():
-    args = parse_args()
-    config = vars(args)
+    run = paths()
+    args = Config(**params(Config))
+    config = asdict(args)
 
-    data_path = os.environ.get("DATA")
-    exp_path = os.environ.get("EXP")
+    info(f"[INFO] DynWalk (NetWalk) on {run.dataset}: {config}")
+    seed_all(args.seed)
 
-    print("DynWalk (NetWalk) Configuration:")
-    for key, value in config.items():
-        print(f"  {key}: {value}")
-
-    # Set seeds
-    random.seed(args.seed)
-    np.random.seed(args.seed)
-    torch.manual_seed(args.seed)
-
-    # Initialize tracking
-    start_time = time.time()
-    process = psutil.Process()
-    peak_memory_mb = 0.0
-
-    # Initialize ResultWriter
     writer = ResultWriter()
 
-    data_dir = Path(data_path)
-    dataset_name = data_dir.name
-
-    writer.add_metadata(
-        method_name="dynwalk",
-        dataset=dataset_name,
-        seed=args.seed,
-    )
-
-    # Load data
-    print(f"\nLoading data from {data_path}...")
-    data_df, labels = load_edge_data(data_path)
+    data_df, labels = load_dataset(run.data)
 
     num_edges = len(data_df)
-    num_anomalies = int(labels.sum()) if labels is not None else 0
-    print(f"Loaded {num_edges} edges, {num_anomalies} anomalies")
+    num_anomalies = int(labels.sum())
+    info(f"[INFO] Loaded {num_edges} edges, {num_anomalies} anomalies")
 
     # Remap node IDs
     all_nodes = set(data_df['src'].values) | set(data_df['dst'].values)
@@ -307,10 +178,6 @@ def main():
     data_df['dst_idx'] = data_df['dst'].map(node_to_idx)
 
     print(f"Number of nodes: {num_nodes}")
-
-    # Memory check
-    current_memory_mb = process.memory_info().rss / (1024 * 1024)
-    peak_memory_mb = max(peak_memory_mb, current_memory_mb)
 
     # Split data
     init_size = int(num_edges * args.init_percent)
@@ -327,7 +194,7 @@ def main():
     print(f"Graph: {G.number_of_nodes()} nodes, {G.number_of_edges()} edges")
 
     # Generate walks
-    print(f"\nGenerating random walks...")
+    print("\nGenerating random walks...")
     walks = generate_walks(G, args.number_walks, args.walk_length)
     print(f"Generated {len(walks)} walks")
 
@@ -337,20 +204,18 @@ def main():
     features = create_node_features(G, walks, num_nodes, feature_dim)
     print(f"Feature shape: {features.shape}")
 
-    # Memory check
-    current_memory_mb = process.memory_info().rss / (1024 * 1024)
-    peak_memory_mb = max(peak_memory_mb, current_memory_mb)
-
     # Train autoencoder
-    print(f"\nTraining autoencoder...")
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-    print(f"Using device: {device}")
+    print("\nTraining autoencoder...")
+    # device() reads _GPU, which `graflag run --no-gpu` sets to -1. This used
+    # to take a GPU whenever one was visible, including on a service Swarm
+    # scheduled without reserving one.
+    dev = device()
 
-    model = Autoencoder(feature_dim, args.hidden_size, args.representation_size).to(device)
+    model = Autoencoder(feature_dim, args.hidden_size, args.representation_size).to(dev)
     optimizer = optim.Adam(model.parameters(), lr=args.learning_rate)
     criterion = nn.MSELoss()
 
-    features_tensor = torch.FloatTensor(features).to(device)
+    features_tensor = torch.FloatTensor(features).to(dev)
     dataset = TensorDataset(features_tensor, features_tensor)
     dataloader = DataLoader(dataset, batch_size=min(256, num_nodes), shuffle=True)
 
@@ -386,9 +251,10 @@ def main():
     kmeans = KMeans(n_clusters=args.n_clusters, random_state=args.seed, n_init=10)
     kmeans.fit(train_edge_embeddings)
 
-    # Get threshold from training
-    train_distances = kmeans.transform(train_edge_embeddings).min(axis=1)
-    threshold = np.percentile(train_distances, 95)
+    # No threshold is derived here. A 95th-percentile cut over the training
+    # distances used to be computed and then dropped on the floor -- the
+    # scores are min-max normalised below, so a raw-distance cut is not on
+    # their scale and reporting it would have been misleading.
 
     # Score all edges
     print("\nScoring all edges...")
@@ -403,16 +269,18 @@ def main():
     if all_scores.max() > all_scores.min():
         all_scores = (all_scores - all_scores.min()) / (all_scores.max() - all_scores.min())
 
-    # Calculate AUC
-    if labels is not None and len(labels) == len(all_scores) and labels.sum() > 0:
-        try:
-            auc = roc_auc_score(labels, all_scores)
-            print(f"\nTest AUC: {auc:.4f}")
-        except Exception as e:
-            print(f"Could not calculate AUC: {e}")
-            auc = 0.0
+    # Calculate AUC. None, not 0.0: 0.0 is a real AUC -- the score of a
+    # perfectly inverted ranking -- so reporting it for "could not be
+    # computed" made an unmeasurable run look like the worst possible one.
+    auc = None
+    if labels is None or len(labels) != len(all_scores):
+        warning("[WARN] No usable labels for this stream; reporting auc null")
+    elif not 0 < labels.sum() < len(labels):
+        warning(f"[WARN] Only one class present ({int(labels.sum())} of "
+                f"{len(labels)} edges anomalous); reporting auc null")
     else:
-        auc = 0.0
+        auc = float(roc_auc_score(labels, all_scores))
+        print(f"\nTest AUC: {auc:.4f}")
 
     # Prepare results
     all_edges = data_df[['src', 'dst']].values.tolist()
@@ -432,56 +300,33 @@ def main():
         ground_truth=all_labels,
     )
 
-    # Timing
-    end_time = time.time()
-    exec_time_seconds = end_time - start_time
-
-    final_memory_mb = process.memory_info().rss / (1024 * 1024)
-    peak_memory_mb = max(peak_memory_mb, final_memory_mb)
-
-    # Track GPU memory if available
-    peak_gpu_mb = None
-    if torch.cuda.is_available():
-        peak_gpu_mb = torch.cuda.max_memory_allocated() / (1024 * 1024)
-
-    print(f"\nResource Usage:")
-    print(f"  Execution time: {exec_time_seconds:.2f}s")
-    print(f"  Peak memory: {peak_memory_mb:.2f}MB")
-    if peak_gpu_mb is not None:
-        print(f"  Peak GPU memory: {peak_gpu_mb:.2f}MB")
-
-    # Final metadata
+    # No timing or psutil sampling here: graflag_runner measures exec time,
+    # peak memory and peak GPU from outside the method and its numbers win
+    # (runner._merge_runtime_metadata). The block that used to be here
+    # reported 409 MB against the monitor's 907 MB.
     writer.add_metadata(
-        exp_name=os.path.basename(exp_path),
+        exp_name=run.experiment,
         method_name="dynwalk",
-        dataset=dataset_name,
+        dataset=run.dataset,
         method_parameters=config,
         threshold=None,
         summary={
             "description": "NetWalk: Deep Embedding for Anomaly Detection in Dynamic Networks (KDD 2018)",
             "task": "edge_anomaly_detection",
             "dataset_info": {
-                "name": dataset_name,
+                "name": run.dataset,
                 "num_edges": num_edges,
                 "num_nodes": num_nodes,
                 "num_anomalies": num_anomalies,
             },
             "results": {
-                "auc": float(auc),
+                "auc": auc,
             },
         },
     )
 
-    # Add resource metrics
-    writer.add_resource_metrics(
-        exec_time_ms=exec_time_seconds * 1000,
-        peak_memory_mb=peak_memory_mb,
-        peak_gpu_mb=peak_gpu_mb,
-    )
-
-    results_file = writer.finalize()
-    print(f"\nResults saved to: {results_file}")
-    print(f"Test AUC: {auc:.4f}")
+    shown = "n/a" if auc is None else f"{auc:.4f}"
+    info(f"[OK] AUC {shown}, results written to {writer.finalize()}")
 
 
 if __name__ == "__main__":

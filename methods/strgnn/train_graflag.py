@@ -6,65 +6,58 @@ StrGNN detects anomalous EDGES in dynamic graphs by learning structural patterns
 from temporal graph snapshots.
 """
 
-import os
-import sys
-import time
-import random
 import math
 import pickle
-import argparse
-from pathlib import Path
+import random
+from dataclasses import dataclass, asdict
 
 import numpy as np
 import scipy.sparse as ssp
 import torch
 import torch.optim as optim
-import psutil
 
-# Add StrGNN source paths
-sys.path.insert(0, '/app/src/detection')
-sys.path.insert(0, '/app/src/pytorch_DGCNN')
+from graflag_runner import (
+    ResultWriter, device, info, params, paths, seed_all, snapshot_files,
+    split_test_edges, upstream,
+)
 
-# GraFlag integration
-from graflag_runner import ResultWriter
-
-
-def parse_args():
-    """Parse command line arguments (passed by graflag_runner --pass-env-args)."""
-    parser = argparse.ArgumentParser(description='StrGNN Training')
-    parser.add_argument('--seed', type=int, default=1, help='Random seed')
-    parser.add_argument('--test_ratio', type=float, default=0.2, help='Test ratio')
-    parser.add_argument('--window', type=int, default=5, help='Window size')
-    parser.add_argument('--gpu', type=str, default='0', help='GPU device')
-    parser.add_argument('--hop', type=int, default=1, help='Enclosing subgraph hop')
-    parser.add_argument('--max_nodes_per_hop', type=int, default=100, help='Max nodes per hop')
-    parser.add_argument('--use_embedding', type=int, default=0, help='Use node2vec embeddings')
-    parser.add_argument('--sortpooling_k', type=float, default=0.6, help='SortPooling k')
-    parser.add_argument('--hidden', type=int, default=128, help='Hidden layer size')
-    parser.add_argument('--num_epochs', type=int, default=50, help='Number of epochs')
-    parser.add_argument('--learning_rate', type=float, default=0.0001, help='Learning rate')
-    parser.add_argument('--batch_size', type=int, default=32, help='Batch size')
-    parser.add_argument('--dropout', type=int, default=1, help='Use dropout (1=True, 0=False)')
-    return parser.parse_args()
+# The StrGNN clone. upstream() anchors on this file's directory, so the
+# script no longer hardcodes /app and is runnable wherever the Dockerfile
+# puts the checkout; it raises if the clone is missing instead of failing
+# later with an unexplained ImportError.
+upstream("src/detection")
+upstream("src/pytorch_DGCNN")
 
 
-def get_config_from_args(args):
-    """Convert parsed args to config dict."""
-    return {
-        'seed': args.seed,
-        'test_ratio': args.test_ratio,
-        'window': args.window,
-        'gpu': args.gpu,
-        'hop': args.hop,
-        'max_nodes_per_hop': args.max_nodes_per_hop if args.max_nodes_per_hop > 0 else None,
-        'use_embedding': args.use_embedding == 1,
-        'sortpooling_k': args.sortpooling_k,
-        'hidden': args.hidden,
-        'num_epochs': args.num_epochs,
-        'learning_rate': args.learning_rate,
-        'batch_size': args.batch_size,
-        'dropout': args.dropout == 1,
-    }
+@dataclass
+class Config:
+    """The parameters this method accepts, and their defaults.
+
+    Replaces an argparse parser plus a get_config_from_args() that restated
+    every key a third time. The three values that are not plain scalars are
+    derived in __post_init__, which is where that translation belongs.
+    """
+
+    seed: int = 1
+    test_ratio: float = 0.2
+    window: int = 5
+    gpu: int = 0                    # GPU index; -1 means CPU
+    hop: int = 1                    # enclosing subgraph hop
+    max_nodes_per_hop: int = 100    # <= 0 means unlimited
+    use_embedding: int = 0          # node2vec embeddings, 1 to enable
+    sortpooling_k: float = 0.6
+    hidden: int = 128
+    num_epochs: int = 50
+    learning_rate: float = 0.0001
+    batch_size: int = 32
+    dropout: int = 1                # 1 to enable
+
+    def __post_init__(self):
+        # Upstream reads these three as None / bool, not as the ints .env
+        # can express.
+        self.max_nodes_per_hop = self.max_nodes_per_hop if self.max_nodes_per_hop > 0 else None
+        self.use_embedding = self.use_embedding == 1
+        self.dropout = self.dropout == 1
 
 
 def load_strgnn_data(data_path):
@@ -77,32 +70,10 @@ def load_strgnn_data(data_path):
 
     Or convert from other formats.
     """
-    data_dir = Path(data_path)
-
-    # Look for graph file
-    graph_file = None
-    for pattern in ['graph.npy', 'acc_*.npy', '*.npy']:
-        matches = list(data_dir.glob(pattern))
-        if matches:
-            # Prefer non-sta (accumulated) files
-            for m in matches:
-                if 'sta_' not in m.name:
-                    graph_file = m
-                    break
-            if graph_file is None:
-                graph_file = matches[0]
-            break
+    graph_file, split_file = snapshot_files(data_path)
 
     if graph_file is None:
-        raise FileNotFoundError(f"No graph .npy file found in {data_dir}")
-
-    # Look for split file
-    split_file = None
-    for pattern in ['split.npz', '*.npz']:
-        matches = list(data_dir.glob(pattern))
-        if matches:
-            split_file = matches[0]
-            break
+        raise FileNotFoundError(f"No graph .npy file found in {data_path}")
 
     print(f"Loading graph from: {graph_file}")
     net = np.load(graph_file, allow_pickle=True)
@@ -129,11 +100,10 @@ def load_strgnn_data(data_path):
 
     if split_file:
         print(f"Loading split from: {split_file}")
-        split_data = np.load(split_file, allow_pickle=True)
-        return net, split_data, graph_file.stem
-    else:
-        print("No split file found - will generate train/test split")
-        return net, None, graph_file.stem
+        return net, np.load(split_file, allow_pickle=True)
+
+    print("No split file found - will generate train/test split")
+    return net, None
 
 
 def generate_split(net, test_ratio, window_size):
@@ -191,54 +161,34 @@ def generate_split(net, test_ratio, window_size):
 
 
 def main():
-    args = parse_args()
-    config = get_config_from_args(args)
-    data_path = os.environ.get("DATA")
-    exp_path = os.environ.get("EXP")
+    run = paths()
+    config = asdict(Config(**params(Config)))
 
-    print("StrGNN Configuration:")
-    for key, value in config.items():
-        print(f"  {key}: {value}")
+    info(f"[INFO] StrGNN on {run.dataset}: {config}")
 
-    # Set GPU
-    os.environ['CUDA_VISIBLE_DEVICES'] = config['gpu']
+    # This used to assign CUDA_VISIBLE_DEVICES *after* `import torch`, which
+    # only works while nothing has touched CUDA yet, and then decided the
+    # mode from torch.cuda.is_available() rather than from _GPU. device()
+    # reads _GPU (-1 means CPU), and set_device pins the index so the bare
+    # .cuda() calls inside pytorch_DGCNN land on the right one.
+    dev = device(config['gpu'])
+    if dev.type == 'cuda':
+        torch.cuda.set_device(dev)
 
-    # Set seeds
-    random.seed(config['seed'])
-    np.random.seed(config['seed'])
-    torch.manual_seed(config['seed'])
-    if torch.cuda.is_available():
-        torch.cuda.manual_seed(config['seed'])
-
-    # Initialize resource tracking
-    start_time = time.time()
-    process = psutil.Process()
-    peak_memory_mb = 0.0
-    peak_gpu_memory_mb = None
+    seed_all(config['seed'])
 
     # Initialize GraFlag ResultWriter
     writer = ResultWriter()
 
     # Load data
     print("\nLoading data...")
-    net, split_data, dataset_name = load_strgnn_data(data_path)
+    net, split_data = load_strgnn_data(run.data)
 
-    # Add initial metadata
-    writer.add_metadata(
-        method_name="strgnn",
-        dataset=dataset_name,
-        seed=config['seed'],
-        num_epochs=config['num_epochs'],
-        batch_size=config['batch_size'],
-        learning_rate=config['learning_rate'],
-        window=config['window'],
-        hop=config['hop'],
-    )
-
-    # Import StrGNN modules after setting paths
+    # From the clone that upstream() put on sys.path. `cmd_args` is the
+    # namespace upstream builds at import time; the block below fills it
+    # in from this method's own Config.
     from util_functions import dyn_links2subgraphs
     from main import Classifier, loop_dataset, cmd_args
-    from util import GNNGraph
 
     # Get or generate split
     if split_data is not None:
@@ -275,7 +225,7 @@ def main():
     print(f"Test negative edges: {len(test_neg)}")
 
     # Check for cached subgraphs
-    cache_file = Path(exp_path) / f"subgraphs_h{config['hop']}.pkl"
+    cache_file = run.exp / f"subgraphs_h{config['hop']}.pkl"
 
     if cache_file.exists():
         print(f"Loading cached subgraphs from {cache_file}")
@@ -309,7 +259,7 @@ def main():
     cmd_args.out_dim = 0
     cmd_args.dropout = config['dropout']
     cmd_args.num_class = 2
-    cmd_args.mode = 'gpu' if torch.cuda.is_available() else 'cpu'
+    cmd_args.mode = 'gpu' if dev.type == 'cuda' else 'cpu'
     cmd_args.num_epochs = config['num_epochs']
     cmd_args.learning_rate = config['learning_rate']
     cmd_args.batch_size = config['batch_size']
@@ -347,17 +297,6 @@ def main():
     best_epoch = 0
 
     for epoch in range(cmd_args.num_epochs):
-        # Track memory
-        current_memory_mb = process.memory_info().rss / (1024 * 1024)
-        peak_memory_mb = max(peak_memory_mb, current_memory_mb)
-
-        if torch.cuda.is_available():
-            current_gpu_mb = torch.cuda.max_memory_allocated() / (1024 * 1024)
-            if peak_gpu_memory_mb is None:
-                peak_gpu_memory_mb = current_gpu_mb
-            else:
-                peak_gpu_memory_mb = max(peak_gpu_memory_mb, current_gpu_mb)
-
         # Train
         random.shuffle(train_idxes)
         classifier.train()
@@ -400,44 +339,47 @@ def main():
     print("\nGenerating predictions for test edges...")
     classifier.eval()
 
-    all_scores = []
-    all_labels = []
-    all_edges = []
-    all_timestamps = []
+    # dyn_links2subgraphs concatenates test_pos then test_neg, which is the
+    # order split_test_edges returns -- so the scores below line up with it.
+    all_edges, all_timestamps, all_labels = split_test_edges({
+        'test_pos': test_pos, 'test_neg': test_neg,
+        'test_pos_id': test_pos_id, 'test_neg_id': test_neg_id,
+    })
+    if len(test_graphs) != len(all_edges):
+        raise RuntimeError(
+            f"dyn_links2subgraphs returned {len(test_graphs)} test subgraphs "
+            f"for {len(all_edges)} test edges"
+        )
 
-    # Process test graphs to get predictions
+    all_scores = []
+
     with torch.no_grad():
         for i, graph_list in enumerate(test_graphs):
-            # Get the label (1 for positive edge, 0 for negative)
-            label = graph_list[-1].label
+            # Upstream labels test_pos 1 and test_neg 0 -- real edge against
+            # sampled non-edge -- so its class 1 is the *normal* one, the
+            # opposite of the anomaly label. Check it rather than trust it: if
+            # upstream ever reorders or relabels, both the scores and the
+            # ground truth invert together and auc_roc still looks right, so
+            # nothing downstream would notice.
+            upstream_label = int(graph_list[-1].label)
+            if upstream_label != 1 - all_labels[i]:
+                raise RuntimeError(
+                    f"test subgraph {i} carries upstream label "
+                    f"{upstream_label}, expected {1 - all_labels[i]}: "
+                    f"dyn_links2subgraphs no longer puts test_pos first or no "
+                    f"longer labels it 1"
+                )
 
-            # Get prediction score
-            # This is simplified - in practice you'd batch these
             batch = [graph_list]
             output = classifier(batch)
 
             # Handle tuple output (logits, loss) from classifier
-            if isinstance(output, tuple):
-                logits = output[0]
-            else:
-                logits = output
+            logits = output[0] if isinstance(output, tuple) else output
 
-            prob = torch.softmax(logits, dim=1)[:, 1].cpu().numpy()[0]
-
-            all_scores.append(float(prob))
-            all_labels.append(int(label))
-
-            # Determine if this is from positive or negative test set
-            if i < len(test_pos):
-                edge = [int(test_pos[i, 0]), int(test_pos[i, 1])]
-                timestamp = int(test_pos_id[i])
-            else:
-                idx = i - len(test_pos)
-                edge = [int(test_neg[idx, 0]), int(test_neg[idx, 1])]
-                timestamp = int(test_neg_id[idx])
-
-            all_edges.append(edge)
-            all_timestamps.append(timestamp)
+            # softmax(...)[:, 1] is P(upstream class 1) = P(normal). The
+            # contract wants a score that rises with anomalousness.
+            normal = torch.softmax(logits, dim=1)[:, 1].cpu().numpy()[0]
+            all_scores.append(float(1.0 - normal))
 
     print(f"Total test predictions: {len(all_scores)}")
     print(f"Score range: [{min(all_scores):.4f}, {max(all_scores):.4f}]")
@@ -457,37 +399,23 @@ def main():
         ground_truth=all_labels,
     )
 
-    # Calculate execution time
-    end_time = time.time()
-    exec_time_seconds = end_time - start_time
-
-    # Final memory check
-    final_memory_mb = process.memory_info().rss / (1024 * 1024)
-    peak_memory_mb = max(peak_memory_mb, final_memory_mb)
-
-    if torch.cuda.is_available():
-        final_gpu_mb = torch.cuda.max_memory_allocated() / (1024 * 1024)
-        if peak_gpu_memory_mb is not None:
-            peak_gpu_memory_mb = max(peak_gpu_memory_mb, final_gpu_mb)
-
-    print(f"\nResource Usage:")
-    print(f"  Total execution time: {exec_time_seconds:.2f}s")
-    print(f"  Peak memory: {peak_memory_mb:.2f}MB")
-    if peak_gpu_memory_mb is not None:
-        print(f"  Peak GPU memory: {peak_gpu_memory_mb:.2f}MB")
-
-    # Add final metadata
+    # graflag_runner measures exec time, peak memory and peak GPU from
+    # outside the method and its numbers win (_merge_runtime_metadata), so
+    # the psutil and torch.cuda sampling that used to be here was recorded
+    # and then overwritten.
     writer.add_metadata(
-        exp_name=os.path.basename(exp_path),
+        exp_name=run.experiment,
         method_name="strgnn",
-        dataset=dataset_name,
+        # run.dataset, not the graph file's stem: a run on uci_snapshot used
+        # to record itself as "acc_graph".
+        dataset=run.dataset,
         method_parameters=config,
         threshold=None,
         summary={
             "description": "StrGNN: Structural Temporal Graph Neural Networks for Anomaly Detection in Dynamic Graphs (CIKM 2021)",
             "task": "edge_anomaly_detection",
             "dataset_info": {
-                "name": dataset_name,
+                "name": run.dataset,
                 "num_snapshots": len(net) if net.dtype == object else net.shape[0],
                 "num_nodes": net[0].shape[0] if net.dtype == object else net.shape[1],
                 "train_edges": len(train_pos) + len(train_neg),
@@ -509,17 +437,7 @@ def main():
         },
     )
 
-    # Add resource metrics
-    writer.add_resource_metrics(
-        exec_time_ms=exec_time_seconds * 1000,
-        peak_memory_mb=peak_memory_mb,
-        peak_gpu_mb=peak_gpu_memory_mb,
-    )
-
-    # Finalize results
-    results_file = writer.finalize()
-    print(f"\nResults saved to: {results_file}")
-    print(f"Best Test AUC: {best_auc:.4f}")
+    info(f"[OK] Best test AUC {best_auc:.4f}, results written to {writer.finalize()}")
 
 
 if __name__ == "__main__":

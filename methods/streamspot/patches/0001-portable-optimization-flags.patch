@@ -1,0 +1,28 @@
+Build a binary that runs on every worker, not only on the one that built it.
+
+The image is built on the swarm manager and the service can be scheduled on any
+node. `-march=native -mtune=native` bakes in the manager's instruction set, so
+the binary SIGILLs on a worker with an older CPU -- a crash that looks like a
+method bug and is really a build flag.
+
+`-Ofast` stays: it is what upstream asks for, and dropping only the two tuning
+flags is the smallest change that makes the binary portable. (This replaces a
+`sed` that rewrote both flags to `-O3`, leaving `-Ofast -O3`; -ffast-math
+survives a later -O3, so that produced the same code generation as plain
+-Ofast, just less legibly.)
+
+Applies to SOURCE_REF=6fb9eccf7d9d6c1f49e6f28e71e6a79ab9e31b11.
+
+diff --git a/Makefile b/Makefile
+index 4d0ae7e..d1a507b 100644
+--- a/Makefile
++++ b/Makefile
+@@ -5,7 +5,7 @@ OBJS := $(SOURCES:.cpp=.o)
+ 
+ .PHONY: clean
+ 
+-optimized: CFLAGS += -Ofast -march=native -mtune=native
++optimized: CFLAGS += -Ofast
+ optimized: streamspot
+ 
+ debug: CFLAGS += -DDEBUG -g

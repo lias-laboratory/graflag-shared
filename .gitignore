@@ -15,6 +15,26 @@ datasets/**/*.pt
 datasets/**/*.pkl
 datasets/**/*.npy
 datasets/**/*.npz
+# .mat is the stored form for the gad_* family (HUGE-GAD, UNPrompt and
+# AD-GCL all read Network/Attributes/Label directly). Without this the
+# nine of them would commit 76 MB of graph data into a repo whose whole
+# dataset mechanism exists so that metadata.json is the only thing
+# tracked.
+datasets/**/*.mat
+datasets/**/*.zip
 datasets/**/*.edges
 datasets/digg/digg
 datasets/uci/uci
+
+# Archives unpacked on macOS leave these beside the dataset files
+__MACOSX/
+.DS_Store
+
+# Python tooling and editors
+.pytest_cache/
+.venv/
+venv/
+.vscode/
+.idea/
+*.swp
+*~

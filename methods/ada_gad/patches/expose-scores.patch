@@ -1,0 +1,44 @@
+Return the per-node outlier scores from main() instead of only printing an AUC.
+
+Upstream's main() computes `final_outlier` -- the per-node score vector
+god_evaluation() produced -- uses it for a printed AUC and then drops it on the
+floor. GraFlag publishes the scores the method computed rather than recomputing
+them, so main() has to hand them back.
+
+Nothing about what the method computes changes: the scores returned are the
+same tensor the printed AUC was measured on, collected per seed in the order
+the seeds run.
+
+Generated with `git diff` against the tree SOURCE_REF pins, not written by
+hand -- a hand-written hunk header is why the first version of this patch
+failed to apply and took the build down with it.
+
+diff --git a/main.py b/main.py
+index 95d0631..1a9f2f0 100644
+--- a/main.py
++++ b/main.py
+@@ -132,6 +132,7 @@ def main(args):
+     args.num_features = num_features
+ 
+     auc_score_list = []
++    outlier_score_runs = []
+ 
+     attr_mask,struct_mask=None,None
+     pretrain_auc_score_list=[]
+@@ -243,6 +244,7 @@ def main(args):
+         print('finish one train!')
+         auc_score,ap_score,ndcg_score,pk_score,rk_score,final_outlier,_= god_evaluation(dataset_name,model_name,attr_encoder_name,struct_encoder_name,topology_encoder_name,attr_decoder_name,struct_decoder_name,attr_model,struct_model,topology_model,graph, graph.x, aggr_f,lr_f, max_epoch, alpha_f,dropout_f,loss_f,loss_weight_f,T_f,args.num_hidden,node_encoder_num_layers,edge_encoder_num_layers,subgraph_encoder_num_layers,attr_decoder_num_layers,struct_decoder_num_layers,use_ssl=args.use_ssl,use_encoder_num=args.use_encoder_num,attention=args.attention,sparse_attention_weight=args.sparse_attention_weight,theta=args.theta,eta=args.eta)
+         auc_score_list.append(auc_score)
++        outlier_score_runs.append(final_outlier)
+ 
+         if logger is not None:
+             logger.finish()
+@@ -253,6 +255,8 @@ def main(args):
+ 
+     print(f"# final_auc: {final_auc*100:.2f}±{final_auc_std*100:.2f}")
+ 
++    return outlier_score_runs, auc_score_list, graph
++
+ 
+ 
+ 

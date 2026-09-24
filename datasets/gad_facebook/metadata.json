@@ -1,0 +1,19 @@
+{
+  "name": "gad_facebook",
+  "description": "Facebook ego-network with injected anomalies (1,081 nodes, 576 features, 25 anomalies).",
+  "source": "https://github.com/CampanulaBells/HUGE-GAD",
+  "source_repo": "https://github.com/CampanulaBells/HUGE-GAD/blob/bdf8d2aec6455b48d7322c0713e31d2f6fecc1b7/datasets/Facebook.mat",
+  "compatible_methods": [
+    "huge_gad",
+    "unprompt"
+  ],
+  "format": "MATLAB .mat (Network sparse adjacency / Attributes / Label)",
+  "files": [
+    {
+      "name": "Facebook.mat",
+      "url": "https://github.com/CampanulaBells/HUGE-GAD/raw/bdf8d2aec6455b48d7322c0713e31d2f6fecc1b7/datasets/Facebook.mat",
+      "sha256": "606d8cce2f9a9d2829244f5691d1abf0c3a5e0f28a2ade25a7ca7df304184163"
+    }
+  ],
+  "notes": "The smallest of the .mat family; useful as a smoke dataset for a new integration. ada_gad and diffgad are deliberately absent from compatible_methods: each refuses to run on a dataset its authors shipped no tuned configuration for, and inventing one would publish a number from hyperparameters nobody chose. Stored as the upstream .mat rather than converted to a PyG .pt at fetch time: the conversion needs torch and torch_geometric, and the manager is a thin orchestration node that carries neither. The .mat methods read this file directly with no conversion at all; a method wanting PyG calls graflag_runner.read_mat inside its own container, where those libraries exist."
+}

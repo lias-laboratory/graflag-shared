@@ -4,14 +4,12 @@ AddGraph: Anomaly Detection in Dynamic Graph Using Attention-based Temporal GCN 
 
 AddGraph detects anomalous EDGES in dynamic graphs using attention-based temporal
 graph convolutional networks with a GRU for sequence modeling.
+
+The models below are a reimplementation from the paper, not upstream's code --
+see methods/addgraph/README.md.
 """
 
-import os
-import sys
-import time
-import random
-import argparse
-from pathlib import Path
+from dataclasses import dataclass, asdict
 
 import numpy as np
 import scipy.sparse as sp
@@ -19,63 +17,34 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from sklearn.metrics import roc_auc_score
-import psutil
 
-# Add AddGraph source paths
-sys.path.insert(0, '/app/src/UCI_D_Addgraph/framwork')
-
-# GraFlag integration
-from graflag_runner import ResultWriter
+from graflag_runner import (
+    ResultWriter, device, info, params, paths, seed_all, snapshot_files,
+    split_test_edges,
+)
 
 
-def parse_args():
-    """Parse command line arguments (passed by graflag_runner --pass-env-args)."""
-    parser = argparse.ArgumentParser(description='AddGraph Training')
-    parser.add_argument('--num_epochs', type=int, default=100, help='Number of epochs')
-    parser.add_argument('--learning_rate', type=float, default=0.0008, help='Learning rate')
-    parser.add_argument('--learning_rate_score', type=float, default=0.0005, help='LR for score network')
-    parser.add_argument('--hidden_dim', type=int, default=100, help='Hidden dimension')
-    parser.add_argument('--num_heads', type=int, default=8, help='Number of attention heads')
-    parser.add_argument('--dropout', type=float, default=0.2, help='Dropout rate')
-    parser.add_argument('--window_size', type=int, default=2, help='Temporal window size')
-    parser.add_argument('--seed', type=int, default=42, help='Random seed')
-    parser.add_argument('--gpu', type=int, default=0, help='GPU device')
-    parser.add_argument('--beta', type=float, default=1.0, help='Beta for score function')
-    parser.add_argument('--mui', type=float, default=0.3, help='Mui (bias) for score function')
-    parser.add_argument('--gamma', type=float, default=0.6, help='Gamma for margin loss')
-    parser.add_argument('--training_ratio', type=float, default=0.5, help='Training ratio')
-    parser.add_argument('--anomaly_rate', type=float, default=0.1, help='Anomaly injection rate')
-    return parser.parse_args()
+@dataclass
+class Config:
+    """The parameters this method accepts, and their defaults.
 
+    Replaces an argparse parser plus a get_config_from_args() that restated
+    every key a third time.
+    """
 
-def get_config_from_args(args):
-    """Convert parsed args to config dict."""
-    return {
-        'num_epochs': args.num_epochs,
-        'learning_rate': args.learning_rate,
-        'learning_rate_score': args.learning_rate_score,
-        'hidden_dim': args.hidden_dim,
-        'num_heads': args.num_heads,
-        'dropout': args.dropout,
-        'window_size': args.window_size,
-        'seed': args.seed,
-        'gpu': args.gpu,
-        'beta': args.beta,
-        'mui': args.mui,
-        'gamma': args.gamma,
-        'training_ratio': args.training_ratio,
-        'anomaly_rate': args.anomaly_rate,
-    }
-
-
-def set_seed(seed):
-    """Set random seeds for reproducibility."""
-    random.seed(seed)
-    np.random.seed(seed)
-    torch.manual_seed(seed)
-    if torch.cuda.is_available():
-        torch.cuda.manual_seed(seed)
-        torch.cuda.manual_seed_all(seed)
+    num_epochs: int = 100
+    learning_rate: float = 0.0008
+    learning_rate_score: float = 0.0005  # the score network has its own
+    hidden_dim: int = 100
+    num_heads: int = 8
+    dropout: float = 0.2
+    window_size: int = 2                 # temporal context, in snapshots
+    seed: int = 42
+    gpu: int = 0                         # GPU index; -1 means CPU
+    beta: float = 1.0                    # score function scale
+    mui: float = 0.3                     # score function bias
+    gamma: float = 0.6                   # margin for the ranking loss
+    training_ratio: float = 0.5          # only read when the split has no snapshot ids
 
 
 # ============== Model Definitions ==============
@@ -266,22 +235,11 @@ def load_data(data_path, config):
     - acc_*.npy or graph.npy: Graph snapshots
     - split.npz: Train/test split
     """
-    data_dir = Path(data_path)
-
-    # Look for graph file
-    graph_file = None
-    for pattern in ['acc_*.npy', 'graph.npy', '*.npy']:
-        matches = list(data_dir.glob(pattern))
-        if matches:
-            for m in matches:
-                if 'sta_' not in m.name:
-                    graph_file = m
-                    break
-            if graph_file:
-                break
-
+    graph_file, split_file = snapshot_files(data_path)
     if graph_file is None:
-        raise FileNotFoundError(f"No graph .npy file found in {data_dir}")
+        raise FileNotFoundError(f"No graph .npy file found in {data_path}")
+    if split_file is None:
+        raise FileNotFoundError(f"No split file found in {data_path}")
 
     # Load graph
     print(f"Loading graph from: {graph_file}")
@@ -304,45 +262,34 @@ def load_data(data_path, config):
 
     print(f"Loaded {num_snapshots} snapshots, {num_nodes} nodes")
 
-    # Load split file
-    split_file = None
-    for pattern in ['split.npz', '*.npz']:
-        matches = list(data_dir.glob(pattern))
-        if matches:
-            split_file = matches[0]
-            break
+    print(f"Loading split from: {split_file}")
+    split_data = np.load(split_file, allow_pickle=True)
 
-    if split_file:
-        print(f"Loading split from: {split_file}")
-        split_data = np.load(split_file, allow_pickle=True)
+    train_pos = split_data['train_pos']
+    train_neg = split_data['train_neg']
+    test_pos = split_data['test_pos']
+    test_neg = split_data['test_neg']
 
-        train_pos = split_data['train_pos']
-        train_neg = split_data['train_neg']
-        test_pos = split_data['test_pos']
-        test_neg = split_data['test_neg']
+    # Handle (2, N) vs (N, 2) format
+    if train_pos.shape[0] == 2 and len(train_pos.shape) == 2:
+        train_pos = train_pos.T
+        train_neg = train_neg.T
+        test_pos = test_pos.T
+        test_neg = test_neg.T
 
-        # Handle (2, N) vs (N, 2) format
-        if train_pos.shape[0] == 2 and len(train_pos.shape) == 2:
-            train_pos = train_pos.T
-            train_neg = train_neg.T
-            test_pos = test_pos.T
-            test_neg = test_neg.T
-
-        # Get snapshot IDs if available
-        if 'train_pos_id' in split_data:
-            train_pos_id = split_data['train_pos_id']
-            train_neg_id = split_data['train_neg_id']
-            test_pos_id = split_data['test_pos_id']
-            test_neg_id = split_data['test_neg_id']
-        else:
-            # Assign to last snapshots
-            n_train = int(num_snapshots * config['training_ratio'])
-            train_pos_id = np.full(len(train_pos), n_train - 1)
-            train_neg_id = np.full(len(train_neg), n_train - 1)
-            test_pos_id = np.full(len(test_pos), num_snapshots - 1)
-            test_neg_id = np.full(len(test_neg), num_snapshots - 1)
+    # Get snapshot IDs if available
+    if 'train_pos_id' in split_data:
+        train_pos_id = split_data['train_pos_id']
+        train_neg_id = split_data['train_neg_id']
+        test_pos_id = split_data['test_pos_id']
+        test_neg_id = split_data['test_neg_id']
     else:
-        raise FileNotFoundError(f"No split file found in {data_dir}")
+        # Assign to last snapshots
+        n_train = int(num_snapshots * config['training_ratio'])
+        train_pos_id = np.full(len(train_pos), n_train - 1)
+        train_neg_id = np.full(len(train_neg), n_train - 1)
+        test_pos_id = np.full(len(test_pos), num_snapshots - 1)
+        test_neg_id = np.full(len(test_neg), num_snapshots - 1)
 
     return {
         'snapshots': snapshots,
@@ -371,48 +318,19 @@ def sparse_mx_to_torch_sparse(sparse_mx):
 
 
 def main():
-    args = parse_args()
-    config = get_config_from_args(args)
-    data_path = os.environ.get("DATA")
-    exp_path = os.environ.get("EXP")
+    run = paths()
+    config = asdict(Config(**params(Config)))
 
-    print("AddGraph Configuration:")
-    for key, value in config.items():
-        print(f"  {key}: {value}")
+    info(f"[INFO] AddGraph on {run.dataset}: {config}")
 
-    # Set device
-    device = torch.device(f'cuda:{config["gpu"]}' if torch.cuda.is_available() else 'cpu')
-    print(f"\nUsing device: {device}")
+    dev = device(config['gpu'])
+    seed_all(config['seed'])
 
-    # Set seeds
-    set_seed(config['seed'])
-
-    # Initialize resource tracking
-    start_time = time.time()
-    process = psutil.Process()
-    peak_memory_mb = 0.0
-    peak_gpu_memory_mb = None
-
-    # Initialize GraFlag ResultWriter
     writer = ResultWriter()
 
-    # Load data
     print("\nLoading data...")
-    data = load_data(data_path, config)
-
-    # Extract dataset name
-    data_dir = Path(data_path)
-    dataset_name = data_dir.name
-
-    # Add initial metadata
-    writer.add_metadata(
-        method_name="addgraph",
-        dataset=dataset_name,
-        seed=config['seed'],
-        num_epochs=config['num_epochs'],
-        hidden_dim=config['hidden_dim'],
-        learning_rate=config['learning_rate'],
-    )
+    data = load_data(run.data, config)
+    dataset_name = run.dataset
 
     num_nodes = data['num_nodes']
     num_snapshots = data['num_snapshots']
@@ -431,10 +349,10 @@ def main():
 
     net1 = SpGAT(nfeat=nfeat, nhid=hidden_dim // config['num_heads'],
                  nout=hidden_dim, dropout=config['dropout'],
-                 nheads=config['num_heads']).to(device)
-    net2 = HCA(hidden_dim).to(device)
-    net3 = GRUCell(hidden_dim).to(device)
-    net4 = ScoreNetwork(hidden_dim, beta=config['beta'], mui=config['mui']).to(device)
+                 nheads=config['num_heads']).to(dev)
+    net2 = HCA(hidden_dim).to(dev)
+    net3 = GRUCell(hidden_dim).to(dev)
+    net4 = ScoreNetwork(hidden_dim, beta=config['beta'], mui=config['mui']).to(dev)
 
     # Optimizers
     optimizer1 = optim.Adam(list(net1.parameters()) + list(net2.parameters()) + list(net3.parameters()),
@@ -442,10 +360,21 @@ def main():
     optimizer2 = optim.Adam(net4.parameters(), lr=config['learning_rate_score'], weight_decay=1e-5)
 
     # Initialize node features (identity matrix)
-    X = torch.eye(num_nodes, device=device)
+    X = torch.eye(num_nodes, device=dev)
 
     # Convert adjacency matrices to torch sparse
-    adj_list = [sparse_mx_to_torch_sparse(adj).to(device) for adj in data['snapshots']]
+    adj_list = [sparse_mx_to_torch_sparse(adj).to(dev) for adj in data['snapshots']]
+
+    # The test half, resolved once: edges in test_pos then test_neg order,
+    # labelled 0 then 1. test_neg holds the non-edges the converter injected,
+    # so it is the anomaly class -- see split_test_edges.
+    all_edges, all_timestamps, all_labels = split_test_edges(data)
+
+    def score_test_edges(embeddings):
+        """net4 returns a plausibility in [0, 1]; the contract wants the
+        opposite direction."""
+        return [1 - net4(embeddings[t][src], embeddings[t][dst]).item()
+                for (src, dst), t in zip(all_edges, all_timestamps)]
 
     # Training
     print("\nStarting training...")
@@ -454,17 +383,6 @@ def main():
     H_history = []  # Store node embeddings history
 
     for epoch in range(config['num_epochs']):
-        # Track memory
-        current_memory_mb = process.memory_info().rss / (1024 * 1024)
-        peak_memory_mb = max(peak_memory_mb, current_memory_mb)
-
-        if torch.cuda.is_available():
-            current_gpu_mb = torch.cuda.max_memory_allocated() / (1024 * 1024)
-            if peak_gpu_memory_mb is None:
-                peak_gpu_memory_mb = current_gpu_mb
-            else:
-                peak_gpu_memory_mb = max(peak_gpu_memory_mb, current_gpu_mb)
-
         net1.train()
         net2.train()
         net3.train()
@@ -555,24 +473,9 @@ def main():
                 H_history_eval.append(H)
 
             # Compute test scores
-            test_scores = []
-            test_labels = []
-
-            # Positive test edges (normal - label 0)
-            for i, (src, dst) in enumerate(data['test_pos']):
-                t = data['test_pos_id'][i]
-                score = net4(H_history_eval[t][src], H_history_eval[t][dst])
-                test_scores.append(1 - score.item())  # Invert: low score = anomaly
-                test_labels.append(0)  # Normal
-
-            # Negative test edges (anomalous - label 1)
-            for i, (src, dst) in enumerate(data['test_neg']):
-                t = data['test_neg_id'][i]
-                score = net4(H_history_eval[t][src], H_history_eval[t][dst])
-                test_scores.append(1 - score.item())  # Invert: low score = anomaly
-                test_labels.append(1)  # Anomaly
-
-            test_auc = roc_auc_score(test_labels, test_scores) if len(set(test_labels)) > 1 else 0.0
+            test_scores = score_test_edges(H_history_eval)
+            test_auc = (roc_auc_score(all_labels, test_scores)
+                        if len(set(all_labels)) > 1 else 0.0)
 
         avg_loss = total_loss / max(1, num_snapshots)
         print(f"Epoch {epoch+1}/{config['num_epochs']} - Loss: {avg_loss:.4f}, Test AUC: {test_auc:.4f}")
@@ -612,28 +515,7 @@ def main():
                 H = H_current
             H_history_final.append(H)
 
-        all_scores = []
-        all_labels = []
-        all_edges = []
-        all_timestamps = []
-
-        # Positive test edges
-        for i, (src, dst) in enumerate(data['test_pos']):
-            t = data['test_pos_id'][i]
-            score = net4(H_history_final[t][src], H_history_final[t][dst])
-            all_scores.append(1 - score.item())
-            all_labels.append(0)
-            all_edges.append([int(src), int(dst)])
-            all_timestamps.append(int(t))
-
-        # Negative test edges
-        for i, (src, dst) in enumerate(data['test_neg']):
-            t = data['test_neg_id'][i]
-            score = net4(H_history_final[t][src], H_history_final[t][dst])
-            all_scores.append(1 - score.item())
-            all_labels.append(1)
-            all_edges.append([int(src), int(dst)])
-            all_timestamps.append(int(t))
+        all_scores = score_test_edges(H_history_final)
 
     print(f"Total predictions: {len(all_scores)}")
     print(f"Score range: [{min(all_scores):.4f}, {max(all_scores):.4f}]")
@@ -651,28 +533,11 @@ def main():
         ground_truth=all_labels,
     )
 
-    # Calculate execution time
-    end_time = time.time()
-    exec_time_seconds = end_time - start_time
-
-    # Final memory check
-    final_memory_mb = process.memory_info().rss / (1024 * 1024)
-    peak_memory_mb = max(peak_memory_mb, final_memory_mb)
-
-    if torch.cuda.is_available():
-        final_gpu_mb = torch.cuda.max_memory_allocated() / (1024 * 1024)
-        if peak_gpu_memory_mb is not None:
-            peak_gpu_memory_mb = max(peak_gpu_memory_mb, final_gpu_mb)
-
-    print(f"\nResource Usage:")
-    print(f"  Total execution time: {exec_time_seconds:.2f}s")
-    print(f"  Peak memory: {peak_memory_mb:.2f}MB")
-    if peak_gpu_memory_mb is not None:
-        print(f"  Peak GPU memory: {peak_gpu_memory_mb:.2f}MB")
-
-    # Add final metadata
+    # Execution time and memory are measured by graflag_runner around this
+    # process and merged into metadata afterwards, so there is nothing to
+    # record here -- see _merge_runtime_metadata in the runner.
     writer.add_metadata(
-        exp_name=os.path.basename(exp_path),
+        exp_name=run.experiment,
         method_name="addgraph",
         dataset=dataset_name,
         method_parameters=config,
@@ -703,17 +568,8 @@ def main():
         },
     )
 
-    # Add resource metrics
-    writer.add_resource_metrics(
-        exec_time_ms=exec_time_seconds * 1000,
-        peak_memory_mb=peak_memory_mb,
-        peak_gpu_mb=peak_gpu_memory_mb,
-    )
-
-    # Finalize results
-    results_file = writer.finalize()
-    print(f"\nResults saved to: {results_file}")
-    print(f"Best Test AUC: {best_auc:.4f}")
+    info(f"[OK] Best test AUC {best_auc:.4f} at epoch {best_epoch}, AUC over all "
+         f"test edges {final_auc:.4f}, results written to {writer.finalize()}")
 
 
 if __name__ == "__main__":

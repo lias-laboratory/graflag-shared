@@ -1,0 +1,34 @@
+Export the per-node score vector main.py already computes.
+
+main.py builds `scores`, measures auc_roc and auc_prc on it, prints both and
+discards the vector. GraFlag publishes the scores a method computed rather
+than a number it printed.
+
+Written behind GRAFLAG_SCORE_OUT so the patched file behaves exactly as
+upstream when the variable is unset: the repository's own README commands
+produce byte-identical output to the unpatched tree.
+
+The labels are written beside the scores because `ano_label` comes from
+upstream's own load_mat, and pairing the published scores against a label
+column read separately would depend on both agreeing about node order.
+
+Note main.py has CRLF line terminators; this patch preserves them. Rewriting
+the file with LF would have turned a three-line change into a 169-line diff
+that breaks on any upstream edit.
+
+Generated with `git diff` against the tree SOURCE_REF pins.
+
+diff --git a/main.py b/main.py
+index e79bd75..0c61be0 100644
+--- a/main.py
++++ b/main.py
+@@ -160,6 +160,9 @@ with warnings.catch_warnings():
+         scores = -scores.detach().cpu().numpy()
+         auc_roc = roc_auc_score(ano_label, scores)
+         auc_prc = prc_auc_score(ano_label, scores)
++        if os.environ.get('GRAFLAG_SCORE_OUT'):
++            np.savetxt(os.environ['GRAFLAG_SCORE_OUT'], scores)
++            np.savetxt(os.environ['GRAFLAG_SCORE_OUT'] + '.label', np.asarray(ano_label))
+     time_eval_end = datetime.datetime.now()
+     timedelta_eval = time_eval_end - time_eval_start
+ if args.print_results:
