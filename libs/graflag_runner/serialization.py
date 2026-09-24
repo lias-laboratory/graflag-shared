@@ -18,7 +18,13 @@ import math
 from pathlib import Path
 from typing import Any, Tuple
 
-import numpy as np
+try:
+    import numpy as np
+except ImportError:
+    # graflag_runner declares no numpy dependency, and numpy is used here only
+    # to recognise numpy values: without it there are none to convert. 1.1.0
+    # imported it unconditionally, and the package failed to import at all.
+    np = None
 
 
 def json_default(obj: Any) -> Any:
@@ -27,10 +33,11 @@ def json_default(obj: Any) -> Any:
     Only called for values the encoder does not already understand, so the
     common path pays nothing.
     """
-    if isinstance(obj, np.generic):
-        return to_jsonable(obj.item())
-    if isinstance(obj, np.ndarray):
-        return to_jsonable(obj.tolist())
+    if np is not None:
+        if isinstance(obj, np.generic):
+            return to_jsonable(obj.item())
+        if isinstance(obj, np.ndarray):
+            return to_jsonable(obj.tolist())
     if isinstance(obj, (set, frozenset)):
         return sorted(obj)
     if isinstance(obj, Path):
@@ -69,10 +76,11 @@ class _Sanitizer:
                 self.replaced += 1
                 return None
             return value
-        if isinstance(value, np.generic):
-            return self(value.item())
-        if isinstance(value, np.ndarray):
-            return self(value.tolist())
+        if np is not None:
+            if isinstance(value, np.generic):
+                return self(value.item())
+            if isinstance(value, np.ndarray):
+                return self(value.tolist())
         if isinstance(value, dict):
             return {k: self(v) for k, v in value.items()}
         if isinstance(value, (list, tuple)):

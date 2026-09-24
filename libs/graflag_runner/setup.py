@@ -4,7 +4,7 @@ from setuptools import setup
 
 setup(
     name="graflag_runner",
-    version="1.1.0",
+    version="1.1.1",
     description="Framework for executing graph anomaly detection methods with resource monitoring",
     author="GraFlag Team",
     url="https://github.com/lias-laboratory/graflag-shared",

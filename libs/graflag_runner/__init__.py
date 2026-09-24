@@ -39,7 +39,7 @@ from .method import (
     read_mat,
 )
 
-__version__ = "1.1.0"
+__version__ = "1.1.1"
 __all__ = [
     "MethodRunner",
     "ResultWriter",
