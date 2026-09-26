@@ -1,9 +1,13 @@
 # Method verification
 
-Every method in `methods/` was built and run on a cluster, and the result
-recorded here. 26 of 27 produced a `results.json` that
-`graflag evaluate` could score; the rest are explained below rather than
-quietly omitted.
+The 27 method directories that existed when this file was written (the 17
+PyGOD detectors and 10 others, the annotated `example/` among them) were built
+and run on a cluster, and the result recorded here. 26 of 27 produced a
+`results.json` that `graflag evaluate` could score; the rest are explained
+below rather than quietly omitted. Methods integrated since (`ad_gcl`,
+`ada_gad`, `diffgad`, `f_fade`, `huge_gad`, `midas`, `rare`) record their
+runs, or why none has completed, in the `## Verification` section of their
+own README.
 
 This file exists because "the method is integrated" and "the method runs" had
 never been the same claim. Several methods here had never been executed once.
