@@ -47,3 +47,18 @@ Different from the rest of the family: `_NUM_LAYERS=2` (the others use `4`),
 `_CONTAMINATION`, `_VERBOSE`, `_SAVE_EMB` and `_COMPILE_MODEL` are accepted
 and recorded but change nothing in `results.json` -- see BOND.md,
 "`_CONTAMINATION` does nothing to the results".
+
+## On a three-node GPU cluster
+
+CARD changes the graph it is fitted on, as DMGD and GADNR do:
+`exp__bond_card__bond_inj_cora__20261117_130943` reports `num_edges: 11148`
+for a file with 11,060. The run was made with a `bond_base` image built
+before `graflag_bond` described the graph ahead of `fit()`
+(`describe_graph`), so its `dataset_info` is the graph after training. The
+scores are not affected: they are bit-identical to PyGOD's `CARD` fitted
+outside GraFlag with the same constructor arguments (CPU, seed 42, AUC
+0.7179; `validation/results/reference/pygod_direct_compare.json`).
+
+That CPU run took 20.4 hours, sharing node-2 with two other CPU-bound
+runs; the GPU run `exp__bond_card__bond_inj_cora__20261117_122239` took
+1.2 hours. Neither is a performance measurement.

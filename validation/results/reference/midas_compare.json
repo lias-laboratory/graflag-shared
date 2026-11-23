@@ -1,0 +1,1 @@
+{"experiment": "exp__midas__anograph_darpa__20261117_120158", "n_graflag": 4554344, "n_reference": 4554344, "identical": false, "max_abs_diff": 496.0, "n_differing": 3682846, "within_1e-06": false, "auc_graflag": 0.9843577267715715, "auc_reference": 0.9843577267715715}

@@ -171,6 +171,13 @@ def main():
             # on a held-out split.
             "selected_timestep": int(model.selected_timestep),
             "timestep_selected_on": "test_labels",
+            # The AUC upstream printed for exactly the published scores, so
+            # `graflag verify` can check the two agree.
+            "auc_roc": float(model.selected_auc),
+            # Every trial overwrites the selected scores, so the published
+            # ones are the last trial's; upstream reports the mean of these.
+            "trial_auc_roc": [float(a) for a in model.trial_aucs],
+            "published_trial": len(model.trial_aucs),
             "seed": seed,
         },
     })

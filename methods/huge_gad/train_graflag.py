@@ -19,7 +19,7 @@ from pathlib import Path
 
 from graflag_runner import (ResultWriter, params, device, paths, upstream,
                             seed_all, load_attributed_graph, write_mat,
-                            info, warning)
+                            info)
 
 UPSTREAM = upstream("src")
 
@@ -35,6 +35,18 @@ class Config:
     batch_size_sampling: int = 8192
     heterophily: str = "ours"
     seed: int = 0
+
+
+# The names upstream's modules/utils.load_dataset routes through load_mat. It
+# raises "Unimplemented dataset" for any other, after the image has started
+# and the graph has been rendered, so a name outside this set is refused here.
+UPSTREAM_MAT_NAMES = ("Amazon", "Facebook", "Reddit", "YelpChi")
+
+# bond_* graphs that are one of those datasets, staged under upstream's name.
+# graflag_runner's tests/test_mat.py checks that Reddit.mat round-trips to
+# bond_reddit. bond_books, bond_disney, bond_enron and bond_weibo have no
+# loader upstream, so they are not here and the method does not declare them.
+RENDERED_AS = {"bond_reddit": "Reddit"}
 
 
 def stage_dataset(data_dir: Path) -> str:
@@ -54,20 +66,47 @@ def stage_dataset(data_dir: Path) -> str:
     if existing:
         source = existing[0]
         name = source.stem
+        if name not in UPSTREAM_MAT_NAMES:
+            raise ValueError(
+                f"{source.name}: upstream's load_dataset accepts only "
+                f"{', '.join(UPSTREAM_MAT_NAMES)} and raises for '{name}'")
         shutil.copy2(source, target_dir / f"{name}.mat")
         info(f"[INFO] Copied {source} -> {target_dir / f'{name}.mat'} (already .mat)")
         return name
 
-    # No .mat: render one from the canonical PyG form.
+    # No .mat: render one from the canonical PyG form, under upstream's name.
+    name = RENDERED_AS.get(data_dir.name)
+    if name is None:
+        raise ValueError(
+            f"{data_dir.name} has no .mat and is not one of upstream's datasets "
+            f"({', '.join(f'{k} as {v}' for k, v in RENDERED_AS.items())}); "
+            f"upstream's load_dataset accepts only {', '.join(UPSTREAM_MAT_NAMES)}")
     data = load_attributed_graph(data_dir)
-    name = data_dir.name
     written = write_mat(data, target_dir / f"{name}.mat")
-    info(f"[INFO] Rendered {data_dir.name} ({data.num_nodes} nodes) -> {written}")
+    info(f"[INFO] Rendered {data_dir.name} ({data.num_nodes} nodes) as {name} -> {written}")
     return name
+
+
+def require_dgl_sparse() -> None:
+    """Load DGL's sparse library now, or fail before upstream starts.
+
+    The conda build links the driver's libcuda.so.1, which only a running
+    container has (the NVIDIA runtime mounts it), so the image build cannot
+    check this; see the Dockerfile. Without it, dgl.sparse raises deep inside
+    upstream's model code instead.
+    """
+    try:
+        import dgl.sparse  # noqa: F401
+    except ImportError as exc:
+        raise RuntimeError(
+            f"DGL's sparse library does not load ({exc}); this container needs "
+            f"the NVIDIA runtime's libcuda.so.1") from exc
 
 
 def main():
     import numpy as np
+
+    require_dgl_sparse()
 
     config = Config(**params(Config))
     seed_all(config.seed)
@@ -75,16 +114,6 @@ def main():
 
     p = paths()
     dataset = stage_dataset(p.data)
-
-    # load_dataset() routes the four names upstream ships through load_mat and
-    # raises "Unimplemented dataset" for anything else, so a rendered graph
-    # has to arrive under one of them.
-    if dataset not in ("Amazon", "Facebook", "Reddit", "YelpChi"):
-        warning(
-            f"[WARN] '{dataset}' is not one of upstream's four .mat names "
-            "(Amazon, Facebook, Reddit, YelpChi); modules/utils.load_dataset "
-            "raises for anything else. Renaming the staged file to one of "
-            "them is the supported route -- see README.md.")
 
     exp = Path(os.environ["EXP"])
     score_out = exp / "huge_gad_scores.txt"

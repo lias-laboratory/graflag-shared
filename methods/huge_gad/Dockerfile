@@ -23,19 +23,29 @@ RUN pip install --no-cache-dir --break-system-packages \
 RUN pip install --no-cache-dir --break-system-packages \
     torch==2.4.0 torchvision==0.19.0 --index-url https://download.pytorch.org/whl/cu121
 
-# DGL 2.4.0, not 2.5.0.
+# DGL 2.4.0, not 2.5.0, and from conda rather than pip.
 #
 # data.dgl.ai lists dgl-2.5.0+cu121-cp312 in its index and then serves it with
-# HTTP 403 -- the wheel is advertised but not downloadable, which is upstream's
-# fault and not something a version specifier fixes. 2.4.0 and 2.3.0 both
-# return 200 for the same interpreter; PyPI's dgl 2.2.1 ships Windows wheels
-# only. 2.4.0 is the newest that can actually be fetched.
+# HTTP 403 -- the wheel is advertised but not downloadable. 2.4.0 was the
+# newest that could be fetched; PyPI's dgl stops at 2.2.1.
+#
+# On 2026-11-17 data.dgl.ai stopped completing the TLS handshake from every
+# network tried (SSL_ERROR_SYSCALL), and the S3 bucket behind it serves the
+# index but answers 403 for every wheel, so pip has no source at all. The DGL
+# team publishes the same version for the same torch and CUDA on its conda
+# channel; install_dgl.py fetches it, checks its pinned SHA-256 and extracts
+# it next to torch. It is not the wheel's binary: its sparse library links the
+# driver directly (see below). Its
+# dependencies, from the package's requires.txt, are installed here by name
+# because nothing resolves them.
 #
 # Both checks below are load-bearing. The import alone is not enough: DGL's
 # C++ half is built per torch version, so a mismatched pair imports fine and
 # fails at the first graph operation.
+COPY methods/huge_gad/install_dgl.py /tmp/install_dgl.py
 RUN pip install --no-cache-dir --break-system-packages \
-    "dgl==2.4.0+cu121" -f https://data.dgl.ai/wheels/torch-2.4/cu121/repo.html \
+    packaging pandas psutil "pydantic>=2.0" pyyaml requests tqdm \
+ && python3 /tmp/install_dgl.py \
  && python3 -c "import torch, dgl; print('[OK] torch', torch.__version__, 'dgl', dgl.__version__)" \
  && python3 -c "import torch, dgl; g = dgl.graph((torch.tensor([0,1]), torch.tensor([1,2]))); assert g.num_nodes() == 3; print('[OK] dgl graph ops')"
 
@@ -49,16 +59,37 @@ RUN pip install --no-cache-dir --break-system-packages \
 # to a CUDA 12 base.
 #
 # This surfaced only at run time and only in dgl.sparse: `import dgl` and
-# ordinary graph ops both succeed without it, which is why the build check
-# above now imports dgl.sparse specifically.
+# ordinary graph ops both succeed without it.
 ENV LD_LIBRARY_PATH=/usr/local/lib/python3.12/dist-packages/nvidia/cuda_nvrtc/lib:${LD_LIBRARY_PATH}
 
-RUN python3 -c "import dgl.sparse; print('[OK] dgl.sparse C++ library loads')"
+# The conda build of that library also links libcuda.so.1, the driver,
+# which no image ships: the NVIDIA runtime mounts it into a running container,
+# and a docker build has no GPU. So `import dgl.sparse` cannot run here, and
+# train_graflag.py imports it before anything else at run time instead. What
+# can be checked here is the part this image is responsible for: the library
+# is present and the loader finds libnvrtc.so.12 through the path above.
+RUN f=/usr/local/lib/python3.12/dist-packages/dgl/dgl_sparse/libdgl_sparse_pytorch_2.4.0.so \
+ && test -f "$f" \
+ && ldd "$f" | grep -q 'libnvrtc.so.12 => /' \
+ && echo "[OK] dgl.sparse library present; libnvrtc.so.12 resolves"
 
 # torchmetrics, which HUGE-GAD imports in its modules. Pure Python, so PyPI
 # is fine and no versioned index is needed.
 RUN pip install --no-cache-dir --break-system-packages torchmetrics \
  && python3 -c "import torchmetrics; print('[OK] torchmetrics', torchmetrics.__version__)"
+
+# torch_geometric, for the datasets rather than for the method. A bond_* graph
+# is a pickled PyG Data, so stage_dataset() -- graflag_runner's
+# load_attributed_graph, then write_mat -- cannot unpickle it without PyG
+# installed: the first run that got past DGL died there, `No module named
+# 'torch_geometric'`. 2.6.1 is the release built against torch 2.4, which this
+# image is pinned to for DGL; PyG's core is pure Python and declares no torch
+# requirement, so installing it moves nothing. pyg-lib and the scatter/sparse
+# extensions are not needed to load a Data and are not installed.
+RUN pip install --no-cache-dir --break-system-packages torch-geometric==2.6.1 \
+ && python3 -c "import torch, torch_geometric; from torch_geometric.data import Data; \
+assert torch.__version__.startswith('2.4.0'), torch.__version__; \
+print('[OK] torch_geometric', torch_geometric.__version__, 'with torch', torch.__version__)"
 
 WORKDIR /app
 

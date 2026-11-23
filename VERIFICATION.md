@@ -7,7 +7,9 @@ and run on a cluster, and the result recorded here. 26 of 27 produced a
 below rather than quietly omitted. Methods integrated since (`ad_gcl`,
 `ada_gad`, `diffgad`, `f_fade`, `huge_gad`, `midas`, `rare`) record their
 runs, or why none has completed, in the `## Verification` section of their
-own README.
+own README. All 33 were then run on a three-node GPU cluster, against their
+reference implementations where those run outside GraFlag; see "On a
+three-node GPU cluster" at the end.
 
 This file exists because "the method is integrated" and "the method runs" had
 never been the same claim. Several methods here had never been executed once.
@@ -68,7 +70,7 @@ only way either becomes visible.
 | `bond_dmgd` | `bond_gen_100` | completed | 0.2087 | 0.1182 | CPU: upstream GPU defect, declared in `.env` |
 | `bond_dominant` | `bond_gen_100` | completed | 0.7913 | 0.7134 |  |
 | `bond_done` | `bond_gen_100` | completed | 0.6944 | 0.3937 |  |
-| `bond_gaan` | `bond_gen_100` | failed | -- | -- | upstream, both devices -- see [its README](methods/bond_gaan/README.md) |
+| `bond_gaan` | `bond_gen_100` | failed | -- | -- | upstream, both devices, on the graph as published; runs since GraFlag removes its repeated edges -- see [its README](methods/bond_gaan/README.md) |
 | `bond_gadnr` | `bond_gen_100` | completed | 0.7981 | 0.7489 | CPU: upstream GPU defect, declared in `.env` |
 | `bond_gae` | `bond_gen_100` | completed | 0.6440 | 0.3183 |  |
 | `bond_guide` | `bond_gen_100` | completed | 0.8401 | 0.7313 |  |
@@ -209,10 +211,12 @@ integration work, so none of them was silently patched.
 - **`dynwalk`** and **`addgraph`** are reimplementations. Their `.env` files
   say `INTEGRATION=reimplementation`; both previously cited a repository whose
   code never ran.
-- **`bond_gaan`** does not run at all, on either device. It is the only
-  detector in the family that passes the dense adjacency to
-  `binary_cross_entropy` as a *target*, and the published BOND graphs contain
-  duplicate edges, so that target contains 2s.
+- **`bond_gaan`** did not run at all, on either device, on the graphs as
+  published. It is the only detector in the family that passes the dense
+  adjacency to `binary_cross_entropy` as a *target*, and the published BOND
+  graphs contain duplicate edges, so that target contains 2s. `graflag_bond`
+  now removes the repeated edges for GAAN alone and records how many in
+  `dataset_info`; the other sixteen still get the file as it is.
 
 ## What running them actually found
 
@@ -259,9 +263,23 @@ code is not installed where the tests run.
   re-run cleared the pass that had failed and finished both epochs, and epoch
   1's losses came back identical to the failed run's -- discriminator 1.0330,
   generator 18.2169 -- which is what "changes no number" means in practice.
-- **`bond_gaan` cannot run on the published BOND graphs**, for a reason in the
-  data rather than in the integration -- four duplicate edges in `gen_100.pt`
-  make the dense adjacency contain a 2.
+- **`bond_gaan` could not run on the published BOND graphs**, for a reason in
+  the data rather than in the integration -- four duplicate edges in
+  `gen_100.pt` (six in `inj_cora.pt`) make the dense adjacency contain a 2.
+  With them removed for GAAN only, it completed on a three-node GPU cluster
+  (2026-11-17, `bond_inj_cora`) and verified, at AUC-ROC 0.498 -- which PyGOD's
+  GAAN called directly on the same deduplicated graph reproduces (0.4980,
+  seed 42; 0.4750, seed 1). Running is not the same as detecting.
+- **`bond_ocgnn` gives every node of `bond_inj_cora` the same score.** Its
+  0.5 is not a measurement, and `graflag verify` fails the run for it. PyGOD's
+  OCGNN called directly does the same for seeds 42, 1 and 7: the one-class
+  objective's trivial solution, reached at these defaults on this graph.
+- **`graflag verify` failed a sound `gady` run.** GADY reports upstream's
+  AUC, a mean over batches of 200 test edges; the evaluator's is one AUC over
+  all of them -- 0.9810 against 0.9788 for the same scores. The method now
+  declares `auc_batch_size`, and `verify` recomputes the batch mean from the
+  published scores (0.9809881184222453, equal to the reported `best_auc`)
+  instead of comparing two different statistics.
 - **DMGD and GAD-NR cannot run on a GPU** at the PyGOD commit the image pins.
   Both now declare `_GPU=-1` in their `.env` with the upstream traceback
   recorded beside it.
@@ -370,3 +388,174 @@ matrix is therefore still in the registry, so re-running any row of it needs
   `methods/` and `libs/` before the first row. `graflag copy -s ./methods
   --dest methods -r` is not the way to do it by hand: it copies the directory
   *into* the destination and leaves a `/shared/methods/methods` behind.
+
+## On a three-node GPU cluster
+
+On 2026-11-17 and 2026-11-18 all 33 methods were run again, on a three-node
+Docker Swarm cluster: node-1 (the manager), node-2 and node-3, one NVIDIA A16
+each. The matrix above shared one GPU between five containers, so it could
+only ask whether a method runs. This campaign also asks whether a method's
+number agrees with its reference implementation, whether it repeats, and what
+more nodes buy.
+
+The driver is `validation/campaign.py`, fed by the `jobs-*.json` files beside
+it; every number below is in a record under `validation/results/`. The
+scripts that write those records name the machines node-1 to node-3 and
+refuse to write a file that names them any other way
+(`validation/clusterenv.py`).
+
+### 33 configured, 33 executed, 32 verified
+
+Each method ran on one dataset of its family, at its declared defaults with a
+fixed seed, on a GPU where it supports one. *Executed* means `completed`, with
+a `results.json` that `graflag evaluate` scores. *Verified* means `graflag
+verify` found nothing failed. The per-method table, with device, attempts,
+AUC, time and peak memory, is `validation/results/coverage-final.md`, which
+`collect.py` and `tables.py` assemble from every attempt's record.
+
+| Setting | Configured | Executed | Verified |
+|---|---|---|---|
+| Static graphs | 22 | 22 | 21 |
+| Temporal (snapshot) graphs | 4 | 4 | 4 |
+| Streams | 7 | 7 | 7 |
+| All | 33 | 33 | 32 |
+
+The one not verified is `bond_ocgnn`. It published a single value,
+-4.03e-05, for all 2,708 nodes, and `verify` fails a run that ranked nothing.
+PyGOD's `OCGNN` called directly does the same (`methods/bond_ocgnn/README.md`).
+
+27 methods completed on their first attempt. Six needed more: `ad_gcl` 7,
+`huge_gad` 5, `generaldyg` 4, `ada_gad`, `bond_gaan` and `gady` 2 each. Every
+failed attempt, and what changed after it, is in that method's README.
+
+Beyond that matrix, `ad_gcl` was run on the five other datasets it declares,
+once it ran at all. All five completed on their first attempt and passed
+`verify` (`methods/ad_gcl/README.md`; `validation/results/ad_gcl-datasets.json`).
+
+### Agreement with the reference implementations
+
+Where a method's reference implementation can be run outside GraFlag on the
+same input, it was. Both sides ran on a CPU, so that GPU nondeterminism does
+not blur the comparison, and the reference was compared with a GraFlag CPU run
+of the same configuration and seed:
+
+| Methods | Reference, run directly | Result |
+|---|---|---|
+| The 17 PyGOD detectors | the detector class itself (`validation/reference/pygod_direct.py`), `bond_inj_cora`, seed 42 | 16 bit-identical over all 2,708 nodes. DMGD within 1.6e-6, and two direct DMGD runs differ from each other by 2.1e-6 |
+| MIDAS | upstream's `Demo.cpp` at the pinned commit (`validation/reference/midas_upstream.sh`) | identical, as upstream prints them, for all 4,554,344 edges; ROC-AUC 0.9844 on both sides |
+| TADDY | upstream's `0_prepare_data.py` and `1_train.py --seed 1`, unmodified (`validation/reference/taddy_upstream.sh`) | the 20 test AUCs upstream prints, one every 10 epochs, equal the GraFlag run's `validation.csv` to the four digits printed; 0.8387 at the end |
+
+The records are `validation/results/reference/`. The other 14 methods were not
+compared this way. For those, `graflag verify` checks that the published scores
+reproduce the AUC the method computed for itself, where it computes one. That
+shows GraFlag publishes what the method measured. It does not show the method
+is upstream's.
+
+The comparison found one defect in its own harness. The first direct script
+fitted every detector on one shared `Data` object, and some PyGOD detectors
+(CARD, DMGD, GADNR) change the graph they are fitted on. A detector fitted
+after one of them saw a different graph: DOMINANT gave 0.6664 against
+GraFlag's 0.7673. With a fresh copy of the graph per detector, the two agree.
+
+It also found something in PyGOD: CONAD trains as DOMINANT. Its contrastive
+term is `MarginRankingLoss(h, h, h_aug)`, a constant with zero gradient. On
+the GPU their published scores differ by at most 1e-4
+(`methods/bond_conad/README.md`).
+
+### Repeatability
+
+Same configuration and seed, replayed with `graflag run --from-config`
+(`validation/repeatability.py`; records `validation/results/repeat-*.json`):
+
+| Method | Device | Runs | Scores | AUC-ROC |
+|---|---|---|---|---|
+| AnoGraph | CPU | 4, on node-2 and node-3 | bit-identical | 0.9480 |
+| AD-GCL | CPU | 2 | bit-identical | 0.9147 |
+| StrGNN | CPU | 2 | bit-identical | 0.9109 |
+| TADDY | GPU | 4 | bit-identical | 0.8388 |
+| DOMINANT | GPU | 4 | within 8.6e-6 | 0.7673 |
+| StrGNN | GPU | 4 | differ by up to 0.415 | 0.9027 to 0.9077 |
+| DiffGAD | GPU | 2 | differ by up to 0.047 | 0.6743 |
+
+Each method's own randomness is fully seeded through GraFlag. What is left is
+GPU floating point, and for StrGNN training amplifies it: a StrGNN number from
+a GPU is one draw from a band about 0.005 wide
+(`methods/strgnn/README.md`).
+
+### More nodes
+
+Six GPU jobs, `bond_anomalous` on `bond_inj_cora` with seeds 1 to 6, each
+reserving its node's one GPU, so a node runs one job at a time and the swarm
+queues the rest. Workers were drained to shrink the cluster
+(`validation/scaling.sh`; `validation/results/scaling-summary.jsonl`):
+
+| Active nodes | Makespan (s) | Speed-up |
+|---|---|---|
+| 1 | 135.5 | 1.00 |
+| 2 | 84.6 | 1.60 |
+| 3 | 73.3 | 1.85 |
+
+The jobs are short, about 13.5 s of method time each, so the fixed cost of
+each service is a large part of the makespan. That is why three nodes give
+1.85 times, not three.
+
+### A fault in the platform, not in GraFlag
+
+A host-to-GPU copy from pinned host memory delivers corrupted data on node-1
+and node-2, and is intact on node-3. Copies from pageable memory are intact
+everywhere. It was found when GeneralDyG's first epoch went NaN, and it needs
+no method code to reproduce (`validation/platform/README.md`). Only
+GeneralDyG pins host memory among the method images, and its loader no longer
+does. It is recorded here so that a NaN on those nodes is not mistaken for a
+method defect.
+
+### What the campaign found in the client
+
+Each was fixed, and each fix has a test.
+
+| Defect | Test (in `graflag/tests/`) |
+|---|---|
+| A failed push was a warning. The build said `[OK]`, and the run used the registry's previous image | `test_build_failure.py::AFailedPushIsAFailedBuild` |
+| `build.log`, which tells the status probe the build is over, was written before the service existed. A listing in between read the run as failed, and a `create_service` that raised left it `building` forever | `test_build_failure.py::TheServiceIsCreatedBeforeTheBuildIsDeclaredOver` |
+| `build.log` appeared only when a build ended. It is now written as the build runs, and a failed build still fails through the pipe | `test_live_build_log.py::LiveBuildLog` |
+| Once `build.log` was live, its existence no longer meant "built", and every build in progress was listed as failed | `test_status.py::ABuildInProgressIsBuilding` |
+| A run waiting for a GPU (26 minutes, for `ad_gcl`) was listed as `building`, or as `running` without `--build`. Stopping one that never started now records it as stopped | `test_status.py::AQueuedRunIsQueued`, `StoppingAQueuedRun` |
+| Two runs started in the same second shared one directory | `test_naming.py::ExperimentNamesDoNotCollide` |
+| ssh's own failure (exit 255) read as an empty reply: "No methods found" | `test_ssh.py::SshFailureIsNotAnAnswer` |
+| Every connection was `root@` the manager, directly. `SSH_USER` and `SSH_PROXY_JUMP` now reach every ssh and rsync | `test_ssh.py::UserAndJumpHost` |
+| One dropped ssh connection ended the wait on two CPU runs nine hours in, and both were recorded as failed while still running | `test_run_quiet.py::WaitThroughALostManager` |
+| A run that queued for a GPU recorded no node | `test_placement.py::TheServiceTellsTheRunnerItsNode`, `RecordPlacement`, `RunRecordsItBeforeRemovingTheService` |
+| GADY's own AUC is a mean over batches, and `verify` compared it with one AUC over everything, failing a run whose scores were the ones it measured | `test_verify.py::ABatchMeanAucIsRecomputed` |
+| A long-running client sent the manager a probe from a `verify.py` edited after it was imported (`NameError: name '_probe' is not defined`) | `test_verify.py::TheProbeIsTheCodeThatWasLoaded` |
+| On a share that is a `graflag-shared` clone, `clear --apply` would have deleted the checkout's `tests/` as a stray | `test_clear.py::ACheckoutIsNotAStray` |
+
+A reviewer's run of the suite on native Windows found two more in the client,
+not the tests: the ssh tunnel and the log follower passed `preexec_fn`, which
+Python rejects on Windows (`test_platform.py::ChildOptions`), and a copy or
+sync without a local rsync died with a bare `FileNotFoundError`
+(`test_platform.py::RsyncIsRequiredLoudly`).
+
+### What it found in the methods
+
+Each is in that method's README, with the failed runs.
+
+- **`ad_gcl`** runs on the CPU. DGL 0.4.3's CUDA builds carry machine code for
+  GPUs up to sm_70 and no PTX, so on the A16 (sm_86) every DGL kernel launch
+  failed without an error and left its output at zero. The image installs
+  upstream's stated stack in its CPU build, and the run checks DGL's message
+  passing against torch before it trains.
+- **`generaldyg`** built its 2.5-hour dataset pickle in the container's
+  working directory, lost it, and failed. It now builds it once, seeded,
+  beside the dataset. Its next failure, NaN at the first evaluation, was the
+  pinned-memory fault above.
+- **`bond_card`**, **`bond_dmgd`** and **`bond_gadnr`** change the graph they
+  are fitted on, so `dataset_info` described the graph after training.
+  `graflag_bond` now describes it before `fit()`.
+- **`bond_conad`** trains as DOMINANT, and **`bond_ocgnn`** publishes a
+  constant. Both are PyGOD's behaviour, and the reference runs show it.
+- **`diffgad`** publishes the last of its 20 trials, while upstream reports
+  their mean. It now records all 20, and the AUC upstream measured for the
+  published scores, which `verify` checks; a rerun gave the same AUC, 0.6743,
+  from scores up to 0.047 apart.
+- **`gady`**: the batch-mean AUC above. **`huge_gad`**: four builds and runs,
+  each failing one step further, before it completed.

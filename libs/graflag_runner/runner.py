@@ -59,6 +59,20 @@ def _parse_monitor_interval(raw, default: float = 1.0) -> float:
     return value
 
 
+
+def run_node() -> Optional[str]:
+    """The cluster node this run is on, or None when it cannot be told.
+
+    GraFlag sets ``GRAFLAG_NODE={{.Node.Hostname}}``, which Swarm expands per
+    task. Outside Swarm the template arrives unexpanded (or not at all), and
+    the container's own hostname is a container id rather than a node, so
+    neither is recorded in its place.
+    """
+    value = os.environ.get("GRAFLAG_NODE", "").strip()
+    if not value or "{{" in value:
+        return None
+    return value
+
 class MethodRunner:
     """
     Wrapper for executing graph anomaly detection methods.
@@ -104,6 +118,7 @@ class MethodRunner:
         self.data_dir = Path(data_dir)
         self.exp_dir = Path(exp_dir)
         self.method_name = method_name
+        self.node = run_node()
         self.command = command
         self.monitor_interval = monitor_interval
         self.pass_env_args = pass_env_args
@@ -193,6 +208,8 @@ class MethodRunner:
                 data = json.load(fh)
 
             metadata = data.setdefault("metadata", {})
+            if self.node:
+                metadata["node"] = self.node
             measured = {"exec_time_ms": round(exec_time_ms, 2)}
             for key in ("peak_memory_mb", "peak_gpu_mb"):
                 if resources and resources.get(key) is not None:
@@ -238,6 +255,8 @@ class MethodRunner:
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "method_name": self.method_name,
         }
+        if self.node:
+            status_data["node"] = self.node
         if exec_time_ms is not None:
             status_data["exec_time_ms"] = round(exec_time_ms, 2)
         if resources is not None:

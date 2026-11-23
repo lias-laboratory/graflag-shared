@@ -1,0 +1,7 @@
+[OK] bond_base present on all nodes
+node-1 Active node-2 Drain node-3 Drain 
+{"active_nodes": 1, "jobs": 6, "makespan_s": 135.5}
+node-1 Active node-2 Active node-3 Drain 
+{"active_nodes": 2, "jobs": 6, "makespan_s": 84.6}
+node-1 Active node-2 Active node-3 Active 
+{"active_nodes": 3, "jobs": 6, "makespan_s": 73.3}

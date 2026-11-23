@@ -1,0 +1,502 @@
+2026-11-17 14:35:44,473 - INFO - [RUN] Starting run: exp__taddy__uci__20261117_143544
+2026-11-17 14:35:46,351 - INFO - [INFO] Ensuring dataset uci is downloaded...
+2026-11-17 14:35:47,838 - INFO - [INFO] Experiment directory: /shared/experiments/exp__taddy__uci__20261117_143544
+2026-11-17 14:35:49,881 - INFO - [INFO] Saved service configuration to /shared/experiments/exp__taddy__uci__20261117_143544/service_config.json
+2026-11-17 14:35:49,881 - INFO -    Setting parameter: _ANOMALY_PER=0.1
+2026-11-17 14:35:49,881 - INFO -    Setting parameter: _TRAIN_PER=0.5
+2026-11-17 14:35:49,881 - INFO -    Setting parameter: _NEIGHBOR_NUM=5
+2026-11-17 14:35:49,881 - INFO -    Setting parameter: _WINDOW_SIZE=2
+2026-11-17 14:35:49,881 - INFO -    Setting parameter: _EMBEDDING_DIM=32
+2026-11-17 14:35:49,881 - INFO -    Setting parameter: _NUM_HIDDEN_LAYERS=2
+2026-11-17 14:35:49,881 - INFO -    Setting parameter: _NUM_ATTENTION_HEADS=2
+2026-11-17 14:35:49,882 - INFO -    Setting parameter: _MAX_EPOCH=200
+2026-11-17 14:35:49,882 - INFO -    Setting parameter: _LEARNING_RATE=0.001
+2026-11-17 14:35:49,882 - INFO -    Setting parameter: _WEIGHT_DECAY=0.0005
+2026-11-17 14:35:49,882 - INFO -    Setting parameter: _SEED=1
+2026-11-17 14:35:49,882 - INFO -    Setting parameter: _PRINT_FREQ=10
+2026-11-17 14:35:49,882 - INFO -    Setting parameter: _GPU=0
+2026-11-17 14:35:49,882 - INFO - [INFO] Creating GPU-enabled service exp__taddy__uci__20261117_143544...
+2026-11-17 14:35:50,874 - INFO - [OK] Service exp__taddy__uci__20261117_143544 created successfully
+2026-11-17 14:35:51,703 - INFO - [INFO] Saved service details to /shared/experiments/exp__taddy__uci__20261117_143544/service_details.json
+2026-11-17 14:35:51,763 - INFO - [INFO] Following service logs (press Ctrl+C to stop)...
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | 
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | ==========
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | == CUDA ==
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | ==========
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | 
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | CUDA Version 11.1.1
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | 
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Container image Copyright (c) 2016-2023, NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | 
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | This container image and its contents are governed by the NVIDIA Deep Learning Container License.
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | By pulling and using the container, you accept the terms and conditions of this license:
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | https://developer.nvidia.com/ngc/nvidia-deep-learning-container-license
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | 
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | A copy of this license is made available in this container at /NGC-DL-CONTAINER-LICENSE for your convenience.
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | 
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | 2026-11-17 13:37:54,600 - graflag_runner.runner - INFO - ============================================================
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | 2026-11-17 13:37:54,600 - graflag_runner.runner - INFO - GraFlag Runner - taddy
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | 2026-11-17 13:37:54,600 - graflag_runner.runner - INFO - ============================================================
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | 2026-11-17 13:37:54,600 - graflag_runner.runner - INFO - [INFO] Data: /shared/datasets/uci
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | 2026-11-17 13:37:54,600 - graflag_runner.runner - INFO - [INFO] Output: /shared/experiments/exp__taddy__uci__20261117_143544
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | 2026-11-17 13:37:54,600 - graflag_runner.runner - INFO - [INFO] Command: python3 train_graflag.py
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | 2026-11-17 13:37:54,600 - graflag_runner.runner - INFO - [INFO] Monitor interval: 1.0s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | 2026-11-17 13:37:54,600 - graflag_runner.runner - INFO - [INFO] Pass env args: False
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | 2026-11-17 13:37:54,600 - graflag_runner.runner - INFO - 
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | 2026-11-17 13:37:54,604 - graflag_runner.monitor - INFO - [INFO] Resource monitoring started (PID: 1)
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | 2026-11-17 13:37:54,604 - graflag_runner.runner - INFO - [INFO] Starting method execution...
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | 2026-11-17 13:37:54,604 - graflag_runner.monitor - INFO -    Total memory: 100588MB
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | 2026-11-17 13:37:54,605 - graflag_runner.monitor - INFO -    Total GPU memory: 15356MB
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | 2026-11-17 13:37:56,597 - taddy - INFO - [INFO] TADDY on uci: {'anomaly_per': 0.1, 'train_per': 0.5, 'neighbor_num': 5, 'window_size': 2, 'embedding_dim': 32, 'num_hidden_layers': 2, 'num_attention_heads': 2, 'max_epoch': 200, 'learning_rate': 0.001, 'weight_decay': 0.0005, 'seed': 1, 'print_freq': 10, 'gpu': 0}
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | 
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | === Setting Up Data Directories ===
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Source: /shared/datasets/uci
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Dataset: uci
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | [OK] Symlinked: uci -> data/raw/uci
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | [OK] Data directories ready
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | 
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | 
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | === Preprocessing Dataset: uci ===
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap size: 1000
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Anomaly %: 0.1
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Train %: 0.5
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Vertices: 1899, Edges: 13838
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | [OK] Preprocess finished! Time: 0.54s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | 
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | === Generating Anomalies ===
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | [#s] generating anomalous dataset...
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    |  2026-11-17 13:37:57.148159
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | [#s] initial network edge percent: #.1f##, anomaly percent: #.1f##.
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    |  2026-11-17 13:37:57.148269 50.0 10.0
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | /usr/local/lib/python3.8/dist-packages/sklearn/manifold/_spectral_embedding.py:236: UserWarning: Graph is not fully connected, spectral embedding may not work as expected.
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    |   warnings.warn("Graph is not fully connected, spectral embedding"
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | [OK] Anomaly generation finished! Time: 9.13s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | 
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | === Building Snapshots ===
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Train: 6919 edges, 7 snaps
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Test: 7610 edges, 8 snaps
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | [OK] Training snapshots created! Time: 0.00s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | [OK] Test snapshots created! Time: 0.00s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | [OK] Saved: data/percent/uci_0.5_0.1.pkl
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | 
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | 2026-11-17 13:38:06,282 - taddy - INFO - [INFO] Seeded with 1
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | === Loading Dataset ===
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | === Configuring Model ===
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | === Initializing Model ===
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | 2026-11-17 13:38:06,286 - taddy - INFO - [INFO] Using GPU cuda:0
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | === Starting Training ===
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | 
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Loading uci dataset...
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Generating eigen as: data/eigen/uci_0.5_0.1.pkl
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | /app/src/codes/DynamicDatasetLoader.py:65: RuntimeWarning: divide by zero encountered in power
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    |   r_inv = np.power(rowsum, -0.5).flatten()
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | /app/src/codes/DynamicDatasetLoader.py:47: RuntimeWarning: divide by zero encountered in power
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    |   r_inv = np.power(rowsum, -1).flatten()
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 1, loss:0.6821, Time: 3.9386s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 2, loss:0.6494, Time: 4.0400s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 3, loss:0.5962, Time: 3.9199s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 4, loss:0.5195, Time: 4.2816s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 5, loss:0.4246, Time: 3.8609s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 6, loss:0.3449, Time: 3.9454s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 7, loss:0.2869, Time: 4.0674s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 8, loss:0.2369, Time: 4.2335s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 9, loss:0.1974, Time: 4.1723s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 10, loss:0.1734, Time: 3.9123s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 07 | AUC: 0.8949
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 08 | AUC: 0.7800
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 09 | AUC: 0.8382
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 10 | AUC: 0.7965
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 11 | AUC: 0.7111
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 12 | AUC: 0.8149
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 13 | AUC: 0.8692
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 14 | AUC: 0.8727
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | TOTAL AUC: 0.8173
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 11, loss:0.1749, Time: 3.9638s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 12, loss:0.1541, Time: 4.2460s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 13, loss:0.1343, Time: 3.9441s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 14, loss:0.1389, Time: 3.8324s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 15, loss:0.1185, Time: 4.0633s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 16, loss:0.0982, Time: 4.0369s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 17, loss:0.0928, Time: 4.0125s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 18, loss:0.0839, Time: 3.8181s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 19, loss:0.0912, Time: 3.9618s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 20, loss:0.0763, Time: 3.9688s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 07 | AUC: 0.8969
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 08 | AUC: 0.8031
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 09 | AUC: 0.8527
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 10 | AUC: 0.7917
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 11 | AUC: 0.7213
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 12 | AUC: 0.8142
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 13 | AUC: 0.8767
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 14 | AUC: 0.8841
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | TOTAL AUC: 0.8240
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 21, loss:0.0715, Time: 3.9723s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 22, loss:0.0682, Time: 3.9888s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 23, loss:0.0635, Time: 4.0249s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 24, loss:0.0608, Time: 4.2200s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 25, loss:0.0673, Time: 3.8081s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 26, loss:0.0635, Time: 3.8437s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 27, loss:0.0617, Time: 3.9786s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 28, loss:0.0775, Time: 3.6422s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 29, loss:0.0680, Time: 4.0175s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 30, loss:0.0572, Time: 4.2832s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 07 | AUC: 0.8953
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 08 | AUC: 0.7991
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 09 | AUC: 0.8489
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 10 | AUC: 0.8038
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 11 | AUC: 0.7279
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 12 | AUC: 0.8186
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 13 | AUC: 0.8768
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 14 | AUC: 0.8848
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | TOTAL AUC: 0.8271
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 31, loss:0.0604, Time: 3.8170s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 32, loss:0.0647, Time: 3.8977s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 33, loss:0.0603, Time: 3.8874s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 34, loss:0.0611, Time: 3.7752s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 35, loss:0.0534, Time: 3.9060s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 36, loss:0.0539, Time: 3.8485s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 37, loss:0.0486, Time: 3.9056s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 38, loss:0.0651, Time: 3.9724s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 39, loss:0.0547, Time: 3.7681s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 40, loss:0.0436, Time: 4.0828s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 07 | AUC: 0.9009
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 08 | AUC: 0.8200
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 09 | AUC: 0.8507
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 10 | AUC: 0.8096
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 11 | AUC: 0.7431
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 12 | AUC: 0.8224
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 13 | AUC: 0.8833
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 14 | AUC: 0.8848
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | TOTAL AUC: 0.8343
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 41, loss:0.0446, Time: 4.2177s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 42, loss:0.0513, Time: 3.7834s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 43, loss:0.0493, Time: 3.9408s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 44, loss:0.0416, Time: 4.0542s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 45, loss:0.0436, Time: 3.9029s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 46, loss:0.0435, Time: 3.8545s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 47, loss:0.0416, Time: 4.1189s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 48, loss:0.0519, Time: 3.7307s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 49, loss:0.0523, Time: 3.9388s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 50, loss:0.0494, Time: 3.7679s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 07 | AUC: 0.9041
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 08 | AUC: 0.8205
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 09 | AUC: 0.8516
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 10 | AUC: 0.8083
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 11 | AUC: 0.7483
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 12 | AUC: 0.8247
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 13 | AUC: 0.8804
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 14 | AUC: 0.8769
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | TOTAL AUC: 0.8351
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 51, loss:0.0377, Time: 4.0449s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 52, loss:0.0473, Time: 4.0664s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 53, loss:0.0398, Time: 3.8124s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 54, loss:0.0358, Time: 3.8886s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 55, loss:0.0419, Time: 4.3018s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 56, loss:0.0424, Time: 3.8167s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 57, loss:0.0489, Time: 3.7924s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 58, loss:0.0418, Time: 3.9038s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 59, loss:0.0439, Time: 3.7100s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 60, loss:0.0358, Time: 4.2300s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 07 | AUC: 0.9030
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 08 | AUC: 0.8225
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 09 | AUC: 0.8520
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 10 | AUC: 0.8159
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 11 | AUC: 0.7563
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 12 | AUC: 0.8215
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 13 | AUC: 0.8833
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 14 | AUC: 0.8599
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | TOTAL AUC: 0.8364
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 61, loss:0.0392, Time: 4.0046s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 62, loss:0.0341, Time: 3.7491s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 63, loss:0.0372, Time: 3.9873s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 64, loss:0.0388, Time: 3.8052s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 65, loss:0.0394, Time: 3.9148s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 66, loss:0.0364, Time: 3.9869s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 67, loss:0.0390, Time: 3.7689s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 68, loss:0.0354, Time: 4.0139s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 69, loss:0.0415, Time: 3.8630s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 70, loss:0.0327, Time: 3.9643s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 07 | AUC: 0.9044
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 08 | AUC: 0.8272
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 09 | AUC: 0.8519
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 10 | AUC: 0.8203
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 11 | AUC: 0.7578
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 12 | AUC: 0.8225
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 13 | AUC: 0.8814
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 14 | AUC: 0.8561
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | TOTAL AUC: 0.8383
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 71, loss:0.0331, Time: 3.8485s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 72, loss:0.0321, Time: 3.9823s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 73, loss:0.0289, Time: 3.9098s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 74, loss:0.0359, Time: 3.8708s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 75, loss:0.0385, Time: 3.8252s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 76, loss:0.0342, Time: 3.9849s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 77, loss:0.0378, Time: 3.9195s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 78, loss:0.0288, Time: 3.9715s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 79, loss:0.0322, Time: 4.0861s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 80, loss:0.0304, Time: 4.2029s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 07 | AUC: 0.9046
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 08 | AUC: 0.8259
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 09 | AUC: 0.8509
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 10 | AUC: 0.8226
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 11 | AUC: 0.7603
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 12 | AUC: 0.8246
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 13 | AUC: 0.8840
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 14 | AUC: 0.8520
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | TOTAL AUC: 0.8387
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 81, loss:0.0335, Time: 3.8426s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 82, loss:0.0391, Time: 3.7936s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 83, loss:0.0414, Time: 3.9671s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 84, loss:0.0362, Time: 3.7901s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 85, loss:0.0310, Time: 4.0574s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 86, loss:0.0343, Time: 4.2112s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 87, loss:0.0315, Time: 4.2018s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 88, loss:0.0333, Time: 3.9222s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 89, loss:0.0285, Time: 4.0118s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 90, loss:0.0341, Time: 4.0040s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 07 | AUC: 0.9061
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 08 | AUC: 0.8349
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 09 | AUC: 0.8510
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 10 | AUC: 0.8228
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 11 | AUC: 0.7589
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 12 | AUC: 0.8209
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 13 | AUC: 0.8835
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 14 | AUC: 0.8449
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | TOTAL AUC: 0.8385
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 91, loss:0.0323, Time: 4.0933s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 92, loss:0.0287, Time: 4.0816s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 93, loss:0.0319, Time: 3.9019s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 94, loss:0.0298, Time: 4.0879s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 95, loss:0.0278, Time: 4.1201s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 96, loss:0.0322, Time: 3.9730s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 97, loss:0.0264, Time: 4.0236s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 98, loss:0.0264, Time: 4.0186s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 99, loss:0.0335, Time: 3.9812s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 100, loss:0.0365, Time: 3.6836s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 07 | AUC: 0.9053
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 08 | AUC: 0.8291
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 09 | AUC: 0.8508
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 10 | AUC: 0.8166
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 11 | AUC: 0.7575
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 12 | AUC: 0.8180
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 13 | AUC: 0.8838
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 14 | AUC: 0.8424
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | TOTAL AUC: 0.8363
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 101, loss:0.0300, Time: 4.1384s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 102, loss:0.0367, Time: 3.9401s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 103, loss:0.0280, Time: 4.0686s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 104, loss:0.0334, Time: 3.8499s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 105, loss:0.0311, Time: 3.9709s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 106, loss:0.0342, Time: 3.7743s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 107, loss:0.0309, Time: 3.9301s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 108, loss:0.0365, Time: 4.3017s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 109, loss:0.0344, Time: 3.7632s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 110, loss:0.0291, Time: 3.9023s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 07 | AUC: 0.9045
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 08 | AUC: 0.8327
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 09 | AUC: 0.8500
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 10 | AUC: 0.8204
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 11 | AUC: 0.7611
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 12 | AUC: 0.8205
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 13 | AUC: 0.8836
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 14 | AUC: 0.8462
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | TOTAL AUC: 0.8382
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 111, loss:0.0316, Time: 4.1653s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 112, loss:0.0304, Time: 3.8148s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 113, loss:0.0308, Time: 3.9884s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 114, loss:0.0394, Time: 3.7993s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 115, loss:0.0360, Time: 3.8341s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 116, loss:0.0361, Time: 3.9254s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 117, loss:0.0286, Time: 4.0339s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 118, loss:0.0312, Time: 4.0336s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 119, loss:0.0317, Time: 3.8351s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 120, loss:0.0293, Time: 4.0834s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 07 | AUC: 0.9054
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 08 | AUC: 0.8319
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 09 | AUC: 0.8510
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 10 | AUC: 0.8224
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 11 | AUC: 0.7629
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 12 | AUC: 0.8207
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 13 | AUC: 0.8836
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 14 | AUC: 0.8474
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | TOTAL AUC: 0.8390
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 121, loss:0.0255, Time: 3.8713s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 122, loss:0.0291, Time: 3.9681s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 123, loss:0.0362, Time: 4.0491s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 124, loss:0.0324, Time: 4.2681s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 125, loss:0.0265, Time: 4.0323s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 126, loss:0.0276, Time: 3.8691s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 127, loss:0.0299, Time: 3.7774s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 128, loss:0.0282, Time: 3.9415s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 129, loss:0.0302, Time: 4.0729s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 130, loss:0.0282, Time: 3.8425s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 07 | AUC: 0.9052
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 08 | AUC: 0.8290
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 09 | AUC: 0.8524
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 10 | AUC: 0.8244
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 11 | AUC: 0.7616
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 12 | AUC: 0.8218
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 13 | AUC: 0.8848
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 14 | AUC: 0.8451
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | TOTAL AUC: 0.8394
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 131, loss:0.0289, Time: 4.1447s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 132, loss:0.0313, Time: 4.2635s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 133, loss:0.0339, Time: 3.8678s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 134, loss:0.0323, Time: 3.8682s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 135, loss:0.0334, Time: 3.7609s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 136, loss:0.0349, Time: 3.6195s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 137, loss:0.0314, Time: 3.9090s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 138, loss:0.0255, Time: 4.1708s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 139, loss:0.0325, Time: 3.8536s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 140, loss:0.0315, Time: 4.1005s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 07 | AUC: 0.9067
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 08 | AUC: 0.8302
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 09 | AUC: 0.8528
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 10 | AUC: 0.8196
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 11 | AUC: 0.7578
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 12 | AUC: 0.8217
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 13 | AUC: 0.8830
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 14 | AUC: 0.8409
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | TOTAL AUC: 0.8379
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 141, loss:0.0332, Time: 3.6870s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 142, loss:0.0405, Time: 4.3423s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 143, loss:0.0284, Time: 4.4688s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 144, loss:0.0307, Time: 3.9541s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 145, loss:0.0355, Time: 3.8737s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 146, loss:0.0321, Time: 4.1655s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 147, loss:0.0353, Time: 3.7704s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 148, loss:0.0306, Time: 3.8501s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 149, loss:0.0309, Time: 3.8802s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 150, loss:0.0344, Time: 3.9594s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 07 | AUC: 0.9050
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 08 | AUC: 0.8323
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 09 | AUC: 0.8530
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 10 | AUC: 0.8175
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 11 | AUC: 0.7565
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 12 | AUC: 0.8200
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 13 | AUC: 0.8823
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 14 | AUC: 0.8427
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | TOTAL AUC: 0.8362
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 151, loss:0.0274, Time: 4.1363s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 152, loss:0.0315, Time: 3.8956s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 153, loss:0.0286, Time: 3.9986s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 154, loss:0.0341, Time: 3.6946s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 155, loss:0.0373, Time: 4.2202s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 156, loss:0.0320, Time: 3.9427s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 157, loss:0.0377, Time: 3.8997s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 158, loss:0.0286, Time: 4.2222s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 159, loss:0.0337, Time: 3.7193s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 160, loss:0.0276, Time: 4.1144s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 07 | AUC: 0.9057
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 08 | AUC: 0.8302
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 09 | AUC: 0.8522
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 10 | AUC: 0.8233
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 11 | AUC: 0.7616
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 12 | AUC: 0.8216
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 13 | AUC: 0.8841
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 14 | AUC: 0.8513
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | TOTAL AUC: 0.8394
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 161, loss:0.0285, Time: 4.1458s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 162, loss:0.0348, Time: 3.8691s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 163, loss:0.0398, Time: 3.7507s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 164, loss:0.0322, Time: 3.8363s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 165, loss:0.0455, Time: 3.6891s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 166, loss:0.0303, Time: 3.9800s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 167, loss:0.0319, Time: 3.6864s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 168, loss:0.0255, Time: 3.9989s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 169, loss:0.0372, Time: 4.1549s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 170, loss:0.0331, Time: 4.0366s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 07 | AUC: 0.9047
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 08 | AUC: 0.8316
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 09 | AUC: 0.8496
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 10 | AUC: 0.8226
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 11 | AUC: 0.7607
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 12 | AUC: 0.8142
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 13 | AUC: 0.8808
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 14 | AUC: 0.8292
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | TOTAL AUC: 0.8357
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 171, loss:0.0343, Time: 3.8242s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 172, loss:0.0297, Time: 3.7896s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 173, loss:0.0325, Time: 3.8900s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 174, loss:0.0232, Time: 4.0564s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 175, loss:0.0341, Time: 3.7570s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 176, loss:0.0323, Time: 3.9417s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 177, loss:0.0272, Time: 3.8852s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 178, loss:0.0278, Time: 3.7786s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 179, loss:0.0338, Time: 3.9434s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 180, loss:0.0385, Time: 3.8580s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 07 | AUC: 0.9045
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 08 | AUC: 0.8299
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 09 | AUC: 0.8496
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 10 | AUC: 0.8142
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 11 | AUC: 0.7577
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 12 | AUC: 0.8196
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 13 | AUC: 0.8851
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 14 | AUC: 0.8412
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | TOTAL AUC: 0.8352
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 181, loss:0.0298, Time: 3.7358s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 182, loss:0.0248, Time: 4.1211s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 183, loss:0.0351, Time: 4.0649s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 184, loss:0.0300, Time: 4.0073s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 185, loss:0.0289, Time: 4.1967s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 186, loss:0.0397, Time: 3.7871s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 187, loss:0.0346, Time: 3.8744s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 188, loss:0.0246, Time: 4.1773s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 189, loss:0.0274, Time: 4.0043s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 190, loss:0.0317, Time: 3.8733s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 07 | AUC: 0.9062
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 08 | AUC: 0.8354
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 09 | AUC: 0.8503
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 10 | AUC: 0.8247
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 11 | AUC: 0.7645
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 12 | AUC: 0.8218
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 13 | AUC: 0.8855
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 14 | AUC: 0.8437
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | TOTAL AUC: 0.8399
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 191, loss:0.0313, Time: 3.9162s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 192, loss:0.0290, Time: 4.0952s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 193, loss:0.0313, Time: 3.7525s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 194, loss:0.0284, Time: 3.6856s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 195, loss:0.0328, Time: 4.0721s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 196, loss:0.0267, Time: 4.0856s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 197, loss:0.0289, Time: 4.2273s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 198, loss:0.0353, Time: 3.9573s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 199, loss:0.0289, Time: 4.1186s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Epoch: 200, loss:0.0298, Time: 3.9669s
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 07 | AUC: 0.9060
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 08 | AUC: 0.8371
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 09 | AUC: 0.8464
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 10 | AUC: 0.8247
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 11 | AUC: 0.7699
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 12 | AUC: 0.8181
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 13 | AUC: 0.8821
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | Snap: 14 | AUC: 0.8370
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | TOTAL AUC: 0.8388
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | 
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | === Generating Final Predictions on Test Snapshots ===
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | [OK] Generated predictions for 8 test snapshots
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    |    Snapshot IDs: [7, 8, 9, 10, 11, 12, 13, 14]
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    |    Total edges: 7610, Anomalies: 691 (9.08%)
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | 
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | [OK] Training Completed
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | 
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | === Saving Results ===
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    |    Predictions for 8 snapshots
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    |    Total edges: 7610
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    |    Ground truth for 8 snapshots
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | 2026-11-17 13:52:36,738 - graflag_runner.results - INFO - [OK] Scores saved: TEMPORAL_EDGE_ANOMALY_SCORES
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | 2026-11-17 13:52:36,739 - graflag_runner.results - INFO - [INFO] Writing results (standard)...
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | 2026-11-17 13:52:36,766 - graflag_runner.results - INFO - [OK] Results written to: /shared/experiments/exp__taddy__uci__20261117_143544/results.json
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | 2026-11-17 13:52:36,766 - taddy - INFO - [OK] Results written to /shared/experiments/exp__taddy__uci__20261117_143544/results.json
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | 2026-11-17 13:52:38,327 - graflag_runner.runner - INFO - 
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | 2026-11-17 13:52:38,328 - graflag_runner.runner - INFO - [INFO] Execution Summary:
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | 2026-11-17 13:52:38,328 - graflag_runner.runner - INFO -    [INFO] Execution time: 882899.06ms
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | 2026-11-17 13:52:38,328 - graflag_runner.runner - INFO -    [INFO] Peak memory: 4708.31MB
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | 2026-11-17 13:52:38,328 - graflag_runner.runner - INFO -    [INFO] Peak GPU memory: 1185.00MB
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | 2026-11-17 13:52:38,328 - graflag_runner.runner - INFO - 
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | 2026-11-17 13:52:38,332 - graflag_runner.runner - INFO - [INFO] Full output saved to: /shared/experiments/exp__taddy__uci__20261117_143544/method_output.txt
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | 2026-11-17 13:52:38,358 - graflag_runner.runner - INFO - [OK] Method execution completed successfully
+exp__taddy__uci__20261117_143544.1.kc2ioynyf54l@node-2    | 2026-11-17 13:52:38,362 - graflag_runner.runner - INFO - [OK] Runner completed successfully
+2026-11-17 14:52:36,061 - INFO - [INFO] Cleaned up finished service: exp__taddy__uci__20261117_143544
+2026-11-17 14:52:36,061 - INFO - [INFO] Removed finished service exp__taddy__uci__20261117_143544
+2026-11-17 14:52:36,061 - INFO - [INFO] View logs later: graflag logs -e exp__taddy__uci__20261117_143544

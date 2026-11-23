@@ -47,6 +47,12 @@ RUN test -n "${SOURCE_CODE}" && test -n "${SOURCE_REF}" \
     && git clone ${SOURCE_CODE} src \
     && git -C src checkout --detach ${SOURCE_REF}
 
+# One fix to upstream's Python, as a patch: `git apply` exits non-zero when it
+# does not apply, so upstream drifting fails the build instead of producing an
+# image that silently runs the unpatched code. See the patch header.
+COPY methods/strgnn/patches/ /app/patches/
+RUN git -C src apply --verbose /app/patches/cpu-labels.patch
+
 # Build the C++ library for DGCNN
 WORKDIR /app/src/pytorch_DGCNN/lib
 RUN make clean && make -j4

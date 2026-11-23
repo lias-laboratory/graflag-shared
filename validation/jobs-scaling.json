@@ -1,0 +1,62 @@
+[
+ {
+  "method": "bond_anomalous",
+  "dataset": "bond_inj_cora",
+  "params": {
+   "SEED": 1
+  },
+  "gpu": true,
+  "build": false,
+  "label": "scaling"
+ },
+ {
+  "method": "bond_anomalous",
+  "dataset": "bond_inj_cora",
+  "params": {
+   "SEED": 2
+  },
+  "gpu": true,
+  "build": false,
+  "label": "scaling"
+ },
+ {
+  "method": "bond_anomalous",
+  "dataset": "bond_inj_cora",
+  "params": {
+   "SEED": 3
+  },
+  "gpu": true,
+  "build": false,
+  "label": "scaling"
+ },
+ {
+  "method": "bond_anomalous",
+  "dataset": "bond_inj_cora",
+  "params": {
+   "SEED": 4
+  },
+  "gpu": true,
+  "build": false,
+  "label": "scaling"
+ },
+ {
+  "method": "bond_anomalous",
+  "dataset": "bond_inj_cora",
+  "params": {
+   "SEED": 5
+  },
+  "gpu": true,
+  "build": false,
+  "label": "scaling"
+ },
+ {
+  "method": "bond_anomalous",
+  "dataset": "bond_inj_cora",
+  "params": {
+   "SEED": 6
+  },
+  "gpu": true,
+  "build": false,
+  "label": "scaling"
+ }
+]

@@ -1,0 +1,29 @@
+{
+  "experiment_name": "exp__anograph__anograph_iscx__20261117_120529",
+  "method_name": "anograph",
+  "dataset": "anograph_iscx",
+  "tag": "latest",
+  "gpu_required": false,
+  "registry_image": "manager:5000/anograph:latest",
+  "manager_ip": "manager",
+  "timestamp": "2026-11-17T12:07:34.911152",
+  "data_path": "/shared/datasets/anograph_iscx/",
+  "exp_path": "/shared/experiments/exp__anograph__anograph_iscx__20261117_120529/",
+  "env_contents": {
+    "METHOD_NAME": "anograph",
+    "DESCRIPTION": "AnoGraph: Sketch-Based Anomaly Detection in Streaming Graphs (KDD 2023)",
+    "SOURCE_CODE": "https://github.com/Stream-AD/AnoGraph",
+    "SOURCE_REF": "6e8bcd85a39ac49de01ea58d4d15690add8f69c8",
+    "INTEGRATION": "upstream",
+    "SUPPORTED_DATASETS": "anograph_*",
+    "COMMAND": "python3 train_graflag.py",
+    "_ALGORITHM": "anograph",
+    "_NUM_ROWS": "2",
+    "_NUM_BUCKETS": "32",
+    "_TIME_WINDOW": "60",
+    "_EDGE_THRESHOLD": "100",
+    "_K": "5",
+    "_THRESHOLD": "0.9",
+    "_SEED": "42"
+  }
+}

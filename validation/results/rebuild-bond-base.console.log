@@ -1,0 +1,3 @@
+[INFO] 11:06:00 worker 0: bond_dmgd on bond_inj_cora (build)
+[INFO] 11:16:02 done exp__bond_dmgd__bond_inj_cora__20261118_110600: status=completed run_ok=True verify_failed=0 
+[OK] campaign finished

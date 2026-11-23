@@ -1,0 +1,11 @@
+[INFO] 12:43:03 worker 0: ad_gcl on gad_citeseer
+[INFO] 13:00:51 done exp__ad_gcl__gad_citeseer__20261118_124303: status=completed run_ok=True verify_failed=0 
+[INFO] 13:00:51 worker 0: ad_gcl on gad_bitalpha
+[INFO] 13:06:45 done exp__ad_gcl__gad_bitalpha__20261118_130051: status=completed run_ok=True verify_failed=0 
+[INFO] 13:06:45 worker 0: ad_gcl on gad_bitotc
+[INFO] 13:16:14 done exp__ad_gcl__gad_bitotc__20261118_130645: status=completed run_ok=True verify_failed=0 
+[INFO] 13:16:14 worker 0: ad_gcl on gad_bitcoinotc
+[INFO] 13:28:19 done exp__ad_gcl__gad_bitcoinotc__20261118_131614: status=completed run_ok=True verify_failed=0 
+[INFO] 13:28:19 worker 0: ad_gcl on gad_pubmed
+[INFO] 14:42:54 done exp__ad_gcl__gad_pubmed__20261118_132819: status=completed run_ok=True verify_failed=0 
+[OK] campaign finished

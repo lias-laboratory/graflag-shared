@@ -63,3 +63,28 @@ enough that CPU is not a constraint.
 
 Drop the line if a later PyGOD release fixes it -- and re-read this file
 when bumping `SOURCE_REF` in `images/bond_base/Dockerfile`.
+
+## DMGD changes the graph it is given
+
+PyGOD's `DMGD.fit()` replaces `data.x` in place: on `bond_inj_cora` the 1,433
+feature columns are 2,708 when it returns. Inside GraFlag that reaches no
+other detector, since each run is its own process reading the dataset file,
+but it reached two other places:
+
+- **This run's own metadata.** `graflag_bond` described the graph after
+  `fit()`, so `results.json` reported `num_features: 2708` for Cora
+  (`exp__bond_dmgd__bond_inj_cora__20261117_131720`). It now records the
+  graph's size and labels before training (`describe_graph`,
+  `graflag_bond/tests/test_describe.py`). The scores were never affected.
+- **A reference that shares one graph.** The direct-PyGOD check
+  (`validation/reference/pygod_direct.py`) fitted several detectors on one
+  `Data` object, so DOMINANT and DONE, fitted after DMGD, trained on DMGD's
+  matrix and disagreed with GraFlag. It now gives each detector a copy. Any
+  script that benchmarks several PyGOD detectors in one process has the same
+  trap.
+
+Run alone on its own copy, PyGOD's DMGD agrees with GraFlag's run to within
+1.6e-6 (AUC 0.76010 both), and that is as close as DMGD comes to itself: two
+direct runs with the same seed, on two CPU nodes, differ by up to 2.1e-6 on
+2,644 of the 2,708 scores. The sixteen other PyGOD detectors match GraFlag
+bit for bit (`validation/results/reference/pygod_direct_compare.json`).

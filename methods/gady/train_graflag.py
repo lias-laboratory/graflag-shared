@@ -715,6 +715,14 @@ def main():
                     "scored_samples": len(results['scores']),
                     "n_anomalies": sum(results['labels']),
                 },
+                # best_auc and mean_auc are upstream's statistic: the mean of
+                # per-batch AUCs over consecutive batches of `bs` test edges
+                # (evaluate_test_split). `graflag evaluate` computes one AUC
+                # over all of them, which differs by construction -- 0.9810
+                # against 0.9788 on email_dnc -- so the batch size is declared
+                # here and `graflag verify` recomputes the batch mean from the
+                # published scores instead of comparing unlike numbers.
+                "auc_batch_size": int(config.bs),
                 "training_info": {
                     "n_runs": config.n_runs,
                     "best_auc": float(results['best_auc']),

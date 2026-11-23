@@ -42,6 +42,7 @@ Two consequences worth internalising before reading the list:
 | `print("[WARN] no data, skipping")` | A skipped input becomes a completed run over nothing. | Raise |
 | `open("results.json", "w")` then `json.dump` | Truncates first, so one unserialisable value leaves a truncated file that still counts as a result. | `ResultWriter.finalize()` |
 | `exit(0)` on a failed `fopen` (C/C++ upstream) | The binary "succeeds" having read nothing. `anograph` shipped this way for months. | Check the exit path before trusting an upstream binary's silence |
+| A prebuilt GPU library older than the GPU | `dgl-cu102` 0.4.3 carries machine code for sm_30 to sm_70 and no PTX. On an sm_86 GPU it has no kernel to launch, does not check the launch, and returns zeros: `ad_gcl` would have trained a graph convolution that outputs nothing. Nothing raised. | Read the archs a library ships (the fatbins in its `.so`) before pinning an old one, and compute one known result on the device against torch before upstream starts (`ad_gcl`'s `require_dgl()`) |
 
 ## Scientific validity
 

@@ -1,0 +1,37 @@
+[
+ {
+  "method": "generaldyg",
+  "dataset": "generaldyg_btc_alpha",
+  "gpu": true,
+  "build": true,
+  "label": "coverage-retry"
+ },
+ {
+  "method": "ada_gad",
+  "dataset": "bond_inj_cora",
+  "gpu": true,
+  "build": true,
+  "label": "coverage-retry"
+ },
+ {
+  "method": "ad_gcl",
+  "dataset": "gad_cora",
+  "gpu": true,
+  "build": true,
+  "label": "coverage-retry"
+ },
+ {
+  "method": "huge_gad",
+  "dataset": "gad_facebook",
+  "gpu": true,
+  "build": true,
+  "label": "coverage-retry"
+ },
+ {
+  "method": "bond_gaan",
+  "dataset": "bond_inj_cora",
+  "gpu": true,
+  "build": true,
+  "label": "coverage-retry"
+ }
+]

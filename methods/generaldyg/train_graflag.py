@@ -6,6 +6,7 @@ This wrapper runs the full dataset (train+test) to get anomaly scores for all no
 import gc
 import os
 import subprocess
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -21,7 +22,7 @@ from graflag_runner import (
 # The GeneralDyG clone, and the only place this script says where it is.
 # upstream() anchors on this file's directory and raises if the checkout is
 # missing, instead of failing later with an unexplained ImportError.
-upstream("src")
+UPSTREAM = upstream("src")
 
 import datasets as dataset                                  # noqa: E402
 from model.CensNet import CensNet                           # noqa: E402
@@ -96,6 +97,77 @@ def eval_epoch(data_loader, model, dev):
     return np.mean(m_loss), auc_roc, m_pred, m_label
 
 
+# Runs upstream's generate_datasets.py unchanged, with `random` seeded first.
+# The generator draws from the stdlib `random` (node masking, edge weights)
+# and never seeds it, so two builds of the same CSV differed.
+_SEEDED_GENERATOR = (
+    "import random, runpy, sys\n"
+    "seed, script = int(sys.argv[1]), sys.argv[2]\n"
+    "random.seed(seed)\n"
+    "sys.path.insert(0, script.rsplit('/', 1)[0])\n"
+    "sys.argv = [script] + sys.argv[3:]\n"
+    "runpy.run_path(script, run_name='__main__')\n"
+)
+
+
+def build_pickle(dir_data, config):
+    """Return the directory holding `<data_set>.pkl` for this run, building it once.
+
+    Upstream's DygDataset reads `{config.dir_data}/{data_set}.pkl`, but
+    generate_datasets.py writes `{data_set}.pkl` into the current directory.
+    This used to run the generator from /app, so on a three-node GPU cluster
+    (2026-11-17) it spent 2 h 26 min building a pickle inside the container,
+    exited 0, and the run then failed opening the one in the dataset
+    directory -- which was never written, so every run would have built it
+    again and failed the same way.
+
+    The pickle is a function of three things, and is cached under all three:
+    the CSV (`data_set`, `neg`) and the seed. The generator reads no other
+    option (data_set, dir_data and neg are the only `config.` fields in it),
+    and its only randomness is the stdlib `random`, seeded here. A cache named
+    after `data_set` alone would hand a run with another `NEG` the pickle of
+    the first one.
+
+    The generator runs in a scratch directory and the result is moved into
+    place with os.replace, so a run killed mid-build, or two building at once,
+    cannot leave a truncated pickle that a later run takes for a finished one.
+    An exit 0 that leaves no pickle raises.
+    """
+    import shutil
+    cache = dir_data / ".generaldyg" / f"{config.data_set}-neg{config.neg}-seed{config.seed}"
+    target = cache / f"{config.data_set}.pkl"
+    if target.is_file():
+        info(f"[INFO] Using {target}")
+        return cache
+    csv = dir_data / f"{config.data_set}_0.5_0.{config.neg}.csv"
+    if not csv.is_file():
+        raise FileNotFoundError(f"{csv}: the generator's input for neg={config.neg}")
+    cache.mkdir(parents=True, exist_ok=True)
+    scratch = cache / f".build-{os.getpid()}"
+    scratch.mkdir()
+    try:
+        info(f"[INFO] Building {target} from {csv.name}, generator seeded with "
+             f"{config.seed} (upstream's generate_datasets.py, run once)")
+        subprocess.run(
+            ["python3", "-c", _SEEDED_GENERATOR, str(config.seed),
+             str(UPSTREAM / "generate_datasets.py"),
+             "--dir_data", str(dir_data),
+             "--data_set", config.data_set,
+             "--neg", str(config.neg)],
+            check=True, cwd=scratch,
+            env=dict(os.environ, PYTHONHASHSEED=str(config.seed)),
+        )
+        built = scratch / f"{config.data_set}.pkl"
+        if not built.is_file():
+            raise RuntimeError(
+                f"generate_datasets.py exited 0 but wrote no {built.name} in {scratch}")
+        os.replace(built, target)
+    finally:
+        shutil.rmtree(scratch, ignore_errors=True)
+    info(f"[OK] Built {target}")
+    return cache
+
+
 def main():
     run = paths()
 
@@ -119,28 +191,24 @@ def main():
     elif dir_data.name == "generaldyg_btc_otc":
         config.data_set = "btc_otc"
 
-    if not (dir_data / f"{config.data_set}.pkl").exists():
-        info(f"[INFO] Building {config.data_set}.pkl")
-        subprocess.run(
-            [
-                "python3",
-                "src/generate_datasets.py",
-                "--dir_data",
-                str(config.dir_data),
-                "--data_set",
-                config.data_set,
-                "--neg",
-                str(config.neg),
-            ],
-            check=True,
-        )
+    # This used to be a hardcoded "cuda:0", so a service Swarm scheduled
+    # without reserving a GPU still took one. device() reads _GPU, where -1
+    # means CPU -- but this model cannot run on one, so a CPU device is refused
+    # here, before the pickle build (2 h 26 min for btc_alpha the first time)
+    # rather than at the first forward pass after it.
+    dev = device()
+    if dev.type != "cuda":
+        raise RuntimeError(
+            "GeneralDyG needs a GPU and this run has none (_GPU="
+            f"{os.environ.get('_GPU', '')!r}, or no GPU visible). Upstream moves "
+            "tensors to 'cuda' unconditionally in every forward pass "
+            "(model/layers.py:50-51 and 64-65, model/Combine.py:18), so "
+            "`graflag run --no-gpu` cannot work for this method.")
+
+    # upstream's DygDataset reads the pickle from config.dir_data.
+    config.dir_data = str(build_pickle(dir_data, config))
 
     set_seed(config.seed)
-
-    # This used to be a hardcoded "cuda:0", so a service Swarm scheduled
-    # without reserving a GPU still took one and `graflag run --no-gpu` had no
-    # effect. device() reads _GPU, where -1 means CPU.
-    dev = device()
 
     writer = ResultWriter()
 
@@ -156,7 +224,14 @@ def main():
         batch_size=config.batch_size,
         shuffle=True,
         num_workers=config.num_data_workers,
-        pin_memory=True,
+        # Upstream's train.py pins (pin_memory=True), and this followed it. On
+        # two of the three nodes, node-1 and node-2, a host-to-GPU copy
+        # from pinned memory delivers corrupted data: the first run there got
+        # 896,452 non-finite values in one batch's eadjs, every weight was
+        # NaN after the first optimizer step, and the run died in the first
+        # evaluation. Pinning changes no value, only transfer speed, so it is
+        # off. See README.md and validation/ for the method-free reproduction.
+        pin_memory=False,
         collate_fn=collate_fn.dyg_collate_fn,
     )
 
@@ -376,6 +451,7 @@ def main():
             "task": "temporal_edge_anomaly_detection",
             "dataset_info": {
                 "name": config.data_set,
+                "pickle": str(Path(config.dir_data) / f"{config.data_set}.pkl"),
                 "scored_split": "test",
                 "scored_samples": len(all_scores),
                 "n_anomalies": int(np.sum(all_labels)),

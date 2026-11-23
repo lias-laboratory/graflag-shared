@@ -236,6 +236,43 @@ class RuntimeMetadataIsRecorded(ExpDirFixture):
         self.assertEqual(leftovers, [])
 
 
+class TheNodeIsRecorded(RuntimeMetadataIsRecorded):
+    """Where a run ran, from GRAFLAG_NODE, which Swarm expands per task.
+
+    service_details.json is written when the service is created; a task
+    queued for a GPU has no node yet, so runs that waited recorded none.
+    """
+
+    def with_node(self, value):
+        old = os.environ.get("GRAFLAG_NODE")
+        if value is None:
+            os.environ.pop("GRAFLAG_NODE", None)
+        else:
+            os.environ["GRAFLAG_NODE"] = value
+        self.addCleanup(lambda: os.environ.__setitem__("GRAFLAG_NODE", old)
+                        if old is not None else os.environ.pop("GRAFLAG_NODE", None))
+
+    def status(self):
+        return json.loads((Path(self.exp) / "status.json").read_text())
+
+    def test_status_and_metadata_carry_the_node(self):
+        self.with_node("node-2")
+        meta = self._run(self.WRITES_RESULTS % "{}")
+        self.assertEqual(meta["node"], "node-2")
+        self.assertEqual(self.status()["node"], "node-2")
+
+    def test_an_unexpanded_template_is_not_a_node(self):
+        self.with_node("{{.Node.Hostname}}")
+        meta = self._run(self.WRITES_RESULTS % "{}")
+        self.assertNotIn("node", meta)
+        self.assertNotIn("node", self.status())
+
+    def test_absent_outside_swarm(self):
+        self.with_node(None)
+        meta = self._run(self.WRITES_RESULTS % "{}")
+        self.assertNotIn("node", meta)
+
+
 class ValidJsonOutput(ExpDirFixture):
     """NaN/Infinity are readable by Python but invalid per RFC 8259."""
 

@@ -92,6 +92,28 @@ the check that matters: it says the scores in `results.json` are the ones the
 method measured itself on, not a recomputation. 4,554,344 edges scored in
 **527 ms** — the paper's constant-time-per-edge claim, on this hardware.
 
+### Against upstream's own program: the same 4,554,344 scores
+
+On a three-node GPU cluster (2026-11-17) upstream's `example/Demo.cpp` was built
+at the pinned commit with two edits only -- seed 42 instead of `time(nullptr)`,
+and upstream's own commented-out `Score.txt` block enabled
+(`validation/reference/midas_upstream.sh`) -- and run on upstream's copy of
+DARPA. That copy and the files GraFlag mounts have the same SHA-256, both
+`darpa_processed.csv`/`Data.csv` and the labels. Upstream printed ROC-AUC
+0.9844.
+
+The scores then agree exactly, not approximately. GraFlag's driver writes each
+float with `%.9g` (every line parses back to a float32 that prints to the same
+line), upstream writes `%f`; each GraFlag score narrowed to float32 and printed
+with `%f` is the same text as upstream's line for all 4,554,344 edges
+(`validation/reference/midas_exact.py`), and `results.json` holds exactly the
+values in the driver's score file. A naive numeric comparison of the two text
+files reports 3,682,846 differing values, up to 496 apart. That is the two
+formats and nothing else: `%f` rounds small scores to six decimals
+(0.005952 for 0.00595238106), and `%.9g` keeps nine significant digits of
+large ones (8.76332712e+11 for 876332711936, still the same float32). The AUC
+from both vectors is 0.9843577267715715.
+
 ### ISCX scores below random, and that is the dataset, not a defect
 
 `anograph_iscx` gives **0.3714**. Worth stating plainly rather than burying:

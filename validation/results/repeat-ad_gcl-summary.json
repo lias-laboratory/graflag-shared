@@ -1,0 +1,37 @@
+{
+ "ad_gcl": {
+  "original": {
+   "experiment": "exp__ad_gcl__gad_cora__20261118_120340",
+   "node": "node-2",
+   "auc_roc": 0.9147,
+   "exec_time_ms": 478671.16,
+   "n_scores": 2708
+  },
+  "replays": [
+   {
+    "experiment": "exp__ad_gcl__gad_cora__20261118_121539",
+    "node": "node-2",
+    "status": "completed",
+    "verify": {
+     "failed": 0,
+     "passed": 3,
+     "warned": 1
+    },
+    "n_scores": 2708,
+    "same_length": true,
+    "max_abs_diff": 0.0,
+    "identical": true,
+    "auc_roc": 0.9147,
+    "exec_time_ms": 467317.81
+   }
+  ],
+  "auc_range": [
+   0.9147,
+   0.9147
+  ],
+  "all_identical": true,
+  "nodes": [
+   "node-2"
+  ]
+ }
+}

@@ -1,0 +1,3 @@
+[INFO] 15:13:58 worker 0: generaldyg on generaldyg_btc_alpha (build)
+[INFO] 17:27:29 done exp__generaldyg__generaldyg_btc_alpha__20261117_151358: status=failed run_ok=False verify_failed=None GraFlagError: Experiment exp__generaldyg__generaldyg_btc_alpha__20261117_151358 failed. See: graflag logs -e exp__generaldyg__generaldyg_btc_alpha__20261117_151358
+[OK] campaign finished

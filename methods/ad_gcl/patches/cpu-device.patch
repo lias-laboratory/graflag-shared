@@ -1,0 +1,33 @@
+Let `--gpu_id -1` mean the CPU, as it does across GraFlag.
+
+run.py sets `device = args.gpu_id` -- an int -- and moves the model, the
+features and every buffer to it with `.to(device)`, so upstream as published
+can only run on a GPU. In this image it has to run on the CPU: DGL
+0.4.3.post1, the version upstream's README states, carries GPU machine code
+for sm_30 to sm_70 only and no PTX, so on a newer GPU (this cluster's NVIDIA
+A16 is sm_86) every DGL kernel launch fails without an error and leaves its
+output at zero. Measured: one copy_src/sum message-passing step on the A16
+returned all zeros (exp__ad_gcl__gad_cora__20261118_115058). See README.md.
+
+For any `--gpu_id` >= 0 this line behaves exactly as upstream's, so the
+patched tree runs upstream's own README commands unchanged.
+
+Nothing else in run.py, model.py, aug.py or utils.py names a device: they
+take `device` from here or use the tensors' own, and the two
+torch.cuda.manual_seed calls are no-ops without a GPU.
+
+Generated with `git diff` against the tree SOURCE_REF pins.
+
+diff --git a/AD-GCL/run.py b/AD-GCL/run.py
+index 30eabee..9a8466e 100644
+--- a/AD-GCL/run.py
++++ b/AD-GCL/run.py
+@@ -58,7 +58,7 @@ os.environ['OMP_NUM_THREADS'] = '1'
+ torch.backends.cudnn.deterministic = True
+ torch.backends.cudnn.benchmark = False
+ 
+-device = args.gpu_id
++device = args.gpu_id if args.gpu_id >= 0 else 'cpu'
+ # Load and preprocess data
+ adj, features, ano_label = load_mat(args.dataset)
+ 

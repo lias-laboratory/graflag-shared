@@ -1,0 +1,233 @@
+[
+ {
+  "method": "generaldyg",
+  "dataset": "generaldyg_btc_alpha",
+  "gpu": true,
+  "build": true,
+  "label": "coverage"
+ },
+ {
+  "method": "taddy",
+  "dataset": "uci",
+  "gpu": true,
+  "build": true,
+  "label": "coverage"
+ },
+ {
+  "method": "diffgad",
+  "dataset": "bond_books",
+  "gpu": true,
+  "build": true,
+  "label": "coverage"
+ },
+ {
+  "method": "huge_gad",
+  "dataset": "gad_facebook",
+  "gpu": true,
+  "build": true,
+  "label": "coverage"
+ },
+ {
+  "method": "gady",
+  "dataset": "gady_email_dnc",
+  "gpu": true,
+  "build": true,
+  "label": "coverage"
+ },
+ {
+  "method": "slade",
+  "dataset": "slade_bitcoinalpha",
+  "gpu": true,
+  "build": true,
+  "label": "coverage"
+ },
+ {
+  "method": "strgnn",
+  "dataset": "uci_snapshot",
+  "gpu": true,
+  "build": true,
+  "label": "coverage"
+ },
+ {
+  "method": "addgraph",
+  "dataset": "uci_snapshot",
+  "gpu": true,
+  "build": true,
+  "label": "coverage"
+ },
+ {
+  "method": "dynwalk",
+  "dataset": "uci_snapshot",
+  "gpu": false,
+  "build": true,
+  "label": "coverage"
+ },
+ {
+  "method": "ada_gad",
+  "dataset": "bond_inj_cora",
+  "gpu": true,
+  "build": true,
+  "label": "coverage"
+ },
+ {
+  "method": "rare",
+  "dataset": "bond_inj_cora",
+  "gpu": true,
+  "build": true,
+  "label": "coverage"
+ },
+ {
+  "method": "ad_gcl",
+  "dataset": "gad_cora",
+  "gpu": true,
+  "build": true,
+  "label": "coverage"
+ },
+ {
+  "method": "midas",
+  "dataset": "anograph_darpa",
+  "gpu": false,
+  "build": true,
+  "label": "coverage"
+ },
+ {
+  "method": "f_fade",
+  "dataset": "anograph_darpa",
+  "gpu": false,
+  "build": true,
+  "label": "coverage"
+ },
+ {
+  "method": "anograph",
+  "dataset": "anograph_iscx",
+  "gpu": false,
+  "build": true,
+  "label": "coverage"
+ },
+ {
+  "method": "streamspot",
+  "dataset": "streamspot_all",
+  "gpu": false,
+  "build": true,
+  "label": "coverage"
+ },
+ {
+  "method": "bond_dominant",
+  "dataset": "bond_inj_cora",
+  "gpu": true,
+  "build": true,
+  "label": "coverage"
+ },
+ {
+  "method": "bond_adone",
+  "dataset": "bond_inj_cora",
+  "gpu": true,
+  "build": true,
+  "label": "coverage"
+ },
+ {
+  "method": "bond_anomalous",
+  "dataset": "bond_inj_cora",
+  "gpu": true,
+  "build": true,
+  "label": "coverage"
+ },
+ {
+  "method": "bond_anomalydae",
+  "dataset": "bond_inj_cora",
+  "gpu": true,
+  "build": true,
+  "label": "coverage"
+ },
+ {
+  "method": "bond_card",
+  "dataset": "bond_inj_cora",
+  "gpu": true,
+  "build": true,
+  "label": "coverage"
+ },
+ {
+  "method": "bond_cola",
+  "dataset": "bond_inj_cora",
+  "gpu": true,
+  "build": true,
+  "label": "coverage"
+ },
+ {
+  "method": "bond_conad",
+  "dataset": "bond_inj_cora",
+  "gpu": true,
+  "build": true,
+  "label": "coverage"
+ },
+ {
+  "method": "bond_dmgd",
+  "dataset": "bond_inj_cora",
+  "gpu": false,
+  "build": true,
+  "label": "coverage"
+ },
+ {
+  "method": "bond_done",
+  "dataset": "bond_inj_cora",
+  "gpu": true,
+  "build": true,
+  "label": "coverage"
+ },
+ {
+  "method": "bond_gaan",
+  "dataset": "bond_inj_cora",
+  "gpu": true,
+  "build": true,
+  "label": "coverage"
+ },
+ {
+  "method": "bond_gadnr",
+  "dataset": "bond_inj_cora",
+  "gpu": false,
+  "build": true,
+  "label": "coverage"
+ },
+ {
+  "method": "bond_gae",
+  "dataset": "bond_inj_cora",
+  "gpu": true,
+  "build": true,
+  "label": "coverage"
+ },
+ {
+  "method": "bond_guide",
+  "dataset": "bond_inj_cora",
+  "gpu": true,
+  "build": true,
+  "label": "coverage"
+ },
+ {
+  "method": "bond_ocgnn",
+  "dataset": "bond_inj_cora",
+  "gpu": true,
+  "build": true,
+  "label": "coverage"
+ },
+ {
+  "method": "bond_one",
+  "dataset": "bond_inj_cora",
+  "gpu": true,
+  "build": true,
+  "label": "coverage"
+ },
+ {
+  "method": "bond_radar",
+  "dataset": "bond_inj_cora",
+  "gpu": true,
+  "build": true,
+  "label": "coverage"
+ },
+ {
+  "method": "bond_scan",
+  "dataset": "bond_inj_cora",
+  "gpu": false,
+  "build": true,
+  "label": "coverage"
+ }
+]

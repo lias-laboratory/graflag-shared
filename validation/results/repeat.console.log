@@ -1,0 +1,25 @@
+[INFO] 13:10:11 worker 0: bond_dominant on bond_inj_cora
+[INFO] 13:10:13 worker 1: bond_dominant on bond_inj_cora
+[INFO] 13:39:47 done exp__bond_dominant__bond_inj_cora__20261117_131017: status=completed run_ok=True verify_failed=0 
+[INFO] 13:39:47 worker 1: bond_dominant on bond_inj_cora
+[INFO] 13:40:05 done exp__bond_dominant__bond_inj_cora__20261117_131012: status=completed run_ok=True verify_failed=0 
+[INFO] 13:40:05 worker 0: anograph on anograph_iscx
+[INFO] 13:40:39 done exp__bond_dominant__bond_inj_cora__20261117_133947: status=completed run_ok=True verify_failed=0 
+[INFO] 13:40:39 worker 1: anograph on anograph_iscx
+[INFO] 13:40:44 done exp__anograph__anograph_iscx__20261117_134005: status=completed run_ok=True verify_failed=0 
+[INFO] 13:40:44 worker 0: anograph on anograph_iscx
+[INFO] 13:41:18 done exp__anograph__anograph_iscx__20261117_134039: status=completed run_ok=True verify_failed=0 
+[INFO] 13:41:18 worker 1: strgnn on uci_snapshot
+[INFO] 13:41:24 done exp__anograph__anograph_iscx__20261117_134044: status=completed run_ok=True verify_failed=0 
+[INFO] 13:41:24 worker 0: strgnn on uci_snapshot
+[INFO] 14:00:00 done exp__strgnn__uci_snapshot__20261117_134118: status=completed run_ok=True verify_failed=0 
+[INFO] 14:00:00 worker 1: strgnn on uci_snapshot
+[INFO] 14:17:54 done exp__strgnn__uci_snapshot__20261117_134124: status=completed run_ok=True verify_failed=0 
+[INFO] 14:17:54 worker 0: taddy on uci
+[INFO] 14:35:44 done exp__strgnn__uci_snapshot__20261117_140000: status=completed run_ok=True verify_failed=0 
+[INFO] 14:35:44 worker 1: taddy on uci
+[INFO] 14:43:21 done exp__taddy__uci__20261117_141754: status=completed run_ok=True verify_failed=0 
+[INFO] 14:43:21 worker 0: taddy on uci
+[INFO] 14:52:51 done exp__taddy__uci__20261117_143544: status=completed run_ok=True verify_failed=0 
+[INFO] 14:58:39 done exp__taddy__uci__20261117_144321: status=completed run_ok=True verify_failed=0 
+[OK] campaign finished

@@ -1,0 +1,9 @@
+[
+ {
+  "method": "taddy",
+  "dataset": "uci",
+  "gpu": false,
+  "build": false,
+  "label": "ref-temporal-cpu"
+ }
+]

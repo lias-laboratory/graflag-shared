@@ -1,0 +1,100 @@
+2026-11-17 13:39:47,215 - INFO - [RUN] Starting run: exp__bond_dominant__bond_inj_cora__20261117_133947
+2026-11-17 13:39:49,272 - INFO - [INFO] Ensuring dataset bond_inj_cora is downloaded...
+2026-11-17 13:39:50,705 - INFO - [INFO] Experiment directory: /shared/experiments/exp__bond_dominant__bond_inj_cora__20261117_133947
+2026-11-17 13:39:52,900 - INFO - [INFO] Saved service configuration to /shared/experiments/exp__bond_dominant__bond_inj_cora__20261117_133947/service_config.json
+2026-11-17 13:39:52,900 - INFO -    Setting parameter: _HID_DIM=64
+2026-11-17 13:39:52,901 - INFO -    Setting parameter: _NUM_LAYERS=4
+2026-11-17 13:39:52,901 - INFO -    Setting parameter: _DROPOUT=0
+2026-11-17 13:39:52,901 - INFO -    Setting parameter: _WEIGHT_DECAY=0
+2026-11-17 13:39:52,901 - INFO -    Setting parameter: _ACT=torch.nn.functional.relu
+2026-11-17 13:39:52,901 - INFO -    Setting parameter: _SIGMOID_S=False
+2026-11-17 13:39:52,901 - INFO -    Setting parameter: _BACKBONE=torch_geometric.nn.GCN
+2026-11-17 13:39:52,901 - INFO -    Setting parameter: _CONTAMINATION=0.1
+2026-11-17 13:39:52,901 - INFO -    Setting parameter: _LR=0.004
+2026-11-17 13:39:52,901 - INFO -    Setting parameter: _EPOCH=100
+2026-11-17 13:39:52,901 - INFO -    Setting parameter: _GPU=0
+2026-11-17 13:39:52,901 - INFO -    Setting parameter: _BATCH_SIZE=0
+2026-11-17 13:39:52,901 - INFO -    Setting parameter: _NUM_NEIGH=-1
+2026-11-17 13:39:52,901 - INFO -    Setting parameter: _WEIGHT=0.5
+2026-11-17 13:39:52,902 - INFO -    Setting parameter: _VERBOSE=0
+2026-11-17 13:39:52,902 - INFO -    Setting parameter: _SAVE_EMB=False
+2026-11-17 13:39:52,902 - INFO -    Setting parameter: _COMPILE_MODEL=False
+2026-11-17 13:39:52,902 - INFO -    Setting parameter: _SEED=42
+2026-11-17 13:39:52,902 - INFO - [INFO] Creating GPU-enabled service exp__bond_dominant__bond_inj_cora__20261117_133947...
+2026-11-17 13:39:53,864 - INFO - [OK] Service exp__bond_dominant__bond_inj_cora__20261117_133947 created successfully
+2026-11-17 13:39:54,691 - INFO - [INFO] Saved service details to /shared/experiments/exp__bond_dominant__bond_inj_cora__20261117_133947/service_details.json
+2026-11-17 13:39:54,753 - INFO - [INFO] Following service logs (press Ctrl+C to stop)...
+exp__bond_dominant__bond_inj_cora__20261117_133947.1.wx9fxfca0r5u@node-2    | 
+exp__bond_dominant__bond_inj_cora__20261117_133947.1.wx9fxfca0r5u@node-2    | ==========
+exp__bond_dominant__bond_inj_cora__20261117_133947.1.wx9fxfca0r5u@node-2    | == CUDA ==
+exp__bond_dominant__bond_inj_cora__20261117_133947.1.wx9fxfca0r5u@node-2    | ==========
+exp__bond_dominant__bond_inj_cora__20261117_133947.1.wx9fxfca0r5u@node-2    | 
+exp__bond_dominant__bond_inj_cora__20261117_133947.1.wx9fxfca0r5u@node-2    | CUDA Version 13.0.2
+exp__bond_dominant__bond_inj_cora__20261117_133947.1.wx9fxfca0r5u@node-2    | 
+exp__bond_dominant__bond_inj_cora__20261117_133947.1.wx9fxfca0r5u@node-2    | Container image Copyright (c) 2016-2023, NVIDIA CORPORATION & AFFILIATES. All rights reserved.
+exp__bond_dominant__bond_inj_cora__20261117_133947.1.wx9fxfca0r5u@node-2    | 
+exp__bond_dominant__bond_inj_cora__20261117_133947.1.wx9fxfca0r5u@node-2    | This container image and its contents are governed by the NVIDIA Deep Learning Container License.
+exp__bond_dominant__bond_inj_cora__20261117_133947.1.wx9fxfca0r5u@node-2    | By pulling and using the container, you accept the terms and conditions of this license:
+exp__bond_dominant__bond_inj_cora__20261117_133947.1.wx9fxfca0r5u@node-2    | https://developer.nvidia.com/ngc/nvidia-deep-learning-container-license
+exp__bond_dominant__bond_inj_cora__20261117_133947.1.wx9fxfca0r5u@node-2    | 
+exp__bond_dominant__bond_inj_cora__20261117_133947.1.wx9fxfca0r5u@node-2    | A copy of this license is made available in this container at /NGC-DL-CONTAINER-LICENSE for your convenience.
+exp__bond_dominant__bond_inj_cora__20261117_133947.1.wx9fxfca0r5u@node-2    | 
+exp__bond_dominant__bond_inj_cora__20261117_133947.1.wx9fxfca0r5u@node-2    | 2026-11-17 12:40:04,463 - graflag_runner.runner - INFO - ============================================================
+exp__bond_dominant__bond_inj_cora__20261117_133947.1.wx9fxfca0r5u@node-2    | 2026-11-17 12:40:04,463 - graflag_runner.runner - INFO - GraFlag Runner - bond_dominant
+exp__bond_dominant__bond_inj_cora__20261117_133947.1.wx9fxfca0r5u@node-2    | 2026-11-17 12:40:04,464 - graflag_runner.runner - INFO - ============================================================
+exp__bond_dominant__bond_inj_cora__20261117_133947.1.wx9fxfca0r5u@node-2    | 2026-11-17 12:40:04,464 - graflag_runner.runner - INFO - [INFO] Data: /shared/datasets/bond_inj_cora
+exp__bond_dominant__bond_inj_cora__20261117_133947.1.wx9fxfca0r5u@node-2    | 2026-11-17 12:40:04,464 - graflag_runner.runner - INFO - [INFO] Output: /shared/experiments/exp__bond_dominant__bond_inj_cora__20261117_133947
+exp__bond_dominant__bond_inj_cora__20261117_133947.1.wx9fxfca0r5u@node-2    | 2026-11-17 12:40:04,464 - graflag_runner.runner - INFO - [INFO] Command: python3 -m graflag_bond.train
+exp__bond_dominant__bond_inj_cora__20261117_133947.1.wx9fxfca0r5u@node-2    | 2026-11-17 12:40:04,464 - graflag_runner.runner - INFO - [INFO] Monitor interval: 1.0s
+exp__bond_dominant__bond_inj_cora__20261117_133947.1.wx9fxfca0r5u@node-2    | 2026-11-17 12:40:04,464 - graflag_runner.runner - INFO - [INFO] Pass env args: False
+exp__bond_dominant__bond_inj_cora__20261117_133947.1.wx9fxfca0r5u@node-2    | 2026-11-17 12:40:04,464 - graflag_runner.runner - INFO - 
+exp__bond_dominant__bond_inj_cora__20261117_133947.1.wx9fxfca0r5u@node-2    | 2026-11-17 12:40:04,467 - graflag_runner.monitor - INFO - [INFO] Resource monitoring started (PID: 1)
+exp__bond_dominant__bond_inj_cora__20261117_133947.1.wx9fxfca0r5u@node-2    | 2026-11-17 12:40:04,468 - graflag_runner.runner - INFO - [INFO] Starting method execution...
+exp__bond_dominant__bond_inj_cora__20261117_133947.1.wx9fxfca0r5u@node-2    | 2026-11-17 12:40:04,468 - graflag_runner.monitor - INFO -    Total memory: 100588MB
+exp__bond_dominant__bond_inj_cora__20261117_133947.1.wx9fxfca0r5u@node-2    | 2026-11-17 12:40:04,468 - graflag_runner.monitor - INFO -    Total GPU memory: 15356MB
+exp__bond_dominant__bond_inj_cora__20261117_133947.1.wx9fxfca0r5u@node-2    | 2026-11-17 12:40:09,421 - bond_dominant - INFO - ============================================================
+exp__bond_dominant__bond_inj_cora__20261117_133947.1.wx9fxfca0r5u@node-2    | 2026-11-17 12:40:09,421 - bond_dominant - INFO - PyGOD Bond: BOND_DOMINANT
+exp__bond_dominant__bond_inj_cora__20261117_133947.1.wx9fxfca0r5u@node-2    | 2026-11-17 12:40:09,421 - bond_dominant - INFO - ============================================================
+exp__bond_dominant__bond_inj_cora__20261117_133947.1.wx9fxfca0r5u@node-2    | 2026-11-17 12:40:09,421 - bond_dominant - INFO - Dataset: /shared/datasets/bond_inj_cora
+exp__bond_dominant__bond_inj_cora__20261117_133947.1.wx9fxfca0r5u@node-2    | 2026-11-17 12:40:09,421 - bond_dominant - INFO - Output: /shared/experiments/exp__bond_dominant__bond_inj_cora__20261117_133947
+exp__bond_dominant__bond_inj_cora__20261117_133947.1.wx9fxfca0r5u@node-2    | 2026-11-17 12:40:09,421 - bond_dominant - INFO - 
+exp__bond_dominant__bond_inj_cora__20261117_133947.1.wx9fxfca0r5u@node-2    | 2026-11-17 12:40:09,426 - bond_dominant - INFO - Loading dataset: bond_inj_cora from /shared/datasets/bond_inj_cora
+exp__bond_dominant__bond_inj_cora__20261117_133947.1.wx9fxfca0r5u@node-2    | /usr/local/lib/python3.12/dist-packages/pygod/utils/utility.py:173: FutureWarning: You are using `torch.load` with `weights_only=False` (the current default value), which uses the default pickle module implicitly. It is possible to construct malicious pickle data which will execute arbitrary code during unpickling (See https://github.com/pytorch/pytorch/blob/main/SECURITY.md#untrusted-models for more details). In a future release, the default value for `weights_only` will be flipped to `True`. This limits the functions that could be executed during unpickling. Arbitrary objects will no longer be allowed to be loaded via this mode unless they are explicitly allowlisted by the user via `torch.serialization.add_safe_globals`. We recommend you start setting `weights_only=True` for any use case where you don't have full control of the loaded file. Please open an issue on GitHub for any issues related to this experimental feature.
+exp__bond_dominant__bond_inj_cora__20261117_133947.1.wx9fxfca0r5u@node-2    |   data = torch.load(file_path)
+exp__bond_dominant__bond_inj_cora__20261117_133947.1.wx9fxfca0r5u@node-2    | 2026-11-17 12:40:09,449 - bond_dominant - INFO - Graph: 2708 nodes, 11060 edges, 1433 features
+exp__bond_dominant__bond_inj_cora__20261117_133947.1.wx9fxfca0r5u@node-2    | 2026-11-17 12:40:09,450 - bond_dominant - WARNING - [WARN] Ignoring _SEED: DOMINANT has no parameter 'seed'
+exp__bond_dominant__bond_inj_cora__20261117_133947.1.wx9fxfca0r5u@node-2    | 2026-11-17 12:40:09,450 - bond_dominant - INFO - ============================================================
+exp__bond_dominant__bond_inj_cora__20261117_133947.1.wx9fxfca0r5u@node-2    | 2026-11-17 12:40:09,450 - bond_dominant - INFO - Training DOMINANT Model
+exp__bond_dominant__bond_inj_cora__20261117_133947.1.wx9fxfca0r5u@node-2    | 2026-11-17 12:40:09,450 - bond_dominant - INFO - ============================================================
+exp__bond_dominant__bond_inj_cora__20261117_133947.1.wx9fxfca0r5u@node-2    | 2026-11-17 12:40:09,450 - bond_dominant - INFO - Detector: DOMINANT
+exp__bond_dominant__bond_inj_cora__20261117_133947.1.wx9fxfca0r5u@node-2    | 2026-11-17 12:40:09,450 - bond_dominant - INFO - Architecture: hid_dim=64, num_layers=4
+exp__bond_dominant__bond_inj_cora__20261117_133947.1.wx9fxfca0r5u@node-2    | 2026-11-17 12:40:09,450 - bond_dominant - INFO - Training: epochs=100, lr=0.004
+exp__bond_dominant__bond_inj_cora__20261117_133947.1.wx9fxfca0r5u@node-2    | 2026-11-17 12:40:09,450 - bond_dominant - INFO - Contamination: 0.1
+exp__bond_dominant__bond_inj_cora__20261117_133947.1.wx9fxfca0r5u@node-2    | 2026-11-17 12:40:09,452 - bond_dominant - INFO - [INFO] Seeded with 42
+exp__bond_dominant__bond_inj_cora__20261117_133947.1.wx9fxfca0r5u@node-2    | 2026-11-17 12:40:09,452 - bond_dominant - INFO - Initializing DOMINANT detector...
+exp__bond_dominant__bond_inj_cora__20261117_133947.1.wx9fxfca0r5u@node-2    | 2026-11-17 12:40:09,473 - bond_dominant - INFO - Starting training...
+exp__bond_dominant__bond_inj_cora__20261117_133947.1.wx9fxfca0r5u@node-2    | 2026-11-17 12:40:20,336 - bond_dominant - INFO - Training completed in 10.85s
+exp__bond_dominant__bond_inj_cora__20261117_133947.1.wx9fxfca0r5u@node-2    | 2026-11-17 12:40:20,337 - bond_dominant - INFO - ============================================================
+exp__bond_dominant__bond_inj_cora__20261117_133947.1.wx9fxfca0r5u@node-2    | 2026-11-17 12:40:20,337 - bond_dominant - INFO - Generating Results
+exp__bond_dominant__bond_inj_cora__20261117_133947.1.wx9fxfca0r5u@node-2    | 2026-11-17 12:40:20,337 - bond_dominant - INFO - ============================================================
+exp__bond_dominant__bond_inj_cora__20261117_133947.1.wx9fxfca0r5u@node-2    | 2026-11-17 12:40:20,351 - graflag_runner.results - INFO - [OK] Scores saved: NODE_ANOMALY_SCORES
+exp__bond_dominant__bond_inj_cora__20261117_133947.1.wx9fxfca0r5u@node-2    | 2026-11-17 12:40:20,351 - bond_dominant - WARNING - [WARN] Ignoring _SEED: DOMINANT has no parameter 'seed'
+exp__bond_dominant__bond_inj_cora__20261117_133947.1.wx9fxfca0r5u@node-2    | 2026-11-17 12:40:20,352 - graflag_runner.results - INFO - [INFO] Writing results (standard)...
+exp__bond_dominant__bond_inj_cora__20261117_133947.1.wx9fxfca0r5u@node-2    | 2026-11-17 12:40:20,366 - graflag_runner.results - INFO - [OK] Results written to: /shared/experiments/exp__bond_dominant__bond_inj_cora__20261117_133947/results.json
+exp__bond_dominant__bond_inj_cora__20261117_133947.1.wx9fxfca0r5u@node-2    | 2026-11-17 12:40:20,366 - bond_dominant - INFO - Results saved to /shared/experiments/exp__bond_dominant__bond_inj_cora__20261117_133947
+exp__bond_dominant__bond_inj_cora__20261117_133947.1.wx9fxfca0r5u@node-2    | 2026-11-17 12:40:20,366 - bond_dominant - INFO - 
+exp__bond_dominant__bond_inj_cora__20261117_133947.1.wx9fxfca0r5u@node-2    | 2026-11-17 12:40:20,367 - bond_dominant - INFO - ============================================================
+exp__bond_dominant__bond_inj_cora__20261117_133947.1.wx9fxfca0r5u@node-2    | 2026-11-17 12:40:20,367 - bond_dominant - INFO - BOND_DOMINANT execution completed successfully!
+exp__bond_dominant__bond_inj_cora__20261117_133947.1.wx9fxfca0r5u@node-2    | 2026-11-17 12:40:20,367 - bond_dominant - INFO - ============================================================
+exp__bond_dominant__bond_inj_cora__20261117_133947.1.wx9fxfca0r5u@node-2    | 2026-11-17 12:40:22,954 - graflag_runner.runner - INFO - 
+exp__bond_dominant__bond_inj_cora__20261117_133947.1.wx9fxfca0r5u@node-2    | 2026-11-17 12:40:22,954 - graflag_runner.runner - INFO - [INFO] Execution Summary:
+exp__bond_dominant__bond_inj_cora__20261117_133947.1.wx9fxfca0r5u@node-2    | 2026-11-17 12:40:22,954 - graflag_runner.runner - INFO -    [INFO] Execution time: 17469.48ms
+exp__bond_dominant__bond_inj_cora__20261117_133947.1.wx9fxfca0r5u@node-2    | 2026-11-17 12:40:22,954 - graflag_runner.runner - INFO -    [INFO] Peak memory: 1310.39MB
+exp__bond_dominant__bond_inj_cora__20261117_133947.1.wx9fxfca0r5u@node-2    | 2026-11-17 12:40:22,954 - graflag_runner.runner - INFO -    [INFO] Peak GPU memory: 349.00MB
+exp__bond_dominant__bond_inj_cora__20261117_133947.1.wx9fxfca0r5u@node-2    | 2026-11-17 12:40:22,954 - graflag_runner.runner - INFO - 
+exp__bond_dominant__bond_inj_cora__20261117_133947.1.wx9fxfca0r5u@node-2    | 2026-11-17 12:40:22,963 - graflag_runner.runner - INFO - [INFO] Full output saved to: /shared/experiments/exp__bond_dominant__bond_inj_cora__20261117_133947/method_output.txt
+exp__bond_dominant__bond_inj_cora__20261117_133947.1.wx9fxfca0r5u@node-2    | 2026-11-17 12:40:22,978 - graflag_runner.runner - INFO - [OK] Method execution completed successfully
+exp__bond_dominant__bond_inj_cora__20261117_133947.1.wx9fxfca0r5u@node-2    | 2026-11-17 12:40:22,981 - graflag_runner.runner - INFO - [OK] Runner completed successfully
+2026-11-17 13:40:23,502 - INFO - [INFO] Cleaned up finished service: exp__bond_dominant__bond_inj_cora__20261117_133947
+2026-11-17 13:40:23,502 - INFO - [INFO] Removed finished service exp__bond_dominant__bond_inj_cora__20261117_133947
+2026-11-17 13:40:23,503 - INFO - [INFO] View logs later: graflag logs -e exp__bond_dominant__bond_inj_cora__20261117_133947

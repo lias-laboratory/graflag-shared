@@ -1,0 +1,22 @@
+Restore sparse_mx_to_torch_sparse_tensor as a method of BatchGraphSample.
+
+Upstream's commit 86a014a ("dense tensor"), the one SOURCE_REF pins, changed
+the helper to return a dense tensor and, in the same edit, dedented its `def`
+to column 0. That ends the class body early, and the next method's
+indentation no longer matches anything, so generate_datasets.py raises
+IndentationError on import and cannot build <data_set>.pkl at all. Only the
+indentation is restored; upstream's dense-tensor change is kept.
+
+Applied after the CRLF strip, against LF line endings.
+
+--- a/generate_datasets.py
++++ b/generate_datasets.py
+@@ -133,7 +133,7 @@
+ 
+         return T
+ 
+-def sparse_mx_to_torch_sparse_tensor(self, sparse_mx):
++    def sparse_mx_to_torch_sparse_tensor(self, sparse_mx):
+         """Convert a scipy sparse matrix to a torch sparse tensor. (now dense tensor)"""
+         sparse_mx = sparse_mx.tocoo().astype(np.float32)
+         indices = torch.from_numpy(

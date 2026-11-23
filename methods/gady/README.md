@@ -59,6 +59,15 @@ savepoint was re-read once per batch instead of once per partition.
   the AUC printed beside them.
 - **A batch with one class present is skipped for the metric, not fatal.**
   Upstream lets `roc_auc_score` raise.
+- **Two AUCs, by definition.** The `best_auc`/`mean_auc` this method records
+  are upstream's statistic, the mean of per-batch AUCs over consecutive batches
+  of `_BS` (200) test edges. `graflag evaluate` computes one AUC over every
+  published score, which is a different number for the same scores: on the
+  three-node GPU cluster (2026-11-17, `gady_email_dnc`, 200 epochs) 0.9810 against
+  0.9788. The summary declares `auc_batch_size`, and `graflag verify`
+  recomputes the batch mean from the published scores: 0.9809881184222453,
+  equal to the reported `best_auc` in every digit. Quote the evaluator's
+  number beside other methods; quote `best_auc` beside the GADY paper.
 - **`discriminator.memory.detach_memory()` after every batch.** Not upstream's;
   without it the second backward pass raises "trying to backward through the
   graph a second time".

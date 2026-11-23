@@ -8,10 +8,16 @@ printing an AUC over it.
 
 The dataset is handed to the method the way the method expects to find it
 rather than the other way round. ADA-GAD calls ``pygod.utils.load_data(name)``
-with no ``cache_dir``, which resolves to ``~/.pygod/data/<name>.pt``, so the
-GraFlag dataset is staged there under the bare name upstream uses. Forcing it
-through a GraFlag loader instead would mean patching upstream's data path,
-which is a change to what runs.
+with no ``cache_dir`` (main.py:126), and the PyGOD it vendors resolves that to
+``data/<name>.pt`` *relative to the working directory* -- not
+``~/.pygod/data``, which is where this script used to stage the file. Staged
+there, the copy was never read: load_data() found nothing under ``data/``,
+downloaded the graph from GitHub, and the run succeeded on a file GraFlag had
+not mounted. A cluster without direct internet access is what exposed it
+(2026-11-17). The graph is now staged under ``data/``, the vendored default is
+checked before the run, and a download that happens anyway is an error.
+Forcing it through a GraFlag loader instead would mean patching upstream's
+data path, which is a change to what runs.
 """
 
 import os
@@ -40,12 +46,33 @@ def upstream_name(dataset_dir: Path) -> str:
         else dataset_dir.name
 
 
+#: Where the vendored load_data() looks when called without cache_dir.
+VENDORED_CACHE_DIR = "data"
+
+
+def check_vendored_cache_dir() -> None:
+    """Fail if the vendored load_data() no longer defaults to ``data/``.
+
+    The staging below is only right for as long as this holds; a SOURCE_REF
+    bump that changes it would otherwise reintroduce the silent download.
+    """
+    import inspect
+    from pygod.utils import load_data
+    source = inspect.getsource(load_data)
+    if f"cache_dir='{VENDORED_CACHE_DIR}'" not in source.replace('"', "'"):
+        raise RuntimeError(
+            "the vendored pygod.utils.load_data no longer defaults cache_dir "
+            f"to '{VENDORED_CACHE_DIR}'; re-check where it reads the graph "
+            "before staging it")
+
+
 def stage_dataset(dataset_dir: Path) -> str:
     """Put the graph where ``pygod.utils.load_data`` will look for it.
 
     Raises rather than falling back to a download: load_data() fetches an
     unpinned copy from the internet when the file is absent, which would make
-    the run silently use a different graph from the one GraFlag mounted.
+    the run silently use a different graph from the one GraFlag mounted. See
+    the module docstring for the time that happened.
     """
     source = dataset_dir / f"{dataset_dir.name}.pt"
     if not source.is_file():
@@ -57,8 +84,12 @@ def stage_dataset(dataset_dir: Path) -> str:
         source = candidates[0]
 
     name = upstream_name(dataset_dir)
-    cache = Path.home() / ".pygod" / "data"
+    check_vendored_cache_dir()
+    cache = Path.cwd() / VENDORED_CACHE_DIR
     cache.mkdir(parents=True, exist_ok=True)
+    stale_zip = cache / f"{name}.pt.zip"
+    if stale_zip.exists():
+        stale_zip.unlink()
     target = cache / f"{name}.pt"
     if target.exists() or target.is_symlink():
         target.unlink()
@@ -130,6 +161,12 @@ def main():
     info(f"[INFO] ADA-GAD on '{dataset_name}', device={dev}, seeds={args.seeds}")
 
     score_runs, auc_runs, graph = ada_gad_main(args)
+    # load_data() writes <name>.pt.zip only when it downloads.
+    downloaded = Path.cwd() / VENDORED_CACHE_DIR / f"{dataset_name}.pt.zip"
+    if downloaded.exists():
+        raise RuntimeError(
+            f"load_data() downloaded {downloaded.name} instead of reading the "
+            f"staged graph; the run did not use the dataset GraFlag mounted")
     if not score_runs:
         raise RuntimeError(
             "ADA-GAD returned no scores. The patch that makes main() return "

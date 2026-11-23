@@ -1,0 +1,11 @@
+[
+ {
+  "method": "strgnn",
+  "dataset": "uci_snapshot",
+  "gpu": false,
+  "build": true,
+  "tag": "cpulabels",
+  "repeat": 2,
+  "label": "repeat-cpu"
+ }
+]

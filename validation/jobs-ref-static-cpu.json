@@ -1,0 +1,121 @@
+[
+ {
+  "method": "bond_dominant",
+  "dataset": "bond_inj_cora",
+  "gpu": false,
+  "build": false,
+  "label": "ref-static-cpu"
+ },
+ {
+  "method": "bond_adone",
+  "dataset": "bond_inj_cora",
+  "gpu": false,
+  "build": false,
+  "label": "ref-static-cpu"
+ },
+ {
+  "method": "bond_anomalous",
+  "dataset": "bond_inj_cora",
+  "gpu": false,
+  "build": false,
+  "label": "ref-static-cpu"
+ },
+ {
+  "method": "bond_anomalydae",
+  "dataset": "bond_inj_cora",
+  "gpu": false,
+  "build": false,
+  "label": "ref-static-cpu"
+ },
+ {
+  "method": "bond_card",
+  "dataset": "bond_inj_cora",
+  "gpu": false,
+  "build": false,
+  "label": "ref-static-cpu"
+ },
+ {
+  "method": "bond_cola",
+  "dataset": "bond_inj_cora",
+  "gpu": false,
+  "build": false,
+  "label": "ref-static-cpu"
+ },
+ {
+  "method": "bond_conad",
+  "dataset": "bond_inj_cora",
+  "gpu": false,
+  "build": false,
+  "label": "ref-static-cpu"
+ },
+ {
+  "method": "bond_dmgd",
+  "dataset": "bond_inj_cora",
+  "gpu": false,
+  "build": false,
+  "label": "ref-static-cpu"
+ },
+ {
+  "method": "bond_done",
+  "dataset": "bond_inj_cora",
+  "gpu": false,
+  "build": false,
+  "label": "ref-static-cpu"
+ },
+ {
+  "method": "bond_gaan",
+  "dataset": "bond_inj_cora",
+  "gpu": false,
+  "build": false,
+  "label": "ref-static-cpu"
+ },
+ {
+  "method": "bond_gadnr",
+  "dataset": "bond_inj_cora",
+  "gpu": false,
+  "build": false,
+  "label": "ref-static-cpu"
+ },
+ {
+  "method": "bond_gae",
+  "dataset": "bond_inj_cora",
+  "gpu": false,
+  "build": false,
+  "label": "ref-static-cpu"
+ },
+ {
+  "method": "bond_guide",
+  "dataset": "bond_inj_cora",
+  "gpu": false,
+  "build": false,
+  "label": "ref-static-cpu"
+ },
+ {
+  "method": "bond_ocgnn",
+  "dataset": "bond_inj_cora",
+  "gpu": false,
+  "build": false,
+  "label": "ref-static-cpu"
+ },
+ {
+  "method": "bond_one",
+  "dataset": "bond_inj_cora",
+  "gpu": false,
+  "build": false,
+  "label": "ref-static-cpu"
+ },
+ {
+  "method": "bond_radar",
+  "dataset": "bond_inj_cora",
+  "gpu": false,
+  "build": false,
+  "label": "ref-static-cpu"
+ },
+ {
+  "method": "bond_scan",
+  "dataset": "bond_inj_cora",
+  "gpu": false,
+  "build": false,
+  "label": "ref-static-cpu"
+ }
+]

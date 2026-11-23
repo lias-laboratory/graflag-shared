@@ -1,0 +1,13 @@
+[INFO] 12:36:04 worker 0: generaldyg on generaldyg_btc_alpha (build)
+[INFO] 12:36:06 worker 1: ada_gad on bond_inj_cora (build)
+[INFO] 12:49:57 done exp__ada_gad__bond_inj_cora__20261117_123606: status=completed run_ok=True verify_failed=0 
+[INFO] 12:49:57 worker 1: ad_gcl on gad_cora (build)
+[INFO] 12:51:52 done exp__ad_gcl__gad_cora__20261117_124957: status=failed run_ok=False verify_failed=None GraFlagError: Build failed: Failed to build image ad_gcl:latest: 2.893   File "/usr/local/lib/python3.12/dist-packages/dgl/sparse/__init__.py", line 43, in <module>
+2.893     load_dgl_sparse()
+2.893  
+[INFO] 12:51:52 worker 1: huge_gad on bond_books (build)
+[INFO] 12:52:06 done exp__huge_gad__bond_books__20261117_125152: status=failed run_ok=False verify_failed=None GraFlagError: Build failed: Failed to build image huge_gad:latest: 2.848   File "/usr/local/lib/python3.12/dist-packages/dgl/sparse/__init__.py", line 43, in <module>
+2.848     load_dgl_sparse()
+2.848
+[INFO] 15:10:10 done exp__generaldyg__generaldyg_btc_alpha__20261117_123604: status=failed run_ok=False verify_failed=None GraFlagError: Experiment exp__generaldyg__generaldyg_btc_alpha__20261117_123604 failed. See: graflag logs -e exp__generaldyg__generaldyg_btc_alpha__20261117_123604
+[OK] campaign finished

@@ -1,0 +1,34 @@
+Build the classifier's label tensor on the device the rest of the model uses.
+
+pytorch_DGCNN/main.py moves features and labels to the GPU only when
+`cmd_args.mode == 'gpu'` (lines 107-111), and the classifier likewise (line
+214) -- except at line 129, where the labels subsampled for the MLP are
+created with an unconditional `.cuda()`. So STRGNN cannot run on a CPU at all:
+with `_GPU=-1` (`graflag run --no-gpu`) on a node whose GPU is hidden from
+the container, the first batch raised
+
+    labels = torch.LongTensor(labels).cuda()
+    RuntimeError: Found no NVIDIA driver on your system.
+
+and with the GPU visible it raised `Expected all tensors to be on the same
+device ... cpu and cuda:0` in nll_loss instead. The guard below is the one
+upstream uses six lines earlier; on a GPU it does exactly what line 129 did.
+It is the only unguarded CUDA call in upstream's Python.
+
+Generated with `git diff` against the tree SOURCE_REF pins.
+
+diff --git a/pytorch_DGCNN/main.py b/pytorch_DGCNN/main.py
+index 9162637..31eb874 100644
+--- a/pytorch_DGCNN/main.py
++++ b/pytorch_DGCNN/main.py
+@@ -126,7 +126,9 @@ class Classifier(nn.Module):
+             node_feat, edge_feat, labels = feature_label
+         embed = self.gnn(batch, node_feat, edge_feat)
+         labels = [labels[i] for i in range(0,labels.shape[0],5)]
+-        labels = torch.LongTensor(labels).cuda()
++        labels = torch.LongTensor(labels)
++        if cmd_args.mode == "gpu":
++            labels = labels.cuda()
+         return self.mlp(embed, labels)
+ 
+     def output_features(self, batch_graph):

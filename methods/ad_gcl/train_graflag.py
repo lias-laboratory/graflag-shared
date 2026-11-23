@@ -2,9 +2,13 @@
 
 Unsupervised node-level anomaly detection by graph contrastive learning,
 corrected for the structural imbalance between high- and low-degree nodes.
-Upstream's ``run.py`` is executed as written; the only change to the clone is
-``patches/export-scores.patch``, which writes out the score vector run.py
-already computes.
+Upstream's ``run.py`` is executed on the stack its README states (Python 3.8,
+PyTorch 1.12.1, DGL 0.4.3.post1), on the CPU. Two changes to the clone, both
+in run.py: ``patches/cpu-device.patch`` lets ``--gpu_id -1`` select the CPU,
+and ``patches/export-scores.patch`` writes out the score vector run.py
+already computes. Why the CPU: DGL 0.4.3's GPU builds have no code for this
+cluster's GPUs, and fail silently on them -- see ``require_dgl()`` and the
+README.
 
 The dataset is used in the form the method reads. AD-GCL's ``load_mat()``
 opens ``./Data/<name>.mat``, and GraFlag stores these datasets as exactly that
@@ -50,6 +54,7 @@ class Config:
     degree: int = 6
     auc_test_rounds: int = 256
     seed: int = 1
+    gpu: int = -1               # CPU only in this image; see require_dgl()
     # Overridable, but defaulted from AUTHOR_CONFIG when left unset.
     lr: float = None
     num_epoch: int = None
@@ -82,6 +87,45 @@ def stage_dataset(data_dir: Path) -> str:
     return name
 
 
+DGL_VERSION = "0.4.3post1"
+
+
+def require_dgl() -> None:
+    """Check, before upstream starts, that DGL is the one AD-GCL needs and
+    that its message passing computes what it should.
+
+    - The version: AD-GCL samples with ``dgl.contrib.sampling.
+      random_walk_with_restart``, which DGL removed in 0.5.
+    - One copy_src/sum message-passing step, the operation upstream's
+      ``GraphConv`` runs, against the same sum written in torch. This is the
+      check that caught DGL 0.4.3's CUDA build: on an sm_86 GPU it has no
+      kernel to launch, raises nothing, and returned all zeros
+      (exp__ad_gcl__gad_cora__20261118_115058). A wrong result from a
+      library is not something to discover from an AUC.
+    """
+    import dgl
+    if dgl.__version__ != DGL_VERSION:
+        raise RuntimeError(f"DGL {dgl.__version__} is installed; AD-GCL needs "
+                           f"{DGL_VERSION}, the version its README states")
+    from dgl.contrib.sampling import random_walk_with_restart  # noqa: F401
+
+    import torch
+    import dgl.function as fn
+    src, dst = [0, 1, 2, 3, 0], [1, 2, 3, 0, 2]
+    g = dgl.DGLGraph()
+    g.add_nodes(4)
+    g.add_edges(src, dst)
+    h = torch.arange(8, dtype=torch.float32).reshape(4, 2)
+    expected = torch.zeros(4, 2).index_add_(0, torch.tensor(dst), h[torch.tensor(src)])
+    g.ndata["h"] = h
+    g.update_all(fn.copy_src(src="h", out="m"), fn.sum(msg="m", out="h"))
+    got = g.ndata["h"]
+    if not torch.equal(got, expected):
+        raise RuntimeError(f"DGL's message passing gave {got.tolist()}, "
+                           f"expected {expected.tolist()}")
+    info(f"[OK] dgl {dgl.__version__}: message passing matches torch")
+
+
 def main():
     import numpy as np
 
@@ -103,7 +147,15 @@ def main():
          f"(authors' values unless overridden by --params)")
 
     seed_all(config.seed)
-    dev = device()
+    dev = device(config.gpu)
+    if dev.type != "cpu":
+        raise RuntimeError(
+            f"_GPU={config.gpu} asks for {dev}, and this image runs AD-GCL on "
+            "the CPU only: DGL 0.4.3.post1, the version upstream states, has "
+            "GPU code for sm_30 to sm_70 and no PTX, so on a newer GPU its "
+            "kernels do not run and their outputs stay zero, with no error. "
+            "Run with --no-gpu (or _GPU=-1); see README.md.")
+    require_dgl()
 
     exp = Path(os.environ["EXP"])
     score_out = exp / "ad_gcl_scores.txt"
@@ -125,7 +177,7 @@ def main():
         "--degree", str(config.degree),
         "--auc_test_rounds", str(config.auc_test_rounds),
         "--seed", str(config.seed),
-        "--gpu_id", str(dev.index if dev.type == "cuda" else 0),
+        "--gpu_id=-1",              # the CPU, via patches/cpu-device.patch
     ]
     info(f"[INFO] AD-GCL: {' '.join(command[1:])}")
     result = subprocess.run(command, cwd=str(UPSTREAM), env=env,

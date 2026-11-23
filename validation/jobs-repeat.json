@@ -1,0 +1,6 @@
+[
+  {"method": "bond_dominant", "dataset": "bond_inj_cora", "from_config": "cfg/bond_dominant.json", "repeat": 3, "label": "repeat"},
+  {"method": "anograph", "dataset": "anograph_iscx", "from_config": "cfg/anograph.json", "repeat": 3, "label": "repeat"},
+  {"method": "strgnn", "dataset": "uci_snapshot", "from_config": "cfg/strgnn.json", "repeat": 3, "label": "repeat"},
+  {"method": "taddy", "dataset": "uci", "from_config": "cfg/taddy.json", "repeat": 3, "label": "repeat"}
+]

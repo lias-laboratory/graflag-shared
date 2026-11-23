@@ -1,0 +1,1 @@
+[{"method": "diffgad", "dataset": "bond_books", "params": {}, "gpu": true, "build": true, "label": "diffgad-auc-record"}]

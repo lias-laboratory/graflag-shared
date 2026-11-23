@@ -1,0 +1,15 @@
+label,method,dataset,repeat_index,experiment,status,node,gpu,auc_roc,auc_pr,best_f1,exec_s,peak_memory_mb,peak_gpu_mb,startup_overhead_s,first_log_after_create_s,run_wall_s,verify_failed,verify_warned,error
+coverage,huge_gad,bond_books,0,exp__huge_gad__bond_books__20261117_111402,failed,,True,,,,,,,,,274.1,,,"GraFlagError: Build failed: Failed to build image huge_gad:latest: #0 building with ""default"" instance using docker driver #1 [internal] load build definition from Dockerfile #1 transferring dockerfile: 4.68kB done #1 DONE 0.1s #2 [internal] load metadata for docker.io/nvidia/cuda:13.0.2-runtime-ubu"
+coverage,generaldyg,generaldyg_btc_alpha,0,exp__generaldyg__generaldyg_btc_alpha__20261117_111356,failed,node-3,True,,,,,,,,67.47,658.9,,,GraFlagError: Experiment exp__generaldyg__generaldyg_btc_alpha__20261117_111356 failed. See: graflag logs -e exp__generaldyg__generaldyg_btc_alpha__20261117_111356
+coverage,taddy,uci,0,exp__taddy__uci__20261117_111358,completed,node-2,True,0.8388,0.388,0.5041,864.2,4708.59,1185.0,55.28,56.42,1345.2,0,1,
+coverage,slade,slade_bitcoinalpha,0,exp__slade__slade_bitcoinalpha__20261117_112456,completed,,True,0.76,0.156,0.2714,54.0,2728.29,665.0,340.29,342.01,795.1,0,0,
+coverage,strgnn,uci_snapshot,0,exp__strgnn__uci_snapshot__20261117_113639,completed,node-2,True,0.9027,0.5172,0.4912,431.6,3808.76,687.0,70.92,71.14,933.2,0,0,
+coverage,addgraph,uci_snapshot,0,exp__addgraph__uci_snapshot__20261117_113826,completed,,True,0.8355,0.4617,0.5,63.9,2677.87,761.0,505.58,507.02,937.9,0,0,
+coverage,dynwalk,uci_snapshot,0,exp__dynwalk__uci_snapshot__20261117_115228,completed,node-2,False,0.8209,0.0038,0.0148,104.1,465.88,,25.83,27.24,305.1,0,1,
+coverage,ada_gad,bond_inj_cora,0,exp__ada_gad__bond_inj_cora__20261117_115419,failed,node-2,True,,,,,,,,79.68,249.2,,,GraFlagError: Experiment exp__ada_gad__bond_inj_cora__20261117_115419 failed. See: graflag logs -e exp__ada_gad__bond_inj_cora__20261117_115419
+coverage,ad_gcl,gad_cora,0,exp__ad_gcl__gad_cora__20261117_115829,failed,,True,,,,,,,,,207.3,,,"GraFlagError: Build failed: Failed to build image ad_gcl:latest: #0 building with ""default"" instance using docker driver #1 [internal] load build definition from Dockerfile #1 transferring dockerfile: 5.47kB done #1 DONE 0.0s #2 [internal] load metadata for docker.io/nvidia/cuda:13.0.2-runtime-ubunt"
+coverage,diffgad,bond_books,0,exp__diffgad__bond_books__20261117_111400,completed,node-3,True,0.6743,0.0403,0.1176,2253.7,1336.95,175.0,71.19,76.04,2976.5,0,2,
+coverage,midas,anograph_darpa,0,exp__midas__anograph_darpa__20261117_120158,completed,node-2,False,0.9844,0.9914,0.9584,14.9,417.44,,21.49,13.74,176.7,0,1,
+coverage,anograph,anograph_iscx,0,exp__anograph__anograph_iscx__20261117_120529,completed,node-2,False,0.948,0.523,0.6702,7.6,570.44,,14.52,15.29,154.5,0,1,
+coverage,rare,bond_inj_cora,0,exp__rare__bond_inj_cora__20261117_115750,completed,node-3,True,0.9571,0.9165,0.9552,233.7,1582.24,14629.0,69.57,75.6,854.1,0,1,
+coverage,f_fade,anograph_darpa,0,exp__f_fade__anograph_darpa__20261117_120352,completed,node-2,False,0.9209,0.9594,0.9147,307.7,2408.43,,31.98,21.7,511.0,0,1,

@@ -1,0 +1,147 @@
+{
+ "dataset": "bond_inj_cora",
+ "seed": 42,
+ "gpu": -1,
+ "num_nodes": 2708,
+ "num_anomalies": 138,
+ "torch": "2.5.1+cu121",
+ "methods": {
+  "bond_gae": {
+   "detector": "GAE",
+   "kwargs": {
+    "hid_dim": 64,
+    "num_layers": 4,
+    "dropout": 0.0,
+    "weight_decay": 0.0,
+    "act": "relu",
+    "backbone": "GCN",
+    "recon_s": false,
+    "sigmoid_s": false,
+    "contamination": 0.1,
+    "lr": 0.004,
+    "epoch": 100,
+    "gpu": -1,
+    "batch_size": 0,
+    "num_neigh": -1,
+    "verbose": 0,
+    "save_emb": false,
+    "compile_model": false
+   },
+   "num_edges": 11060,
+   "fit_s": 12.58,
+   "auc_roc": 0.7110528393390854,
+   "auc_pr": 0.13220562052002133,
+   "n_scores": 2708
+  },
+  "bond_guide": {
+   "detector": "GUIDE",
+   "kwargs": {
+    "hid_a": 64,
+    "hid_s": 4,
+    "num_layers": 4,
+    "dropout": 0.0,
+    "weight_decay": 0.0,
+    "act": "relu",
+    "backbone": null,
+    "alpha": 0.5,
+    "contamination": 0.1,
+    "lr": 0.004,
+    "epoch": 100,
+    "gpu": -1,
+    "batch_size": 0,
+    "num_neigh": -1,
+    "graphlet_size": 4,
+    "selected_motif": true,
+    "cache_dir": null,
+    "verbose": 0,
+    "save_emb": false,
+    "compile_model": false
+   },
+   "num_edges": 11060,
+   "fit_s": 467.54,
+   "auc_roc": 0.7085673602887272,
+   "auc_pr": 0.17339651878910387,
+   "n_scores": 2708
+  },
+  "bond_ocgnn": {
+   "detector": "OCGNN",
+   "kwargs": {
+    "hid_dim": 64,
+    "num_layers": 2,
+    "dropout": 0.0,
+    "weight_decay": 0.0,
+    "act": "relu",
+    "backbone": "GCN",
+    "contamination": 0.1,
+    "lr": 0.004,
+    "epoch": 100,
+    "gpu": -1,
+    "batch_size": 0,
+    "num_neigh": -1,
+    "beta": 0.5,
+    "warmup": 2,
+    "eps": 0.001,
+    "verbose": 0,
+    "save_emb": false,
+    "compile_model": false
+   },
+   "num_edges": 11060,
+   "fit_s": 1.32,
+   "auc_roc": 0.5,
+   "auc_pr": 0.05096011816838995,
+   "n_scores": 2708
+  },
+  "bond_one": {
+   "detector": "ONE",
+   "kwargs": {
+    "hid_a": 36,
+    "hid_s": 36,
+    "alpha": 1.0,
+    "beta": 1.0,
+    "gamma": 1.0,
+    "weight_decay": 0.0,
+    "contamination": 0.1,
+    "lr": 0.004,
+    "epoch": 5,
+    "gpu": -1,
+    "verbose": 0
+   },
+   "num_edges": 11060,
+   "fit_s": 0.31,
+   "auc_roc": 0.47681441380477074,
+   "auc_pr": 0.05236635560067068,
+   "n_scores": 2708
+  },
+  "bond_radar": {
+   "detector": "Radar",
+   "kwargs": {
+    "gamma": 1.0,
+    "weight_decay": 0.0,
+    "lr": 0.004,
+    "epoch": 100,
+    "gpu": -1,
+    "contamination": 0.1,
+    "verbose": 0
+   },
+   "num_edges": 11060,
+   "fit_s": 17.56,
+   "auc_roc": 0.5302233124682796,
+   "auc_pr": 0.05170967979917215,
+   "n_scores": 2708
+  },
+  "bond_scan": {
+   "detector": "SCAN",
+   "kwargs": {
+    "eps": 0.5,
+    "mu": 2,
+    "contamination": 0.1,
+    "verbose": 0
+   },
+   "num_edges": 11060,
+   "fit_s": 3.83,
+   "auc_roc": 0.6602577116111205,
+   "auc_pr": 0.08232297445229511,
+   "n_scores": 2708
+  }
+ }
+}

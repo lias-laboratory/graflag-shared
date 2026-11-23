@@ -1,0 +1,483 @@
+{
+ "anograph": {
+  "original": {
+   "experiment": "exp__anograph__anograph_iscx__20261117_120529",
+   "node": null,
+   "auc_roc": 0.948,
+   "exec_time_ms": 7622.85,
+   "n_scores": 2751
+  },
+  "replays": [
+   {
+    "experiment": "exp__anograph__anograph_iscx__20261117_134005",
+    "node": "node-3",
+    "status": "completed",
+    "verify": {
+     "failed": 0,
+     "findings": [
+      {
+       "level": "OK",
+       "message": "result_type GRAPH_ANOMALY_SCORES"
+      },
+      {
+       "level": "OK",
+       "message": "2751 scored samples, 93 positive (3.38%)"
+      },
+      {
+       "level": "WARN",
+       "message": "scored_split is 'all_windows', not 'test'. Scoring everything is only sound when the method fitted nothing; if it trained, this AUC is partly over its own training data. Either way the README has to say which it is."
+      },
+      {
+       "level": "OK",
+       "message": "evaluator AUC 0.948 matches the method's results.auc_published_scores"
+      }
+     ],
+     "passed": 3,
+     "warned": 1
+    },
+    "n_scores": 2751,
+    "same_length": true,
+    "max_abs_diff": 0.0,
+    "identical": true,
+    "auc_roc": 0.948,
+    "exec_time_ms": 7434.35
+   },
+   {
+    "experiment": "exp__anograph__anograph_iscx__20261117_134039",
+    "node": "node-2",
+    "status": "completed",
+    "verify": {
+     "failed": 0,
+     "findings": [
+      {
+       "level": "OK",
+       "message": "result_type GRAPH_ANOMALY_SCORES"
+      },
+      {
+       "level": "OK",
+       "message": "2751 scored samples, 93 positive (3.38%)"
+      },
+      {
+       "level": "WARN",
+       "message": "scored_split is 'all_windows', not 'test'. Scoring everything is only sound when the method fitted nothing; if it trained, this AUC is partly over its own training data. Either way the README has to say which it is."
+      },
+      {
+       "level": "OK",
+       "message": "evaluator AUC 0.948 matches the method's results.auc_published_scores"
+      }
+     ],
+     "passed": 3,
+     "warned": 1
+    },
+    "n_scores": 2751,
+    "same_length": true,
+    "max_abs_diff": 0.0,
+    "identical": true,
+    "auc_roc": 0.948,
+    "exec_time_ms": 8025.93
+   },
+   {
+    "experiment": "exp__anograph__anograph_iscx__20261117_134044",
+    "node": "node-3",
+    "status": "completed",
+    "verify": {
+     "failed": 0,
+     "findings": [
+      {
+       "level": "OK",
+       "message": "result_type GRAPH_ANOMALY_SCORES"
+      },
+      {
+       "level": "OK",
+       "message": "2751 scored samples, 93 positive (3.38%)"
+      },
+      {
+       "level": "WARN",
+       "message": "scored_split is 'all_windows', not 'test'. Scoring everything is only sound when the method fitted nothing; if it trained, this AUC is partly over its own training data. Either way the README has to say which it is."
+      },
+      {
+       "level": "OK",
+       "message": "evaluator AUC 0.948 matches the method's results.auc_published_scores"
+      }
+     ],
+     "passed": 3,
+     "warned": 1
+    },
+    "n_scores": 2751,
+    "same_length": true,
+    "max_abs_diff": 0.0,
+    "identical": true,
+    "auc_roc": 0.948,
+    "exec_time_ms": 7721.95
+   }
+  ],
+  "auc_range": [
+   0.948,
+   0.948
+  ],
+  "all_identical": true,
+  "nodes": [
+   "node-2",
+   "node-3"
+  ]
+ },
+ "bond_dominant": {
+  "original": {
+   "experiment": "exp__bond_dominant__bond_inj_cora__20261117_121219",
+   "node": null,
+   "auc_roc": 0.7673,
+   "exec_time_ms": 10789.37,
+   "n_scores": 2708
+  },
+  "replays": [
+   {
+    "experiment": "exp__bond_dominant__bond_inj_cora__20261117_131017",
+    "node": "node-2",
+    "status": "completed",
+    "verify": {
+     "failed": 0,
+     "findings": [
+      {
+       "level": "OK",
+       "message": "result_type NODE_ANOMALY_SCORES"
+      },
+      {
+       "level": "OK",
+       "message": "2708 scored samples, 138 positive (5.10%)"
+      },
+      {
+       "level": "WARN",
+       "message": "scored_split is 'all_nodes', not 'test'. Scoring everything is only sound when the method fitted nothing; if it trained, this AUC is partly over its own training data. Either way the README has to say which it is."
+      },
+      {
+       "level": "WARN",
+       "message": "evaluator AUC 0.7673, but the method records no AUC in metadata.summary, so the two cannot be cross-checked"
+      }
+     ],
+     "passed": 2,
+     "warned": 2
+    },
+    "n_scores": 2708,
+    "same_length": true,
+    "max_abs_diff": 8.58306884765625e-06,
+    "identical": false,
+    "auc_roc": 0.7673,
+    "exec_time_ms": 17108.1
+   },
+   {
+    "experiment": "exp__bond_dominant__bond_inj_cora__20261117_131012",
+    "node": "node-2",
+    "status": "completed",
+    "verify": {
+     "failed": 0,
+     "findings": [
+      {
+       "level": "OK",
+       "message": "result_type NODE_ANOMALY_SCORES"
+      },
+      {
+       "level": "OK",
+       "message": "2708 scored samples, 138 positive (5.10%)"
+      },
+      {
+       "level": "WARN",
+       "message": "scored_split is 'all_nodes', not 'test'. Scoring everything is only sound when the method fitted nothing; if it trained, this AUC is partly over its own training data. Either way the README has to say which it is."
+      },
+      {
+       "level": "WARN",
+       "message": "evaluator AUC 0.7673, but the method records no AUC in metadata.summary, so the two cannot be cross-checked"
+      }
+     ],
+     "passed": 2,
+     "warned": 2
+    },
+    "n_scores": 2708,
+    "same_length": true,
+    "max_abs_diff": 2.384185791015625e-07,
+    "identical": false,
+    "auc_roc": 0.7673,
+    "exec_time_ms": 16744.22
+   },
+   {
+    "experiment": "exp__bond_dominant__bond_inj_cora__20261117_133947",
+    "node": "node-2",
+    "status": "completed",
+    "verify": {
+     "failed": 0,
+     "findings": [
+      {
+       "level": "OK",
+       "message": "result_type NODE_ANOMALY_SCORES"
+      },
+      {
+       "level": "OK",
+       "message": "2708 scored samples, 138 positive (5.10%)"
+      },
+      {
+       "level": "WARN",
+       "message": "scored_split is 'all_nodes', not 'test'. Scoring everything is only sound when the method fitted nothing; if it trained, this AUC is partly over its own training data. Either way the README has to say which it is."
+      },
+      {
+       "level": "WARN",
+       "message": "evaluator AUC 0.7673, but the method records no AUC in metadata.summary, so the two cannot be cross-checked"
+      }
+     ],
+     "passed": 2,
+     "warned": 2
+    },
+    "n_scores": 2708,
+    "same_length": true,
+    "max_abs_diff": 8.58306884765625e-06,
+    "identical": false,
+    "auc_roc": 0.7673,
+    "exec_time_ms": 17469.48
+   }
+  ],
+  "auc_range": [
+   0.7673,
+   0.7673
+  ],
+  "all_identical": false,
+  "nodes": [
+   "node-2"
+  ]
+ },
+ "strgnn": {
+  "original": {
+   "experiment": "exp__strgnn__uci_snapshot__20261117_113639",
+   "node": null,
+   "auc_roc": 0.9027,
+   "exec_time_ms": 431615.54,
+   "n_scores": 777
+  },
+  "replays": [
+   {
+    "experiment": "exp__strgnn__uci_snapshot__20261117_134118",
+    "node": null,
+    "status": "completed",
+    "verify": {
+     "failed": 0,
+     "findings": [
+      {
+       "level": "OK",
+       "message": "result_type EDGE_STREAM_ANOMALY_SCORES"
+      },
+      {
+       "level": "OK",
+       "message": "777 scored samples, 37 positive (4.76%)"
+      },
+      {
+       "level": "OK",
+       "message": "scored_split 'test' over 777 samples"
+      },
+      {
+       "level": "OK",
+       "message": "evaluator AUC 0.9077 matches the method's training_info.final_auc"
+      }
+     ],
+     "passed": 4,
+     "warned": 0
+    },
+    "n_scores": 777,
+    "same_length": true,
+    "max_abs_diff": 0.41452276706695557,
+    "identical": false,
+    "auc_roc": 0.9077,
+    "exec_time_ms": 1087339.83
+   },
+   {
+    "experiment": "exp__strgnn__uci_snapshot__20261117_134124",
+    "node": null,
+    "status": "completed",
+    "verify": {
+     "failed": 0,
+     "findings": [
+      {
+       "level": "OK",
+       "message": "result_type EDGE_STREAM_ANOMALY_SCORES"
+      },
+      {
+       "level": "OK",
+       "message": "777 scored samples, 37 positive (4.76%)"
+      },
+      {
+       "level": "OK",
+       "message": "scored_split 'test' over 777 samples"
+      },
+      {
+       "level": "OK",
+       "message": "evaluator AUC 0.906 matches the method's training_info.final_auc"
+      }
+     ],
+     "passed": 4,
+     "warned": 0
+    },
+    "n_scores": 777,
+    "same_length": true,
+    "max_abs_diff": 0.40622982382774353,
+    "identical": false,
+    "auc_roc": 0.906,
+    "exec_time_ms": 1071892.49
+   },
+   {
+    "experiment": "exp__strgnn__uci_snapshot__20261117_140000",
+    "node": null,
+    "status": "completed",
+    "verify": {
+     "failed": 0,
+     "findings": [
+      {
+       "level": "OK",
+       "message": "result_type EDGE_STREAM_ANOMALY_SCORES"
+      },
+      {
+       "level": "OK",
+       "message": "777 scored samples, 37 positive (4.76%)"
+      },
+      {
+       "level": "OK",
+       "message": "scored_split 'test' over 777 samples"
+      },
+      {
+       "level": "OK",
+       "message": "evaluator AUC 0.9034 matches the method's training_info.final_auc"
+      }
+     ],
+     "passed": 4,
+     "warned": 0
+    },
+    "n_scores": 777,
+    "same_length": true,
+    "max_abs_diff": 0.28007400035858154,
+    "identical": false,
+    "auc_roc": 0.9034,
+    "exec_time_ms": 1069588.66
+   }
+  ],
+  "auc_range": [
+   0.9027,
+   0.9077
+  ],
+  "all_identical": false,
+  "nodes": []
+ },
+ "taddy": {
+  "original": {
+   "experiment": "exp__taddy__uci__20261117_111358",
+   "node": null,
+   "auc_roc": 0.8388,
+   "exec_time_ms": 864194.87,
+   "n_scores": 7610
+  },
+  "replays": [
+   {
+    "experiment": "exp__taddy__uci__20261117_141754",
+    "node": null,
+    "status": "completed",
+    "verify": {
+     "failed": 0,
+     "findings": [
+      {
+       "level": "OK",
+       "message": "result_type TEMPORAL_EDGE_ANOMALY_SCORES"
+      },
+      {
+       "level": "OK",
+       "message": "7610 scored samples, 691 positive (9.08%)"
+      },
+      {
+       "level": "OK",
+       "message": "scored_split 'test' over 7610 samples"
+      },
+      {
+       "level": "WARN",
+       "message": "evaluator AUC 0.8388, but the method records no AUC in metadata.summary, so the two cannot be cross-checked"
+      }
+     ],
+     "passed": 3,
+     "warned": 1
+    },
+    "n_scores": 7610,
+    "same_length": true,
+    "max_abs_diff": 0.0,
+    "identical": true,
+    "auc_roc": 0.8388,
+    "exec_time_ms": 882829.92
+   },
+   {
+    "experiment": "exp__taddy__uci__20261117_143544",
+    "node": null,
+    "status": "completed",
+    "verify": {
+     "failed": 0,
+     "findings": [
+      {
+       "level": "OK",
+       "message": "result_type TEMPORAL_EDGE_ANOMALY_SCORES"
+      },
+      {
+       "level": "OK",
+       "message": "7610 scored samples, 691 positive (9.08%)"
+      },
+      {
+       "level": "OK",
+       "message": "scored_split 'test' over 7610 samples"
+      },
+      {
+       "level": "WARN",
+       "message": "evaluator AUC 0.8388, but the method records no AUC in metadata.summary, so the two cannot be cross-checked"
+      }
+     ],
+     "passed": 3,
+     "warned": 1
+    },
+    "n_scores": 7610,
+    "same_length": true,
+    "max_abs_diff": 0.0,
+    "identical": true,
+    "auc_roc": 0.8388,
+    "exec_time_ms": 882899.06
+   },
+   {
+    "experiment": "exp__taddy__uci__20261117_144321",
+    "node": null,
+    "status": "completed",
+    "verify": {
+     "failed": 0,
+     "findings": [
+      {
+       "level": "OK",
+       "message": "result_type TEMPORAL_EDGE_ANOMALY_SCORES"
+      },
+      {
+       "level": "OK",
+       "message": "7610 scored samples, 691 positive (9.08%)"
+      },
+      {
+       "level": "OK",
+       "message": "scored_split 'test' over 7610 samples"
+      },
+      {
+       "level": "WARN",
+       "message": "evaluator AUC 0.8388, but the method records no AUC in metadata.summary, so the two cannot be cross-checked"
+      }
+     ],
+     "passed": 3,
+     "warned": 1
+    },
+    "n_scores": 7610,
+    "same_length": true,
+    "max_abs_diff": 0.0,
+    "identical": true,
+    "auc_roc": 0.8388,
+    "exec_time_ms": 884446.55
+   }
+  ],
+  "auc_range": [
+   0.8388,
+   0.8388
+  ],
+  "all_identical": true,
+  "nodes": []
+ }
+}

@@ -1,0 +1,21 @@
+example/Demo.cpp: In function 'int main(int, char**)':
+example/Demo.cpp:74:27: warning: format '%lld' expects argument of type 'long long int', but argument 2 has type 'std::chrono::duration<long int, std::ratio<1, 1000> >::rep' {aka 'long int'} [-Wformat=]
+   74 |         printf("Time = %lldms\t\t// Algorithm is finished\n", duration_cast<milliseconds>(high_resolution_clock::now() - time).count());
+      |                        ~~~^                                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      |                           |                                                                                                         |
+      |                           long long int                                                                                             std::chrono::duration<long int, std::ratio<1, 1000> >::rep {aka long int}
+      |                        %ld
+example/Demo.cpp:48:15: warning: ignoring return value of 'int fscanf(FILE*, const char*, ...)' declared with attribute 'warn_unused_result' [-Wunused-result]
+   48 |         fscanf(fileMeta, "%d", &n);
+      |         ~~~~~~^~~~~~~~~~~~~~~~~~~~
+example/Demo.cpp:59:23: warning: ignoring return value of 'int fscanf(FILE*, const char*, ...)' declared with attribute 'warn_unused_result' [-Wunused-result]
+   59 |                 fscanf(fileData, "%d,%d,%d", &source[i], &destination[i], &timestamp[i]);
+      |                 ~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+example/Demo.cpp:82:23: warning: ignoring return value of 'int fscanf(FILE*, const char*, ...)' declared with attribute 'warn_unused_result' [-Wunused-result]
+   82 |                 fscanf(fileLabel, "%f", &label[i]);
+      |                 ~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Seed = 42	// In case of reproduction
+# Records = 4554344	// Dataset is loaded
+Time = 758ms		// Algorithm is finished
+ROC-AUC = 0.9844	// Experimental impl is used
+exit 0

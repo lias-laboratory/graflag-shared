@@ -84,3 +84,21 @@ evaluator.
 `validation.csv` holds a per-`_PRINT_FREQ` AUC, and it is computed on those same
 test snapshots -- it tracks progress, it is not a held-out number. `training.csv`
 holds per-epoch loss and wall time.
+
+## Verification: against upstream's own scripts
+
+On a three-node GPU cluster (2026-11-17), upstream's two entry points were run as
+its README gives them -- `0_prepare_data.py` then `1_train.py --seed 1`, on
+upstream's copy of UCI, from the clone at the pinned commit, unmodified and
+outside GraFlag (`validation/reference/taddy_upstream.sh`). Upstream trains
+on the CPU, so the GraFlag run it is compared with was a CPU run too:
+`exp__taddy__uci__20261117_131204`, defaults, `graflag verify` 0 failed.
+
+Upstream prints a TOTAL AUC over the test snapshots every 10 epochs. All 20
+of them, from 0.8179 at epoch 10 to 0.8387 at epoch 200, are the same to the
+four decimals upstream prints as the 20 rows of the GraFlag run's
+`validation.csv`, and the evaluator's AUC-ROC over the published scores is
+0.8387. Upstream's run took 3,786 s.
+
+On a GPU the same configuration gives 0.8388, and three GPU replays of that
+run published bit-identical scores (`validation/results/repeat-summary.json`).

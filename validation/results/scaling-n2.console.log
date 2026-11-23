@@ -1,0 +1,13 @@
+[INFO] 11:20:54 worker 0: bond_anomalous on bond_inj_cora
+[INFO] 11:20:56 worker 1: bond_anomalous on bond_inj_cora
+[INFO] 11:20:58 worker 2: bond_anomalous on bond_inj_cora
+[INFO] 11:21:00 worker 3: bond_anomalous on bond_inj_cora
+[INFO] 11:21:02 worker 4: bond_anomalous on bond_inj_cora
+[INFO] 11:21:04 worker 5: bond_anomalous on bond_inj_cora
+[INFO] 11:21:44 done exp__bond_anomalous__bond_inj_cora__20261118_112054: status=completed run_ok=True verify_failed=0 
+[INFO] 11:21:45 done exp__bond_anomalous__bond_inj_cora__20261118_112056: status=completed run_ok=True verify_failed=0 
+[INFO] 11:21:59 done exp__bond_anomalous__bond_inj_cora__20261118_112104: status=completed run_ok=True verify_failed=0 
+[INFO] 11:22:02 done exp__bond_anomalous__bond_inj_cora__20261118_112102: status=completed run_ok=True verify_failed=0 
+[INFO] 11:22:16 done exp__bond_anomalous__bond_inj_cora__20261118_112058: status=completed run_ok=True verify_failed=0 
+[INFO] 11:22:18 done exp__bond_anomalous__bond_inj_cora__20261118_112100: status=completed run_ok=True verify_failed=0 
+[OK] campaign finished

@@ -1,0 +1,39 @@
+{
+ "dataset": "bond_inj_cora",
+ "seed": 42,
+ "gpu": -1,
+ "num_nodes": 2708,
+ "num_anomalies": 138,
+ "torch": "2.5.1+cu121",
+ "methods": {
+  "bond_card": {
+   "detector": "CARD",
+   "kwargs": {
+    "hid_dim": 64,
+    "num_layers": 2,
+    "dropout": 0.0,
+    "weight_decay": 0.0,
+    "act": "relu",
+    "backbone": "GCN",
+    "contamination": 0.1,
+    "lr": 0.004,
+    "epoch": 100,
+    "gpu": -1,
+    "batch_size": 0,
+    "num_neigh": -1,
+    "subgraph_num_neigh": 4,
+    "fp": 0.6,
+    "gama": 0.5,
+    "alpha": 0.1,
+    "verbose": 0,
+    "save_emb": false,
+    "compile_model": false
+   },
+   "num_edges": 11060,
+   "fit_s": 20791.08,
+   "auc_roc": 0.7178960130829527,
+   "auc_pr": 0.13671803478194464,
+   "n_scores": 2708
+  }
+ }
+}

@@ -69,8 +69,31 @@ model is on. The fix belongs upstream, so it is declared in `.env` rather
 than patched into `graflag_bond`.
 
 Verified on `bond_gen_100`: fails on GPU, completes on CPU
-(`auc_roc` 0.7981). The graphs this family is benchmarked on are small
-enough that CPU is not a constraint.
+(`auc_roc` 0.7981). On `bond_inj_cora` the CPU costs time: on a three-node GPU
+cluster (2026-11-17) one run took 14 minutes, and another took 18.2 hours
+while it shared node-2 with two other CPU-bound runs (load average 58 on
+20 vCPUs). A CPU service reserves no cores, so Swarm can place several on one
+node, and each PyTorch process starts as many threads as the node has cores.
+Neither number is a performance measurement.
 
 Drop the line if a later PyGOD release fixes it -- and re-read this file
 when bumping `SOURCE_REF` in `images/bond_base/Dockerfile`.
+
+## GADNR changes the graph it is given
+
+PyGOD's `GADNR.fit()` changes its input in place: on `bond_inj_cora`,
+`edge_index` grows from 11,060 to 13,856 edges and `x` is rewritten. A GraFlag
+run reads the dataset file in its own process, so no other detector sees
+this, but `graflag_bond` used to describe the graph after `fit()`, and
+`exp__bond_gadnr__bond_inj_cora__20261117_122545` reported `num_edges: 13856`.
+It now describes the graph before training (`describe_graph`); the scores
+were never affected. A script that fits several PyGOD detectors on one
+`Data` object hands every detector after GADNR a different graph -- see
+`methods/bond_dmgd/README.md`, where the same trap showed up first.
+
+## Agreement with PyGOD called directly
+
+`exp__bond_gadnr__bond_inj_cora__20261117_132337` (CPU, seed 42, AUC 0.7406)
+is bit-identical to PyGOD's `GADNR` fitted outside GraFlag with the same
+constructor arguments (`validation/reference/pygod_direct.py`, recorded in
+`validation/results/reference/pygod_direct_compare.json`).

@@ -1,0 +1,73 @@
+[INFO] 11:13:56 worker 0: generaldyg on generaldyg_btc_alpha (build)
+[INFO] 11:13:58 worker 1: taddy on uci (build)
+[INFO] 11:14:00 worker 2: diffgad on bond_books (build)
+[INFO] 11:14:02 worker 3: huge_gad on bond_books (build)
+[INFO] 11:18:38 done exp__huge_gad__bond_books__20261117_111402: status=failed run_ok=False verify_failed=None GraFlagError: Build failed: Failed to build image huge_gad:latest: #0 building with "default" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile
+#1 transferring dockerfi
+[INFO] 11:18:38 worker 3: gady on gady_email_dnc (build)
+[INFO] 11:24:56 done exp__generaldyg__generaldyg_btc_alpha__20261117_111356: status=failed run_ok=False verify_failed=None GraFlagError: Experiment exp__generaldyg__generaldyg_btc_alpha__20261117_111356 failed. See: graflag logs -e exp__generaldyg__generaldyg_btc_alpha__20261117_111356
+[INFO] 11:24:56 worker 0: slade on slade_bitcoinalpha (build)
+[INFO] 11:36:39 done exp__taddy__uci__20261117_111358: status=completed run_ok=True verify_failed=0 
+[INFO] 11:36:39 worker 1: strgnn on uci_snapshot (build)
+[INFO] 11:38:26 done exp__slade__slade_bitcoinalpha__20261117_112456: status=completed run_ok=True verify_failed=0 
+[INFO] 11:38:26 worker 0: addgraph on uci_snapshot (build)
+[INFO] 11:52:28 done exp__strgnn__uci_snapshot__20261117_113639: status=completed run_ok=True verify_failed=0 
+[INFO] 11:52:28 worker 1: dynwalk on uci_snapshot (build)
+[INFO] 11:54:19 done exp__addgraph__uci_snapshot__20261117_113826: status=completed run_ok=True verify_failed=0 
+[INFO] 11:54:19 worker 0: ada_gad on bond_inj_cora (build)
+[INFO] 11:57:50 done exp__dynwalk__uci_snapshot__20261117_115228: status=completed run_ok=True verify_failed=0 
+[INFO] 11:57:50 worker 1: rare on bond_inj_cora (build)
+[INFO] 11:58:29 done exp__ada_gad__bond_inj_cora__20261117_115419: status=failed run_ok=False verify_failed=None GraFlagError: Experiment exp__ada_gad__bond_inj_cora__20261117_115419 failed. See: graflag logs -e exp__ada_gad__bond_inj_cora__20261117_115419
+[INFO] 11:58:29 worker 0: ad_gcl on gad_cora (build)
+[INFO] 12:01:58 done exp__ad_gcl__gad_cora__20261117_115829: status=failed run_ok=False verify_failed=None GraFlagError: Build failed: Failed to build image ad_gcl:latest: #0 building with "default" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile
+#1 transferring dockerfile
+[INFO] 12:01:58 worker 0: midas on anograph_darpa (build)
+[INFO] 12:03:52 done exp__diffgad__bond_books__20261117_111400: status=completed run_ok=True verify_failed=0 
+[INFO] 12:03:52 worker 2: f_fade on anograph_darpa (build)
+[INFO] 12:05:29 done exp__midas__anograph_darpa__20261117_120158: status=completed run_ok=True verify_failed=0 
+[INFO] 12:05:29 worker 0: anograph on anograph_iscx (build)
+[INFO] 12:08:19 done exp__anograph__anograph_iscx__20261117_120529: status=completed run_ok=True verify_failed=0 
+[INFO] 12:08:19 worker 0: streamspot on streamspot_all (build)
+[INFO] 12:12:19 done exp__rare__bond_inj_cora__20261117_115750: status=completed run_ok=True verify_failed=0 
+[INFO] 12:12:19 worker 1: bond_dominant on bond_inj_cora (build)
+[INFO] 12:12:50 done exp__f_fade__anograph_darpa__20261117_120352: status=completed run_ok=True verify_failed=0 
+[INFO] 12:18:25 done exp__streamspot__streamspot_all__20261117_120819: status=completed run_ok=True verify_failed=0 
+[INFO] 12:22:01 worker 0: bond_anomalous on bond_inj_cora[INFO] 12:22:01 worker 2: bond_adone on bond_inj_cora
+
+[INFO] 12:22:01 done exp__bond_dominant__bond_inj_cora__20261117_121219: status=completed run_ok=True verify_failed=0 
+[INFO] 12:22:01 worker 1: bond_anomalydae on bond_inj_cora
+[INFO] 12:22:39 done exp__bond_anomalydae__bond_inj_cora__20261117_122201: status=completed run_ok=True verify_failed=0 
+[INFO] 12:22:39 worker 1: bond_card on bond_inj_cora
+[INFO] 12:22:50 done exp__bond_adone__bond_inj_cora__20261117_122201: status=completed run_ok=True verify_failed=0 
+[INFO] 12:22:50 worker 2: bond_cola on bond_inj_cora
+[INFO] 12:23:51 done exp__bond_anomalous__bond_inj_cora__20261117_122201: status=completed run_ok=True verify_failed=0 
+[INFO] 12:23:51 worker 0: bond_conad on bond_inj_cora
+[INFO] 12:23:59 done exp__bond_cola__bond_inj_cora__20261117_122250: status=completed run_ok=True verify_failed=0 
+[INFO] 12:23:59 worker 2: bond_dmgd on bond_inj_cora
+[INFO] 12:24:42 done exp__bond_conad__bond_inj_cora__20261117_122351: status=completed run_ok=True verify_failed=0 
+[INFO] 12:24:42 worker 0: bond_done on bond_inj_cora
+[INFO] 12:25:22 done exp__bond_done__bond_inj_cora__20261117_122442: status=completed run_ok=True verify_failed=0 
+[INFO] 12:25:22 worker 0: bond_gaan on bond_inj_cora
+[INFO] 12:25:45 done exp__bond_gaan__bond_inj_cora__20261117_122522: status=failed run_ok=False verify_failed=None GraFlagError: Experiment exp__bond_gaan__bond_inj_cora__20261117_122522 failed. See: graflag logs -e exp__bond_gaan__bond_inj_cora__20261117_122522
+[INFO] 12:25:45 worker 0: bond_gadnr on bond_inj_cora
+[INFO] 12:26:36 done exp__bond_dmgd__bond_inj_cora__20261117_122359: status=completed run_ok=True verify_failed=0 
+[INFO] 12:26:36 worker 2: bond_gae on bond_inj_cora
+[INFO] 12:27:14 done exp__bond_gae__bond_inj_cora__20261117_122636: status=completed run_ok=True verify_failed=0 
+[INFO] 12:27:14 worker 2: bond_guide on bond_inj_cora
+[INFO] 12:35:30 done exp__bond_guide__bond_inj_cora__20261117_122714: status=completed run_ok=True verify_failed=0 
+[INFO] 12:35:30 worker 2: bond_ocgnn on bond_inj_cora
+[INFO] 12:36:07 done exp__bond_ocgnn__bond_inj_cora__20261117_123530: status=completed run_ok=True verify_failed=1 
+[INFO] 12:36:07 worker 2: bond_one on bond_inj_cora
+[INFO] 12:36:45 done exp__bond_one__bond_inj_cora__20261117_123607: status=completed run_ok=True verify_failed=0 
+[INFO] 12:36:45 worker 2: bond_radar on bond_inj_cora
+[INFO] 12:37:23 done exp__bond_radar__bond_inj_cora__20261117_123645: status=completed run_ok=True verify_failed=0 
+[INFO] 12:37:23 worker 2: bond_scan on bond_inj_cora
+[INFO] 12:37:48 done exp__gady__gady_email_dnc__20261117_111838: status=completed run_ok=True verify_failed=1 
+[INFO] 12:38:00 done exp__bond_scan__bond_inj_cora__20261117_123723: status=completed run_ok=True verify_failed=0 
+[INFO] 12:40:06 done exp__bond_gadnr__bond_inj_cora__20261117_122545: status=completed run_ok=True verify_failed=0 
+[INFO] 13:37:38 done exp__bond_card__bond_inj_cora__20261117_122239: status=completed run_ok=True verify_failed=None 
+[OK] campaign finished

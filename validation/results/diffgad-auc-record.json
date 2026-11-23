@@ -1,0 +1,70 @@
+[
+ {
+  "build": true,
+  "dataset": "bond_books",
+  "eval_ok": true,
+  "eval_wall_s": 14.0,
+  "exec_time_ms": 2262411.14,
+  "exists": true,
+  "experiment": "exp__diffgad__bond_books__20261118_200637",
+  "first_log_after_create_s": 69.33,
+  "gpu": true,
+  "label": "diffgad-auc-record",
+  "method": "diffgad",
+  "method_end_ts": 1795028014.298818,
+  "method_parameters": null,
+  "method_start_ts": 1795025751.8876781,
+  "metrics": {
+   "anomaly_ratio": 0.0197,
+   "auc_pr": 0.0403,
+   "auc_roc": 0.6743,
+   "best_f1": 0.1176,
+   "best_f1_threshold": 96952.6328,
+   "f1_at_k": 0.0,
+   "k": 28,
+   "num_anomalies": 28,
+   "num_samples": 1418,
+   "precision_at_k": 0.0,
+   "recall_at_k": 0.0
+  },
+  "node": "node-2",
+  "node_source": "runner",
+  "params": {},
+  "peak_gpu_mb": 175.0,
+  "peak_memory_mb": 1342.39,
+  "repeat_index": 0,
+  "result_type": "NODE_ANOMALY_SCORES",
+  "run_ok": true,
+  "run_wall_s": 2822.1,
+  "scored_samples": 1418,
+  "scored_split": "all_nodes",
+  "service_created_ts": 1795025687.379891,
+  "startup_overhead_s": 64.51,
+  "status": "completed",
+  "status_error": null,
+  "verify": {
+   "failed": 0,
+   "findings": [
+    {
+     "level": "OK",
+     "message": "result_type NODE_ANOMALY_SCORES"
+    },
+    {
+     "level": "OK",
+     "message": "1418 scored samples, 28 positive (1.97%)"
+    },
+    {
+     "level": "WARN",
+     "message": "scored_split is 'all_nodes', not 'test'. Scoring everything is only sound when the method fitted nothing; if it trained, this AUC is partly over its own training data. Either way the README has to say which it is."
+    },
+    {
+     "level": "OK",
+     "message": "evaluator AUC 0.6743 matches the method's training_info.auc_roc"
+    }
+   ],
+   "passed": 3,
+   "warned": 1
+  },
+  "worker": 0
+ }
+]

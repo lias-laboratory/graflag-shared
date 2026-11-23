@@ -1,0 +1,6 @@
+label,method,dataset,repeat_index,experiment,status,node,gpu,auc_roc,auc_pr,best_f1,exec_s,peak_memory_mb,peak_gpu_mb,startup_overhead_s,first_log_after_create_s,run_wall_s,verify_failed,verify_warned,error
+coverage-ad_gcl-datasets,ad_gcl,gad_citeseer,0,exp__ad_gcl__gad_citeseer__20261118_124303,completed,node-2,False,0.9407,0.574,0.6382,1036.5,2389.62,,1.15,1.06,1052.3,0,1,
+coverage-ad_gcl-datasets,ad_gcl,gad_bitalpha,0,exp__ad_gcl__gad_bitalpha__20261118_130051,completed,node-2,False,0.795,0.354,0.4538,321.5,1306.8,,0.94,1.06,337.4,0,1,
+coverage-ad_gcl-datasets,ad_gcl,gad_bitotc,0,exp__ad_gcl__gad_bitotc__20261118_130645,completed,node-2,False,0.8139,0.3092,0.3793,534.3,2205.11,,0.97,1.1,552.3,0,1,
+coverage-ad_gcl-datasets,ad_gcl,gad_bitcoinotc,0,exp__ad_gcl__gad_bitcoinotc__20261118_131614,completed,node-3,False,0.8175,0.2871,0.3935,673.6,3138.0,,21.63,20.97,708.8,0,1,
+coverage-ad_gcl-datasets,ad_gcl,gad_pubmed,0,exp__ad_gcl__gad_pubmed__20261118_132819,completed,node-2,False,0.957,0.5709,0.5995,4439.3,26801.45,,1.01,1.07,4459.6,0,1,

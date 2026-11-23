@@ -31,9 +31,17 @@ round-trip to `bond_reddit` and `Disney.mat` to `bond_disney`.
 
 **Upstream only accepts four names.** `modules/utils.load_dataset` routes
 `Amazon`, `Facebook`, `Reddit` and `YelpChi` through `load_mat` and raises
-`Unimplemented dataset` for anything else, so a rendered graph has to be staged
-under one of them. `train_graflag.py` warns when the staged name is outside
-that set rather than letting the run fail deeper in with less context.
+`Unimplemented dataset` for anything else. So the method declares exactly the
+datasets that reach one of them: the three `gad_*` files, which are those
+`.mat`s, and `bond_reddit`, staged as `Reddit` -- the round-trip test above is
+what makes that upstream's own Reddit. `stage_dataset` raises for any other
+name before upstream starts.
+
+It used to warn instead, and declare `bond_books`, `bond_disney`, `bond_enron`
+and `bond_weibo` too, rendering them under their own names. Upstream has no
+loader for any of the four, so a run on one could only fail: the first run
+here that got past the image build did exactly that, `Exception:
+Unimplemented dataset: bond_books`.
 
 ## Hyperparameters
 
@@ -73,6 +81,24 @@ methods, ADA-GAD and AD-GCL, and comparable with them.
 
 ## Verification
 
-**Not verified: never run on a cluster.** The definition passes gate 1 (the
-contract tests); gates 2 to 4 are outstanding, so HUGE-GAD is defined and
-pinned, not integrated.
+**Verified on `gad_facebook`** (three-node GPU cluster, 2026-11-17, defaults above,
+seed 0, GPU):
+
+| Dataset | Gate 1 | Gate 2 | Gate 3 (`auc_roc`) | Gate 4 |
+|---|---|---|---|---|
+| `gad_facebook` | contract tests | completed on `node-2`, 31.7 s, 1,896 MB, 703 MB GPU | **0.9766** | 0 failed, 1 warned (`all_nodes`, see above), 3 passed |
+
+`exp__huge_gad__gad_facebook__20261117_143047`. Upstream's own `main.py`
+printed `auc_roc: 0.9765530303030303` over the 1,081 nodes (25 anomalous),
+and the evaluator computes 0.9766 independently from the published vector;
+`graflag verify` checks that the two agree. The four attempts before it
+failed, each one step further:
+
+| Run | Failure | Changed since |
+|---|---|---|
+| `exp__huge_gad__bond_books__20261117_111402` | build: `No matching distribution found for dgl==2.4.0+cu121` -- data.dgl.ai was down, and PyPI has only 0.1.x and 2.1.0 | DGL installed from the DGL team's conda channel, SHA-256 pinned (`install_dgl.py`) |
+| `exp__huge_gad__bond_books__20261117_125152` | build: `import dgl.sparse` -- `libcuda.so.1` missing | checked with `ldd` at build time, imported at run time (`require_dgl_sparse`) |
+| `exp__huge_gad__bond_books__20261117_130738` | `stage_dataset`: `No module named 'torch_geometric'` unpickling the `.pt` | `torch-geometric==2.6.1` in the image, for loading the dataset only |
+| `exp__huge_gad__bond_books__20261117_135034` | `Exception: Unimplemented dataset: bond_books` in upstream's `load_dataset` | `bond_books` is no longer declared; only datasets upstream can load are, and any other is refused before upstream starts |
+
+Not yet run on `gad_amazon`, `gad_yelpchi` or `bond_reddit`.

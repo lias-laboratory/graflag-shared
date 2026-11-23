@@ -1,0 +1,342 @@
+[
+ {
+  "build": false,
+  "dataset": "gad_citeseer",
+  "eval_ok": true,
+  "eval_wall_s": 14.1,
+  "exec_time_ms": 1036501.04,
+  "exists": true,
+  "experiment": "exp__ad_gcl__gad_citeseer__20261118_124303",
+  "first_log_after_create_s": 1.06,
+  "gpu": false,
+  "label": "coverage-ad_gcl-datasets",
+  "method": "ad_gcl",
+  "method_end_ts": 1794999633.672895,
+  "method_parameters": null,
+  "method_start_ts": 1794998597.171855,
+  "metrics": {
+   "anomaly_ratio": 0.0451,
+   "auc_pr": 0.574,
+   "auc_roc": 0.9407,
+   "best_f1": 0.6382,
+   "best_f1_threshold": -0.0836,
+   "f1_at_k": 0.6333,
+   "k": 150,
+   "num_anomalies": 150,
+   "num_samples": 3327,
+   "precision_at_k": 0.6333,
+   "recall_at_k": 0.6333
+  },
+  "node": "node-2",
+  "node_source": "runner",
+  "params": {},
+  "peak_gpu_mb": null,
+  "peak_memory_mb": 2389.62,
+  "repeat_index": 0,
+  "result_type": "NODE_ANOMALY_SCORES",
+  "run_ok": true,
+  "run_wall_s": 1052.3,
+  "scored_samples": 3327,
+  "scored_split": "all_nodes",
+  "service_created_ts": 1794998596.024714,
+  "startup_overhead_s": 1.15,
+  "status": "completed",
+  "status_error": null,
+  "verify": {
+   "failed": 0,
+   "findings": [
+    {
+     "level": "OK",
+     "message": "result_type NODE_ANOMALY_SCORES"
+    },
+    {
+     "level": "OK",
+     "message": "3327 scored samples, 150 positive (4.51%)"
+    },
+    {
+     "level": "WARN",
+     "message": "scored_split is 'all_nodes', not 'test'. Scoring everything is only sound when the method fitted nothing; if it trained, this AUC is partly over its own training data. Either way the README has to say which it is."
+    },
+    {
+     "level": "OK",
+     "message": "evaluator AUC 0.9407 matches the method's training_info.auc_roc"
+    }
+   ],
+   "passed": 3,
+   "warned": 1
+  },
+  "worker": 0
+ },
+ {
+  "build": false,
+  "dataset": "gad_bitalpha",
+  "eval_ok": true,
+  "eval_wall_s": 13.7,
+  "exec_time_ms": 321548.83,
+  "exists": true,
+  "experiment": "exp__ad_gcl__gad_bitalpha__20261118_130051",
+  "first_log_after_create_s": 1.06,
+  "gpu": false,
+  "label": "coverage-ad_gcl-datasets",
+  "method": "ad_gcl",
+  "method_end_ts": 1794999986.753978,
+  "method_parameters": null,
+  "method_start_ts": 1794999665.205148,
+  "metrics": {
+   "anomaly_ratio": 0.0932,
+   "auc_pr": 0.354,
+   "auc_roc": 0.795,
+   "best_f1": 0.4538,
+   "best_f1_threshold": -0.0574,
+   "f1_at_k": 0.4433,
+   "k": 300,
+   "num_anomalies": 300,
+   "num_samples": 3219,
+   "precision_at_k": 0.4433,
+   "recall_at_k": 0.4433
+  },
+  "node": "node-2",
+  "node_source": "runner",
+  "params": {},
+  "peak_gpu_mb": null,
+  "peak_memory_mb": 1306.8,
+  "repeat_index": 0,
+  "result_type": "NODE_ANOMALY_SCORES",
+  "run_ok": true,
+  "run_wall_s": 337.4,
+  "scored_samples": 3219,
+  "scored_split": "all_nodes",
+  "service_created_ts": 1794999664.265373,
+  "startup_overhead_s": 0.94,
+  "status": "completed",
+  "status_error": null,
+  "verify": {
+   "failed": 0,
+   "findings": [
+    {
+     "level": "OK",
+     "message": "result_type NODE_ANOMALY_SCORES"
+    },
+    {
+     "level": "OK",
+     "message": "3219 scored samples, 300 positive (9.32%)"
+    },
+    {
+     "level": "WARN",
+     "message": "scored_split is 'all_nodes', not 'test'. Scoring everything is only sound when the method fitted nothing; if it trained, this AUC is partly over its own training data. Either way the README has to say which it is."
+    },
+    {
+     "level": "OK",
+     "message": "evaluator AUC 0.795 matches the method's training_info.auc_roc"
+    }
+   ],
+   "passed": 3,
+   "warned": 1
+  },
+  "worker": 0
+ },
+ {
+  "build": false,
+  "dataset": "gad_bitotc",
+  "eval_ok": true,
+  "eval_wall_s": 14.3,
+  "exec_time_ms": 534308.28,
+  "exists": true,
+  "experiment": "exp__ad_gcl__gad_bitotc__20261118_130645",
+  "first_log_after_create_s": 1.1,
+  "gpu": false,
+  "label": "coverage-ad_gcl-datasets",
+  "method": "ad_gcl",
+  "method_end_ts": 1795000553.11623,
+  "method_parameters": null,
+  "method_start_ts": 1795000018.80795,
+  "metrics": {
+   "anomaly_ratio": 0.0617,
+   "auc_pr": 0.3092,
+   "auc_roc": 0.8139,
+   "best_f1": 0.3793,
+   "best_f1_threshold": -0.0433,
+   "f1_at_k": 0.37,
+   "k": 300,
+   "num_anomalies": 300,
+   "num_samples": 4863,
+   "precision_at_k": 0.37,
+   "recall_at_k": 0.37
+  },
+  "node": "node-2",
+  "node_source": "runner",
+  "params": {},
+  "peak_gpu_mb": null,
+  "peak_memory_mb": 2205.11,
+  "repeat_index": 0,
+  "result_type": "NODE_ANOMALY_SCORES",
+  "run_ok": true,
+  "run_wall_s": 552.3,
+  "scored_samples": 4863,
+  "scored_split": "all_nodes",
+  "service_created_ts": 1795000017.835763,
+  "startup_overhead_s": 0.97,
+  "status": "completed",
+  "status_error": null,
+  "verify": {
+   "failed": 0,
+   "findings": [
+    {
+     "level": "OK",
+     "message": "result_type NODE_ANOMALY_SCORES"
+    },
+    {
+     "level": "OK",
+     "message": "4863 scored samples, 300 positive (6.17%)"
+    },
+    {
+     "level": "WARN",
+     "message": "scored_split is 'all_nodes', not 'test'. Scoring everything is only sound when the method fitted nothing; if it trained, this AUC is partly over its own training data. Either way the README has to say which it is."
+    },
+    {
+     "level": "OK",
+     "message": "evaluator AUC 0.8139 matches the method's training_info.auc_roc"
+    }
+   ],
+   "passed": 3,
+   "warned": 1
+  },
+  "worker": 0
+ },
+ {
+  "build": false,
+  "dataset": "gad_bitcoinotc",
+  "eval_ok": true,
+  "eval_wall_s": 13.7,
+  "exec_time_ms": 673636.01,
+  "exists": true,
+  "experiment": "exp__ad_gcl__gad_bitcoinotc__20261118_131614",
+  "first_log_after_create_s": 20.97,
+  "gpu": false,
+  "label": "coverage-ad_gcl-datasets",
+  "method": "ad_gcl",
+  "method_end_ts": 1795001282.234309,
+  "method_parameters": null,
+  "method_start_ts": 1795000608.598299,
+  "metrics": {
+   "anomaly_ratio": 0.051,
+   "auc_pr": 0.2871,
+   "auc_roc": 0.8175,
+   "best_f1": 0.3935,
+   "best_f1_threshold": -0.0365,
+   "f1_at_k": 0.3833,
+   "k": 300,
+   "num_anomalies": 300,
+   "num_samples": 5881,
+   "precision_at_k": 0.3833,
+   "recall_at_k": 0.3833
+  },
+  "node": "node-3",
+  "node_source": "runner",
+  "params": {},
+  "peak_gpu_mb": null,
+  "peak_memory_mb": 3138.0,
+  "repeat_index": 0,
+  "result_type": "NODE_ANOMALY_SCORES",
+  "run_ok": true,
+  "run_wall_s": 708.8,
+  "scored_samples": 5881,
+  "scored_split": "all_nodes",
+  "service_created_ts": 1795000586.96681,
+  "startup_overhead_s": 21.63,
+  "status": "completed",
+  "status_error": null,
+  "verify": {
+   "failed": 0,
+   "findings": [
+    {
+     "level": "OK",
+     "message": "result_type NODE_ANOMALY_SCORES"
+    },
+    {
+     "level": "OK",
+     "message": "5881 scored samples, 300 positive (5.10%)"
+    },
+    {
+     "level": "WARN",
+     "message": "scored_split is 'all_nodes', not 'test'. Scoring everything is only sound when the method fitted nothing; if it trained, this AUC is partly over its own training data. Either way the README has to say which it is."
+    },
+    {
+     "level": "OK",
+     "message": "evaluator AUC 0.8175 matches the method's training_info.auc_roc"
+    }
+   ],
+   "passed": 3,
+   "warned": 1
+  },
+  "worker": 0
+ },
+ {
+  "build": false,
+  "dataset": "gad_pubmed",
+  "eval_ok": true,
+  "eval_wall_s": 13.6,
+  "exec_time_ms": 4439314.56,
+  "exists": true,
+  "experiment": "exp__ad_gcl__gad_pubmed__20261118_132819",
+  "first_log_after_create_s": 1.07,
+  "gpu": false,
+  "label": "coverage-ad_gcl-datasets",
+  "method": "ad_gcl",
+  "method_end_ts": 1795005753.046778,
+  "method_parameters": null,
+  "method_start_ts": 1795001313.732218,
+  "metrics": {
+   "anomaly_ratio": 0.0304,
+   "auc_pr": 0.5709,
+   "auc_roc": 0.957,
+   "best_f1": 0.5995,
+   "best_f1_threshold": -0.0377,
+   "f1_at_k": 0.5867,
+   "k": 600,
+   "num_anomalies": 600,
+   "num_samples": 19717,
+   "precision_at_k": 0.5867,
+   "recall_at_k": 0.5867
+  },
+  "node": "node-2",
+  "node_source": "runner",
+  "params": {},
+  "peak_gpu_mb": null,
+  "peak_memory_mb": 26801.45,
+  "repeat_index": 0,
+  "result_type": "NODE_ANOMALY_SCORES",
+  "run_ok": true,
+  "run_wall_s": 4459.6,
+  "scored_samples": 19717,
+  "scored_split": "all_nodes",
+  "service_created_ts": 1795001312.721664,
+  "startup_overhead_s": 1.01,
+  "status": "completed",
+  "status_error": null,
+  "verify": {
+   "failed": 0,
+   "findings": [
+    {
+     "level": "OK",
+     "message": "result_type NODE_ANOMALY_SCORES"
+    },
+    {
+     "level": "OK",
+     "message": "19717 scored samples, 600 positive (3.04%)"
+    },
+    {
+     "level": "WARN",
+     "message": "scored_split is 'all_nodes', not 'test'. Scoring everything is only sound when the method fitted nothing; if it trained, this AUC is partly over its own training data. Either way the README has to say which it is."
+    },
+    {
+     "level": "OK",
+     "message": "evaluator AUC 0.957 matches the method's training_info.auc_roc"
+    }
+   ],
+   "passed": 3,
+   "warned": 1
+  },
+  "worker": 0
+ }
+]

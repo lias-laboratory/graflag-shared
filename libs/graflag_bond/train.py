@@ -20,7 +20,7 @@ from pathlib import Path
 # metadata fields the runner owns.
 
 # Import graflag_runner utilities
-from graflag_runner import ResultWriter
+from graflag_runner import ResultWriter, seed_all
 from graflag_runner import info, warning, error
 
 # Import PyGOD
@@ -29,6 +29,31 @@ from pygod.utils import load_data
 # Import bond utilities
 from graflag_bond.detectors import BondDetector
 from graflag_bond.utils import get_all_parameters
+
+
+#: The seed when `_SEED` is not set. Every other integration script seeds
+#: through `seed_all`; this one did not, so two runs of the same bond method
+#: with the same configuration trained from different initial weights and
+#: published different numbers, with nothing in the record to say why.
+DEFAULT_SEED = 42
+
+
+def run_seed() -> int:
+    """The seed for this run: `_SEED` if set, else `DEFAULT_SEED`.
+
+    Not a detector argument -- PyGOD's constructors take no seed, and
+    `get_all_parameters` drops a key the signature does not accept -- so it
+    is read here. A value that is not an integer raises instead of falling
+    back to the default: a run that silently ignored its seed would look
+    reproducible and not be.
+    """
+    raw = os.environ.get("_SEED", "").strip()
+    if not raw:
+        return DEFAULT_SEED
+    try:
+        return int(raw)
+    except ValueError:
+        raise ValueError(f"_SEED={raw!r} is not an integer") from None
 
 
 def load_graph_data(data_dir):
@@ -56,8 +81,87 @@ def load_graph_data(data_dir):
     return data
 
 
-def train_detector(method_name, data, exp_dir, writer):
-    """Train PyGOD detector."""
+#: Detectors that are given the graph with repeated (u, v) pairs removed.
+#:
+#: GAAN trains with binary cross-entropy against the dense adjacency matrix
+#: (pygod.nn.functional.double_recon_loss), which requires every entry to be
+#: 0 or 1. to_dense_adj sums repeated pairs, and PyGOD's own inj_cora repeats
+#: 6 of its 11,060 edges, so the matrix holds 2s and PyGOD 1.1.0 fails on its
+#: own benchmark graph: "Assertion `target_val >= zero && target_val <= one`
+#: failed" on a GPU, the same check as a ValueError on a CPU. Only GAAN gets
+#: the deduplicated graph, so every other detector keeps running on exactly
+#: the graph it ran on before; the count removed is published in results.json.
+DEDUPLICATE_EDGES = frozenset({"gaan"})
+
+
+def deduplicate_edges(data) -> int:
+    """Drop repeated (u, v) pairs from ``data.edge_index`` in place.
+
+    Keeps the first occurrence of each pair and the original order, so the
+    only change is the repeats. (u, v) and (v, u) are different pairs: an
+    undirected graph stored both ways is not touched. Raises on a graph with
+    edge attributes or weights, whose duplicates would need a merge rule this
+    function has no business choosing.
+
+    Returns the number of edges removed.
+    """
+    import numpy as np
+    for attr in ("edge_attr", "edge_weight"):
+        if getattr(data, attr, None) is not None:
+            raise ValueError(
+                f"the graph has {attr}; repeated edges cannot be dropped without "
+                f"deciding how to merge their {attr}")
+    ei = data.edge_index
+    pairs = ei.cpu().numpy()
+    key = pairs[0].astype(np.int64) * int(data.num_nodes) + pairs[1].astype(np.int64)
+    _, first = np.unique(key, return_index=True)
+    keep = np.sort(first)
+    removed = int(ei.size(1) - keep.size)
+    if removed:
+        import torch
+        data.edge_index = ei[:, torch.as_tensor(keep, device=ei.device)]
+    return removed
+
+
+def prepare_graph(detector_name: str, data) -> dict:
+    """Apply a detector's input adjustment, if it has one; describe what was done."""
+    if detector_name.lower() not in DEDUPLICATE_EDGES:
+        return {}
+    in_file = int(data.edge_index.size(1))
+    removed = deduplicate_edges(data)
+    info(f"[INFO] {detector_name.upper()}: removed {removed} repeated edge(s) "
+         f"of {in_file}; see DEDUPLICATE_EDGES")
+    return {"num_edges_in_file": in_file, "duplicate_edges_removed": removed}
+
+
+def describe_graph(data) -> dict:
+    """The graph's size and labels, read before any detector touches it.
+
+    PyGOD's detectors may change the Data object they are fitted on. On
+    inj_cora, DMGD replaces data.x (1,433 feature columns become 2,708),
+    GADNR adds 2,796 edges to edge_index and rewrites x, CARD adds 88 edges,
+    and AdONE adds data.s. results.json used to be filled from the graph
+    after fit(), so bond_dmgd reported `num_features: 2708`, bond_gadnr
+    `num_edges: 13856` and bond_card `num_edges: 11148` for a Cora with 1,433
+    and 11,060. Everything published about the input is taken from here
+    instead, labels included.
+    """
+    labels = data.y.cpu() if hasattr(data.y, "cpu") else data.y
+    return {
+        "num_nodes": int(data.num_nodes),
+        "num_edges": int(data.num_edges),
+        "num_features": int(data.num_features),
+        "ground_truth": [1 if label != 0 else 0 for label in labels],
+    }
+
+
+def train_detector(method_name, data, exp_dir, writer, seed=DEFAULT_SEED):
+    """Train PyGOD detector.
+
+    Seeds immediately before the detector is built, so weight initialisation
+    and every draw made during `fit` (dropout, negative sampling, PyGOD's own
+    subsampling) start from `seed`.
+    """
     
     # Get detector name and class dynamically
     detector_name = BondDetector.from_method_name(method_name)
@@ -80,6 +184,7 @@ def train_detector(method_name, data, exp_dir, writer):
         info(f"Contamination: {params['contamination']}")
     
     # Initialize model
+    seed_all(seed)
     info(f"Initializing {detector_name.upper()} detector...")
     model = detector_class(**params)
     
@@ -99,7 +204,8 @@ def train_detector(method_name, data, exp_dir, writer):
     return model
 
 
-def save_results(model, data, exp_dir, writer, method_name, dataset_name):
+def save_results(model, graph, exp_dir, writer, method_name, dataset_name,
+                 seed=DEFAULT_SEED, graph_changes=None):
     """Save results with metadata.
 
     Resource metrics are not written here. graflag_runner records exec time,
@@ -113,9 +219,9 @@ def save_results(model, data, exp_dir, writer, method_name, dataset_name):
     # Get anomaly scores
     scores = model.decision_score_
 
-    # Get ground truth labels from data (binarize: 0=normal, any non-zero=anomaly)
-    gt_raw = data.y.cpu() if hasattr(data.y, 'cpu') else data.y
-    ground_truth = [1 if label != 0 else 0 for label in gt_raw]
+    # `graph` is describe_graph()'s record, taken before fit(): labels
+    # binarized, 0 = normal and any non-zero = anomaly.
+    ground_truth = graph["ground_truth"]
 
     # Save results using ResultWriter
     writer.save_scores(
@@ -137,6 +243,7 @@ def save_results(model, data, exp_dir, writer, method_name, dataset_name):
             safe_params[k] = f"{v.__module__}.{v.__qualname__}" if hasattr(v, '__module__') else str(v)
         else:
             safe_params[k] = v
+    safe_params["seed"] = seed
 
     # Add metadata
     writer.add_metadata(
@@ -150,14 +257,17 @@ def save_results(model, data, exp_dir, writer, method_name, dataset_name):
             "task": "node_anomaly_detection",
             "dataset_info": {
                 "name": dataset_name,
-                "num_nodes": data.num_nodes,
-                "num_edges": data.num_edges,
-                "num_features": data.num_features,
+                "num_nodes": graph["num_nodes"],
+                "num_edges": graph["num_edges"],
+                "num_features": graph["num_features"],
                 "num_anomalies": sum(ground_truth),
                 # PyGOD's detectors fit on the graph they score: every node,
                 # the BOND protocol.
                 "scored_split": "all_nodes",
                 "scored_samples": len(scores),
+                # What the detector was given differs from the file only for
+                # the detectors in DEDUPLICATE_EDGES, and then says by how much.
+                **(graph_changes or {}),
             },
         },
     )
@@ -192,14 +302,19 @@ def main():
     writer = ResultWriter()
 
     try:
+        seed = run_seed()
+
         # Load data
         data = load_graph_data(data_dir)
+        graph_changes = prepare_graph(BondDetector.from_method_name(method_name), data)
+        graph = describe_graph(data)   # before fit(), which may change `data`
 
         # Train model
-        model = train_detector(method_name, data, exp_dir, writer)
+        model = train_detector(method_name, data, exp_dir, writer, seed=seed)
 
         # Save results with metadata
-        save_results(model, data, exp_dir, writer, method_name, data_dir.name)
+        save_results(model, graph, exp_dir, writer, method_name, data_dir.name,
+                     seed=seed, graph_changes=graph_changes)
 
         info("")
         info("=" * 60)

@@ -1,0 +1,5 @@
+# Where the cluster is and what its machines are called stays off the
+# repository: cluster.env holds the real values (cluster.env.example is the
+# template), private/ the unscrubbed raw records.
+cluster.env
+private/

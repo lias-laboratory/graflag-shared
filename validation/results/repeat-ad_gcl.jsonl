@@ -1,0 +1,1 @@
+{"build": false, "dataset": "gad_cora", "eval_ok": true, "experiment": "exp__ad_gcl__gad_cora__20261118_121539", "gpu": false, "label": "repeat-cpu", "method": "ad_gcl", "params": {}, "repeat_index": 1, "run_ok": true, "status": "completed", "verify": {"failed": 0, "passed": 3, "warned": 1}}

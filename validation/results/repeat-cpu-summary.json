@@ -1,0 +1,10 @@
+{
+ "what": "STRGNN on uci_snapshot, CPU, same config and seed, run twice (cpu-labels patch, image tag cpulabels)",
+ "runs": ["exp__strgnn__uci_snapshot__20261117_141244", "exp__strgnn__uci_snapshot__20261117_151728"],
+ "node": "node-3",
+ "n_scores": 777,
+ "identical": true,
+ "max_abs_diff": 0.0,
+ "auc_roc": [0.9109203798392987, 0.9109203798392987],
+ "gpu_runs_for_contrast": {"auc_roc": [0.9027, 0.9077, 0.906, 0.9034], "max_abs_diff": 0.415}
+}

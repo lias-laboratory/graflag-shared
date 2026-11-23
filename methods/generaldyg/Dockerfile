@@ -62,6 +62,15 @@ RUN CR=$(printf '\r') \
     && find src -name '*.py' -exec sed -i 's/\r$//' {} + \
     && ! grep -rlU "$CR" src --include='*.py' > /dev/null
 
+# Upstream's generate_datasets.py does not parse at this pin: commit 86a014a
+# dedented a method's `def` to column 0 (see the patch header). The devcluster
+# never ran it -- a btc_alpha.pkl built earlier was already on the share --
+# so the first run on a fresh share was the first to reach it. `git apply`
+# exits non-zero if the context drifts.
+COPY methods/generaldyg/patches/ /app/patches/
+RUN git -C src apply --verbose /app/patches/generate-datasets-indent.patch \
+    && python3 -c "import ast; ast.parse(open('src/generate_datasets.py').read())"
+
 # Copy GraFlag integration files
 COPY methods/generaldyg/train_graflag.py ./train_graflag.py
 

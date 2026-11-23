@@ -1,0 +1,67 @@
+2026-11-17 13:40:44,846 - INFO - [RUN] Starting run: exp__anograph__anograph_iscx__20261117_134044
+2026-11-17 13:40:46,983 - INFO - [INFO] Ensuring dataset anograph_iscx is downloaded...
+2026-11-17 13:40:48,646 - INFO - [INFO] Experiment directory: /shared/experiments/exp__anograph__anograph_iscx__20261117_134044
+2026-11-17 13:40:50,843 - INFO - [INFO] Saved service configuration to /shared/experiments/exp__anograph__anograph_iscx__20261117_134044/service_config.json
+2026-11-17 13:40:50,843 - INFO -    Setting parameter: _ALGORITHM=anograph
+2026-11-17 13:40:50,843 - INFO -    Setting parameter: _NUM_ROWS=2
+2026-11-17 13:40:50,843 - INFO -    Setting parameter: _NUM_BUCKETS=32
+2026-11-17 13:40:50,843 - INFO -    Setting parameter: _TIME_WINDOW=60
+2026-11-17 13:40:50,843 - INFO -    Setting parameter: _EDGE_THRESHOLD=100
+2026-11-17 13:40:50,843 - INFO -    Setting parameter: _K=5
+2026-11-17 13:40:50,844 - INFO -    Setting parameter: _THRESHOLD=0.9
+2026-11-17 13:40:50,844 - INFO -    Setting parameter: _SEED=42
+2026-11-17 13:40:50,844 - INFO - [RUN] Creating service exp__anograph__anograph_iscx__20261117_134044...
+2026-11-17 13:40:51,959 - INFO - [OK] Service exp__anograph__anograph_iscx__20261117_134044 created successfully
+2026-11-17 13:40:52,728 - INFO - [INFO] Saved service details to /shared/experiments/exp__anograph__anograph_iscx__20261117_134044/service_details.json
+2026-11-17 13:40:52,799 - INFO - [INFO] Following service logs (press Ctrl+C to stop)...
+exp__anograph__anograph_iscx__20261117_134044.1.yebi0f5y07pl@node-3    | 2026-11-17 12:41:01,712 - graflag_runner.runner - INFO - ============================================================
+exp__anograph__anograph_iscx__20261117_134044.1.yebi0f5y07pl@node-3    | 2026-11-17 12:41:01,712 - graflag_runner.runner - INFO - GraFlag Runner - anograph
+exp__anograph__anograph_iscx__20261117_134044.1.yebi0f5y07pl@node-3    | 2026-11-17 12:41:01,712 - graflag_runner.runner - INFO - ============================================================
+exp__anograph__anograph_iscx__20261117_134044.1.yebi0f5y07pl@node-3    | 2026-11-17 12:41:01,712 - graflag_runner.runner - INFO - [INFO] Data: /shared/datasets/anograph_iscx
+exp__anograph__anograph_iscx__20261117_134044.1.yebi0f5y07pl@node-3    | 2026-11-17 12:41:01,712 - graflag_runner.runner - INFO - [INFO] Output: /shared/experiments/exp__anograph__anograph_iscx__20261117_134044
+exp__anograph__anograph_iscx__20261117_134044.1.yebi0f5y07pl@node-3    | 2026-11-17 12:41:01,712 - graflag_runner.runner - INFO - [INFO] Command: python3 train_graflag.py
+exp__anograph__anograph_iscx__20261117_134044.1.yebi0f5y07pl@node-3    | 2026-11-17 12:41:01,712 - graflag_runner.runner - INFO - [INFO] Monitor interval: 1.0s
+exp__anograph__anograph_iscx__20261117_134044.1.yebi0f5y07pl@node-3    | 2026-11-17 12:41:01,712 - graflag_runner.runner - INFO - [INFO] Pass env args: False
+exp__anograph__anograph_iscx__20261117_134044.1.yebi0f5y07pl@node-3    | 2026-11-17 12:41:01,712 - graflag_runner.runner - INFO - 
+exp__anograph__anograph_iscx__20261117_134044.1.yebi0f5y07pl@node-3    | 2026-11-17 12:41:01,718 - graflag_runner.monitor - INFO - [INFO] Resource monitoring started (PID: 1)
+exp__anograph__anograph_iscx__20261117_134044.1.yebi0f5y07pl@node-3    | 2026-11-17 12:41:01,718 - graflag_runner.runner - INFO - [INFO] Starting method execution...
+exp__anograph__anograph_iscx__20261117_134044.1.yebi0f5y07pl@node-3    | 2026-11-17 12:41:01,718 - graflag_runner.monitor - INFO -    Total memory: 100588MB
+exp__anograph__anograph_iscx__20261117_134044.1.yebi0f5y07pl@node-3    | 2026-11-17 12:41:01,727 - graflag_runner.monitor - INFO -    GPU: Not available
+exp__anograph__anograph_iscx__20261117_134044.1.yebi0f5y07pl@node-3    | 2026-11-17 12:41:03,024 - anograph - INFO - [INFO] AnoGraph on anograph_iscx: {'algorithm': 'anograph', 'num_rows': 2, 'num_buckets': 32, 'time_window': 60, 'edge_threshold': 100, 'k': 5, 'threshold': 0.9, 'seed': 42}
+exp__anograph__anograph_iscx__20261117_134044.1.yebi0f5y07pl@node-3    | 2026-11-17 12:41:03,024 - anograph - INFO - [INFO] Seeded with 42
+exp__anograph__anograph_iscx__20261117_134044.1.yebi0f5y07pl@node-3    | 
+exp__anograph__anograph_iscx__20261117_134044.1.yebi0f5y07pl@node-3    | Loading data from /shared/datasets/anograph_iscx...
+exp__anograph__anograph_iscx__20261117_134044.1.yebi0f5y07pl@node-3    | Loading native AnoGraph format from /shared/datasets/anograph_iscx
+exp__anograph__anograph_iscx__20261117_134044.1.yebi0f5y07pl@node-3    | Loaded 1097070 edges, 46456 anomalies
+exp__anograph__anograph_iscx__20261117_134044.1.yebi0f5y07pl@node-3    | Data setup at /app/src/data/graflag_data:
+exp__anograph__anograph_iscx__20261117_134044.1.yebi0f5y07pl@node-3    |   Data file:  /app/src/data/graflag_data/Data.csv (1097070 edges)
+exp__anograph__anograph_iscx__20261117_134044.1.yebi0f5y07pl@node-3    |   Label file: /app/src/data/graflag_data/Label.csv
+exp__anograph__anograph_iscx__20261117_134044.1.yebi0f5y07pl@node-3    | Preprocessing graph labels: /usr/bin/python3 process_data.py graflag_data 60 100
+exp__anograph__anograph_iscx__20261117_134044.1.yebi0f5y07pl@node-3    |   2751 time windows, 93 anomalous (edge_threshold=100)
+exp__anograph__anograph_iscx__20261117_134044.1.yebi0f5y07pl@node-3    | 
+exp__anograph__anograph_iscx__20261117_134044.1.yebi0f5y07pl@node-3    | Running anograph...
+exp__anograph__anograph_iscx__20261117_134044.1.yebi0f5y07pl@node-3    | Running AnoGraph: /app/src/code/main anograph graflag_data 60 100 2 32
+exp__anograph__anograph_iscx__20261117_134044.1.yebi0f5y07pl@node-3    | Working directory: /app/src/code
+exp__anograph__anograph_iscx__20261117_134044.1.yebi0f5y07pl@node-3    | AnoGraph stdout:
+exp__anograph__anograph_iscx__20261117_134044.1.yebi0f5y07pl@node-3    | 
+exp__anograph__anograph_iscx__20261117_134044.1.yebi0f5y07pl@node-3    | AUC of the published scores: 0.9480
+exp__anograph__anograph_iscx__20261117_134044.1.yebi0f5y07pl@node-3    | 
+exp__anograph__anograph_iscx__20261117_134044.1.yebi0f5y07pl@node-3    | Total predictions: 2751
+exp__anograph__anograph_iscx__20261117_134044.1.yebi0f5y07pl@node-3    | Score range: [9.0000, 762.1024]
+exp__anograph__anograph_iscx__20261117_134044.1.yebi0f5y07pl@node-3    | 
+exp__anograph__anograph_iscx__20261117_134044.1.yebi0f5y07pl@node-3    | Saving results...
+exp__anograph__anograph_iscx__20261117_134044.1.yebi0f5y07pl@node-3    | 2026-11-17 12:41:09,238 - graflag_runner.results - INFO - [OK] Scores saved: GRAPH_ANOMALY_SCORES
+exp__anograph__anograph_iscx__20261117_134044.1.yebi0f5y07pl@node-3    | 2026-11-17 12:41:09,238 - graflag_runner.results - INFO - [INFO] Writing results (standard)...
+exp__anograph__anograph_iscx__20261117_134044.1.yebi0f5y07pl@node-3    | 2026-11-17 12:41:09,256 - graflag_runner.results - INFO - [OK] Results written to: /shared/experiments/exp__anograph__anograph_iscx__20261117_134044/results.json
+exp__anograph__anograph_iscx__20261117_134044.1.yebi0f5y07pl@node-3    | 2026-11-17 12:41:09,257 - anograph - INFO - [OK] Results written to /shared/experiments/exp__anograph__anograph_iscx__20261117_134044/results.json
+exp__anograph__anograph_iscx__20261117_134044.1.yebi0f5y07pl@node-3    | 2026-11-17 12:41:09,796 - graflag_runner.runner - INFO - 
+exp__anograph__anograph_iscx__20261117_134044.1.yebi0f5y07pl@node-3    | 2026-11-17 12:41:09,796 - graflag_runner.runner - INFO - [INFO] Execution Summary:
+exp__anograph__anograph_iscx__20261117_134044.1.yebi0f5y07pl@node-3    | 2026-11-17 12:41:09,796 - graflag_runner.runner - INFO -    [INFO] Execution time: 7721.95ms
+exp__anograph__anograph_iscx__20261117_134044.1.yebi0f5y07pl@node-3    | 2026-11-17 12:41:09,796 - graflag_runner.runner - INFO -    [INFO] Peak memory: 571.04MB
+exp__anograph__anograph_iscx__20261117_134044.1.yebi0f5y07pl@node-3    | 2026-11-17 12:41:09,796 - graflag_runner.runner - INFO - 
+exp__anograph__anograph_iscx__20261117_134044.1.yebi0f5y07pl@node-3    | 2026-11-17 12:41:09,805 - graflag_runner.runner - INFO - [INFO] Full output saved to: /shared/experiments/exp__anograph__anograph_iscx__20261117_134044/method_output.txt
+exp__anograph__anograph_iscx__20261117_134044.1.yebi0f5y07pl@node-3    | 2026-11-17 12:41:09,819 - graflag_runner.runner - INFO - [OK] Method execution completed successfully
+exp__anograph__anograph_iscx__20261117_134044.1.yebi0f5y07pl@node-3    | 2026-11-17 12:41:09,823 - graflag_runner.runner - INFO - [OK] Runner completed successfully
+2026-11-17 13:41:08,633 - INFO - [INFO] Cleaned up finished service: exp__anograph__anograph_iscx__20261117_134044
+2026-11-17 13:41:08,634 - INFO - [INFO] Removed finished service exp__anograph__anograph_iscx__20261117_134044
+2026-11-17 13:41:08,634 - INFO - [INFO] View logs later: graflag logs -e exp__anograph__anograph_iscx__20261117_134044

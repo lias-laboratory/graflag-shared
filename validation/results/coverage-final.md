@@ -1,0 +1,35 @@
+| Method | Setting | Dataset | Device | Attempts | Status | verify (F/W/P) | AUC-ROC | Time (s) | Peak RAM (MB) |
+|---|---|---|---|---|---|---|---|---|---|
+| `ad_gcl` | static | `gad_cora` | cpu | 7 | completed | 0/1/3 | 0.9147 | 478.7 | 1,357 |
+| `ada_gad` | static | `bond_inj_cora` | gpu | 2 | completed | 0/1/3 | 0.8499 | 262.3 | 1,453 |
+| `addgraph` | temporal | `uci_snapshot` | gpu | 1 | completed | 0/0/4 | 0.8355 | 63.9 | 2,678 |
+| `anograph` | streaming | `anograph_iscx` | cpu | 1 | completed | 0/1/3 | 0.9480 | 7.6 | 570 |
+| `bond_adone` | static | `bond_inj_cora` | gpu | 1 | completed | 0/2/2 | 0.8244 | 9.7 | 1,298 |
+| `bond_anomalous` | static | `bond_inj_cora` | gpu | 1 | completed | 0/2/2 | 0.3410 | 13.5 | 1,194 |
+| `bond_anomalydae` | static | `bond_inj_cora` | gpu | 1 | completed | 0/2/2 | 0.7143 | 9.3 | 1,322 |
+| `bond_card` | static | `bond_inj_cora` | gpu | 1 | completed | 0/2/2 | 0.7177 | 4,464.2 | 6,328 |
+| `bond_cola` | static | `bond_inj_cora` | gpu | 1 | completed | 0/2/2 | 0.5557 | 8.8 | 1,179 |
+| `bond_conad` | static | `bond_inj_cora` | gpu | 1 | completed | 0/2/2 | 0.7673 | 22.3 | 1,344 |
+| `bond_dmgd` | static | `bond_inj_cora` | cpu | 1 | completed | 0/2/2 | 0.7601 | 126.9 | 1,211 |
+| `bond_dominant` | static | `bond_inj_cora` | gpu | 1 | completed | 0/2/2 | 0.7673 | 10.8 | 1,330 |
+| `bond_done` | static | `bond_inj_cora` | gpu | 1 | completed | 0/2/2 | 0.8276 | 10.7 | 1,261 |
+| `bond_gaan` | static | `bond_inj_cora` | gpu | 2 | completed | 0/2/2 | 0.4980 | 13.7 | 1,354 |
+| `bond_gadnr` | static | `bond_inj_cora` | cpu | 1 | completed | 0/2/2 | 0.7406 | 832.2 | 3,236 |
+| `bond_gae` | static | `bond_inj_cora` | gpu | 1 | completed | 0/2/2 | 0.7111 | 10.6 | 1,219 |
+| `bond_guide` | static | `bond_inj_cora` | gpu | 1 | completed | 0/2/2 | 0.7046 | 467.8 | 1,262 |
+| `bond_ocgnn` | static | `bond_inj_cora` | gpu | 1 | completed | 1/2/2 | 0.5000 | 9.2 | 1,293 |
+| `bond_one` | static | `bond_inj_cora` | gpu | 1 | completed | 0/2/2 | 0.4768 | 8.3 | 859 |
+| `bond_radar` | static | `bond_inj_cora` | gpu | 1 | completed | 0/2/2 | 0.4942 | 11.4 | 1,198 |
+| `bond_scan` | static | `bond_inj_cora` | cpu | 1 | completed | 0/2/2 | 0.6603 | 9.4 | 661 |
+| `diffgad` | static | `bond_books` | gpu | 1 | completed | 0/2/2 | 0.6743 | 2,253.7 | 1,337 |
+| `dynwalk` | temporal | `uci_snapshot` | cpu | 1 | completed | 0/1/3 | 0.8209 | 104.1 | 466 |
+| `f_fade` | streaming | `anograph_darpa` | cpu | 1 | completed | 0/1/3 | 0.9209 | 307.7 | 2,408 |
+| `gady` | streaming | `gady_email_dnc` | gpu | 2 | completed | 0/0/4 | 0.9788 | 4,544.0 | 6,592 |
+| `generaldyg` | streaming | `generaldyg_btc_alpha` | gpu | 4 | completed | 0/0/4 | 0.7787 | 1,526.8 | 10,459 |
+| `huge_gad` | static | `gad_facebook` | gpu | 5 | completed | 0/1/3 | 0.9766 | 31.7 | 1,896 |
+| `midas` | streaming | `anograph_darpa` | cpu | 1 | completed | 0/1/3 | 0.9844 | 14.9 | 417 |
+| `rare` | static | `bond_inj_cora` | gpu | 1 | completed | 0/1/3 | 0.9571 | 233.7 | 1,582 |
+| `slade` | streaming | `slade_bitcoinalpha` | gpu | 1 | completed | 0/0/4 | 0.7600 | 54.0 | 2,728 |
+| `streamspot` | streaming | `streamspot_all` | cpu | 1 | completed | 0/1/3 | 0.8942 | 432.2 | 6,217 |
+| `strgnn` | temporal | `uci_snapshot` | gpu | 1 | completed | 0/0/4 | 0.9027 | 431.6 | 3,809 |
+| `taddy` | temporal | `uci` | gpu | 1 | completed | 0/1/3 | 0.8388 | 864.2 | 4,709 |

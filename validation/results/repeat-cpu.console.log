@@ -1,0 +1,5 @@
+[INFO] 14:12:44 worker 0: strgnn on uci_snapshot (build)
+[INFO] 15:17:28 worker 1: strgnn on uci_snapshot
+[INFO] 15:17:28 done exp__strgnn__uci_snapshot__20261117_141244: status=completed run_ok=True verify_failed=0 
+[INFO] 15:41:20 done exp__strgnn__uci_snapshot__20261117_151728: status=completed run_ok=True verify_failed=0 
+[OK] campaign finished

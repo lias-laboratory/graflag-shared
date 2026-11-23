@@ -1,0 +1,1 @@
+[{"method": "bond_dmgd", "dataset": "bond_inj_cora", "params": {}, "gpu": true, "build": true, "label": "rebuild-bond-base"}]

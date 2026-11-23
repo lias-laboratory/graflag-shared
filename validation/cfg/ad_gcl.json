@@ -1,0 +1,32 @@
+{
+  "experiment_name": "exp__ad_gcl__gad_cora__20261118_120340",
+  "method_name": "ad_gcl",
+  "dataset": "gad_cora",
+  "tag": "latest",
+  "gpu_required": false,
+  "registry_image": "manager:5000/ad_gcl:latest",
+  "manager_ip": "manager",
+  "timestamp": "2026-11-18T11:06:22.687021+00:00",
+  "data_path": "/shared/datasets/gad_cora/",
+  "exp_path": "/shared/experiments/exp__ad_gcl__gad_cora__20261118_120340/",
+  "env_contents": {
+    "METHOD_NAME": "ad_gcl",
+    "DESCRIPTION": "AD-GCL: graph contrastive learning for node anomaly detection, corrected for the structural imbalance between high- and low-degree nodes (AAAI 2025)",
+    "SOURCE_CODE": "https://github.com/yimingxu24/AD-GCL",
+    "SOURCE_REF": "da110446c1a7a8d0b9d52c5f7f91ec104dc1dcf2",
+    "INTEGRATION": "upstream",
+    "SUPPORTED_DATASETS": "gad_cora,gad_citeseer,gad_pubmed,gad_bitcoinotc,gad_bitotc,gad_bitalpha",
+    "COMMAND": "python3 train_graflag.py",
+    "_EMBEDDING_DIM": "64",
+    "_DROP_PROB": "0.0",
+    "_WEIGHT_DECAY": "0.0",
+    "_BATCH_SIZE": "300",
+    "_SUBGRAPH_SIZE": "4",
+    "_READOUT": "avg",
+    "_NEGSAMP_RATIO": "1",
+    "_DEGREE": "6",
+    "_AUC_TEST_ROUNDS": "256",
+    "_GPU": "-1",
+    "_SEED": "1"
+  }
+}

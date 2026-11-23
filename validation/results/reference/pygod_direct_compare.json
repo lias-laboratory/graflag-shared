@@ -1,0 +1,294 @@
+{
+  "what": "GraFlag CPU runs (ref-static-cpu) vs PyGOD called directly, bond_inj_cora, seed 42, CPU",
+  "dmgd_direct_vs_direct": {
+    "max_abs_diff": 2.0563602447509766e-06,
+    "n_differing": 2644,
+    "note": "two direct runs, same seed: DMGD is not bit-repeatable on CPU"
+  },
+  "detectors": {
+    "bond_anomalous": [
+      {
+        "experiment": "exp__bond_anomalous__bond_inj_cora__20261117_130802",
+        "n_graflag": 2708,
+        "n_reference": 2708,
+        "identical": true,
+        "max_abs_diff": 0.0,
+        "n_differing": 0,
+        "auc_graflag": 0.36618733434839,
+        "auc_reference": 0.36618733434839,
+        "reference": "pygod_direct_cpu_a/b (one shared Data object)"
+      }
+    ],
+    "bond_dominant": [
+      {
+        "experiment": "exp__bond_dominant__bond_inj_cora__20261117_130758",
+        "n_graflag": 2708,
+        "n_reference": 2708,
+        "identical": false,
+        "max_abs_diff": 4.76555061340332,
+        "n_differing": 2708,
+        "auc_graflag": 0.7672813398748097,
+        "auc_reference": 0.6663917554841257,
+        "reference": "pygod_direct_cpu_a/b (one shared Data object)"
+      },
+      {
+        "experiment": "exp__bond_dominant__bond_inj_cora__20261117_130758",
+        "n_graflag": 2708,
+        "n_reference": 2708,
+        "identical": true,
+        "max_abs_diff": 0.0,
+        "n_differing": 0,
+        "auc_graflag": 0.7672813398748097,
+        "auc_reference": 0.7672813398748097,
+        "reference": "pygod_direct_cpu_d (a copy per detector)"
+      }
+    ],
+    "bond_anomalydae": [
+      {
+        "experiment": "exp__bond_anomalydae__bond_inj_cora__20261117_130938",
+        "n_graflag": 2708,
+        "n_reference": 2708,
+        "identical": true,
+        "max_abs_diff": 0.0,
+        "n_differing": 0,
+        "auc_graflag": 0.714264365871539,
+        "auc_reference": 0.714264365871539,
+        "reference": "pygod_direct_cpu_a/b (one shared Data object)"
+      }
+    ],
+    "bond_cola": [
+      {
+        "experiment": "exp__bond_cola__bond_inj_cora__20261117_131119",
+        "n_graflag": 2708,
+        "n_reference": 2708,
+        "identical": true,
+        "max_abs_diff": 0.0,
+        "n_differing": 0,
+        "auc_graflag": 0.5556392037444313,
+        "auc_reference": 0.5556392037444313,
+        "reference": "pygod_direct_cpu_a/b (one shared Data object)"
+      }
+    ],
+    "bond_adone": [
+      {
+        "experiment": "exp__bond_adone__bond_inj_cora__20261117_130800",
+        "n_graflag": 2708,
+        "n_reference": 2708,
+        "identical": true,
+        "max_abs_diff": 0.0,
+        "n_differing": 0,
+        "auc_graflag": 0.8251649467095246,
+        "auc_reference": 0.8251649467095246,
+        "reference": "pygod_direct_cpu_a/b (one shared Data object)"
+      }
+    ],
+    "bond_conad": [
+      {
+        "experiment": "exp__bond_conad__bond_inj_cora__20261117_131401",
+        "n_graflag": 2708,
+        "n_reference": 2708,
+        "identical": true,
+        "max_abs_diff": 0.0,
+        "n_differing": 0,
+        "auc_graflag": 0.7672813398748097,
+        "auc_reference": 0.7672813398748097,
+        "reference": "pygod_direct_cpu_a/b (one shared Data object)"
+      }
+    ],
+    "bond_done": [
+      {
+        "experiment": "exp__bond_done__bond_inj_cora__20261117_131900",
+        "n_graflag": 2708,
+        "n_reference": 2708,
+        "identical": false,
+        "max_abs_diff": 0.042538986905128695,
+        "n_differing": 2708,
+        "auc_graflag": 0.8280916934528845,
+        "auc_reference": 0.7392615462696667,
+        "reference": "pygod_direct_cpu_a/b (one shared Data object)"
+      },
+      {
+        "experiment": "exp__bond_done__bond_inj_cora__20261117_131900",
+        "n_graflag": 2708,
+        "n_reference": 2708,
+        "identical": true,
+        "max_abs_diff": 0.0,
+        "n_differing": 0,
+        "auc_graflag": 0.8280916934528845,
+        "auc_reference": 0.8280916934528845,
+        "reference": "pygod_direct_cpu_d (a copy per detector)"
+      }
+    ],
+    "bond_dmgd": [
+      {
+        "experiment": "exp__bond_dmgd__bond_inj_cora__20261117_131720",
+        "n_graflag": 2708,
+        "n_reference": 2708,
+        "identical": false,
+        "max_abs_diff": 4.172325134277344e-07,
+        "n_differing": 2415,
+        "auc_graflag": 0.7600984041053404,
+        "auc_reference": 0.7600998139062765,
+        "reference": "pygod_direct_cpu_a/b (one shared Data object)"
+      },
+      {
+        "experiment": "exp__bond_dmgd__bond_inj_cora__20261117_131720",
+        "n_graflag": 2708,
+        "n_reference": 2708,
+        "identical": false,
+        "max_abs_diff": 1.6391277313232422e-06,
+        "n_differing": 2639,
+        "auc_graflag": 0.7600984041053404,
+        "auc_reference": 0.7600998139062765,
+        "reference": "pygod_direct_cpu_d (a copy per detector)"
+      }
+    ],
+    "bond_gaan": [
+      {
+        "experiment": "exp__bond_gaan__bond_inj_cora__20261117_132202",
+        "n_graflag": 2708,
+        "n_reference": 2708,
+        "identical": true,
+        "max_abs_diff": 0.0,
+        "n_differing": 0,
+        "auc_graflag": 0.49800936107821575,
+        "auc_reference": 0.49800936107821575,
+        "reference": "pygod_direct_cpu_a/b (one shared Data object)"
+      }
+    ],
+    "bond_gae": [
+      {
+        "experiment": "exp__bond_gae__bond_inj_cora__20261117_132505",
+        "n_graflag": 2708,
+        "n_reference": 2708,
+        "identical": true,
+        "max_abs_diff": 0.0,
+        "n_differing": 0,
+        "auc_graflag": 0.7110528393390854,
+        "auc_reference": 0.7110528393390854,
+        "reference": "pygod_direct_cpu_e on node-3: a fresh deepcopy of the graph per detector"
+      }
+    ],
+    "bond_guide": [
+      {
+        "experiment": "exp__bond_guide__bond_inj_cora__20261117_133043",
+        "n_graflag": 2708,
+        "n_reference": 2708,
+        "identical": true,
+        "max_abs_diff": 0.0,
+        "n_differing": 0,
+        "auc_graflag": 0.7085673602887272,
+        "auc_reference": 0.7085673602887272,
+        "reference": "pygod_direct_cpu_e on node-3: a fresh deepcopy of the graph per detector"
+      }
+    ],
+    "bond_ocgnn": [
+      {
+        "experiment": "exp__bond_ocgnn__bond_inj_cora__20261117_134733",
+        "n_graflag": 2708,
+        "n_reference": 2708,
+        "identical": true,
+        "max_abs_diff": 0.0,
+        "n_differing": 0,
+        "auc_graflag": 0.5,
+        "auc_reference": 0.5,
+        "reference": "pygod_direct_cpu_e on node-3: a fresh deepcopy of the graph per detector"
+      }
+    ],
+    "bond_one": [
+      {
+        "experiment": "exp__bond_one__bond_inj_cora__20261117_135054",
+        "n_graflag": 2708,
+        "n_reference": 2708,
+        "identical": true,
+        "max_abs_diff": 0.0,
+        "n_differing": 0,
+        "auc_graflag": 0.47681441380477074,
+        "auc_reference": 0.47681441380477074,
+        "reference": "pygod_direct_cpu_e on node-3: a fresh deepcopy of the graph per detector"
+      }
+    ],
+    "bond_radar": [
+      {
+        "experiment": "exp__bond_radar__bond_inj_cora__20261117_135141",
+        "n_graflag": 2708,
+        "n_reference": 2708,
+        "identical": true,
+        "max_abs_diff": 0.0,
+        "n_differing": 0,
+        "auc_graflag": 0.5302233124682795,
+        "auc_reference": 0.5302233124682795,
+        "reference": "pygod_direct_cpu_e on node-3: a fresh deepcopy of the graph per detector"
+      }
+    ],
+    "bond_scan": [
+      {
+        "experiment": "exp__bond_scan__bond_inj_cora__20261117_135409",
+        "n_graflag": 2708,
+        "n_reference": 2708,
+        "identical": true,
+        "max_abs_diff": 0.0,
+        "n_differing": 0,
+        "auc_graflag": 0.6602577116111205,
+        "auc_reference": 0.6602577116111205,
+        "reference": "pygod_direct_cpu_e on node-3: a fresh deepcopy of the graph per detector"
+      }
+    ],
+    "bond_card": [
+      {
+        "experiment": "exp__bond_card__bond_inj_cora__20261117_130943",
+        "n_graflag": 2708,
+        "n_reference": 2708,
+        "identical": true,
+        "max_abs_diff": 0.0,
+        "n_differing": 0,
+        "auc_graflag": 0.7178960130829527,
+        "auc_reference": 0.7178960130829527,
+        "reference": "pygod_direct_cpu_c on node-3: CARD alone"
+      }
+    ],
+    "bond_gadnr": [
+      {
+        "experiment": "exp__bond_gadnr__bond_inj_cora__20261117_132337",
+        "n_graflag": 2708,
+        "n_reference": 2708,
+        "identical": true,
+        "max_abs_diff": 0.0,
+        "n_differing": 0,
+        "auc_graflag": 0.7406093159645858,
+        "auc_reference": 0.7406093159645858,
+        "reference": "pygod_direct_cpu_b on node-2: GADNR ran second, after GAAN, which scores a clone (old script, but nothing before GADNR changed the shared graph)"
+      }
+    ]
+  },
+  "summary": {
+    "detectors": 17,
+    "bit_identical": 16,
+    "bit_identical_methods": [
+      "bond_adone",
+      "bond_anomalous",
+      "bond_anomalydae",
+      "bond_card",
+      "bond_cola",
+      "bond_conad",
+      "bond_dominant",
+      "bond_done",
+      "bond_gaan",
+      "bond_gadnr",
+      "bond_gae",
+      "bond_guide",
+      "bond_ocgnn",
+      "bond_one",
+      "bond_radar",
+      "bond_scan"
+    ],
+    "not_identical": {
+      "bond_dmgd": {
+        "max_abs_diff": 1.6391277313232422e-06,
+        "auc_graflag": 0.7600984041053404,
+        "auc_reference": 0.7600998139062765
+      }
+    },
+    "note": "DMGD is the one detector not bit-identical, and two direct runs of it with the same seed differ by more (dmgd_direct_vs_direct). OCGNN is identical at AUC 0.5: PyGOD itself returns constant scores, which is why graflag verify rejects the run."
+  }
+}

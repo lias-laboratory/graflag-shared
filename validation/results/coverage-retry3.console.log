@@ -1,0 +1,5 @@
+[INFO] 13:50:32 worker 0: ad_gcl on gad_cora (build)
+[INFO] 13:50:34 worker 1: huge_gad on bond_books (build)
+[INFO] 14:28:05 done exp__ad_gcl__gad_cora__20261117_135032: status=failed run_ok=False verify_failed=None GraFlagError: Experiment exp__ad_gcl__gad_cora__20261117_135032 failed. See: graflag logs -e exp__ad_gcl__gad_cora__20261117_135032
+[INFO] 14:28:21 done exp__huge_gad__bond_books__20261117_135034: status=failed run_ok=False verify_failed=None GraFlagError: Experiment exp__huge_gad__bond_books__20261117_135034 failed. See: graflag logs -e exp__huge_gad__bond_books__20261117_135034
+[OK] campaign finished

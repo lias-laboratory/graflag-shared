@@ -1,0 +1,37 @@
+[INFO] 13:07:58 worker 0: bond_dominant on bond_inj_cora
+[INFO] 13:08:00 worker 1: bond_adone on bond_inj_cora
+[INFO] 13:08:02 worker 2: bond_anomalous on bond_inj_cora
+[INFO] 13:09:38 done exp__bond_anomalous__bond_inj_cora__20261117_130802: status=completed run_ok=True verify_failed=0 
+[INFO] 13:09:38 worker 2: bond_anomalydae on bond_inj_cora
+[INFO] 13:09:43 done exp__bond_dominant__bond_inj_cora__20261117_130758: status=completed run_ok=True verify_failed=0 
+[INFO] 13:09:43 worker 0: bond_card on bond_inj_cora
+[INFO] 13:11:19 done exp__bond_anomalydae__bond_inj_cora__20261117_130938: status=completed run_ok=True verify_failed=0 
+[INFO] 13:11:19 worker 2: bond_cola on bond_inj_cora
+[INFO] 13:14:01 done exp__bond_cola__bond_inj_cora__20261117_131119: status=completed run_ok=True verify_failed=0 
+[INFO] 13:14:01 worker 2: bond_conad on bond_inj_cora
+[INFO] 13:17:20 done exp__bond_adone__bond_inj_cora__20261117_130800: status=completed run_ok=True verify_failed=0 
+[INFO] 13:17:20 worker 1: bond_dmgd on bond_inj_cora
+[INFO] 13:19:00 done exp__bond_conad__bond_inj_cora__20261117_131401: status=completed run_ok=True verify_failed=0 
+[INFO] 13:19:00 worker 2: bond_done on bond_inj_cora
+[INFO] 13:22:02 done exp__bond_done__bond_inj_cora__20261117_131900: status=completed run_ok=True verify_failed=0 
+[INFO] 13:22:02 worker 2: bond_gaan on bond_inj_cora
+[INFO] 13:23:37 done exp__bond_dmgd__bond_inj_cora__20261117_131720: status=completed run_ok=True verify_failed=0 
+[INFO] 13:23:37 worker 1: bond_gadnr on bond_inj_cora
+[INFO] 13:25:05 done exp__bond_gaan__bond_inj_cora__20261117_132202: status=completed run_ok=True verify_failed=0 
+[INFO] 13:25:05 worker 2: bond_gae on bond_inj_cora
+[INFO] 13:30:43 done exp__bond_gae__bond_inj_cora__20261117_132505: status=completed run_ok=True verify_failed=0 
+[INFO] 13:30:43 worker 2: bond_guide on bond_inj_cora
+[INFO] 13:47:33 done exp__bond_guide__bond_inj_cora__20261117_133043: status=completed run_ok=True verify_failed=0 
+[INFO] 13:47:33 worker 2: bond_ocgnn on bond_inj_cora
+[INFO] 13:50:54 done exp__bond_ocgnn__bond_inj_cora__20261117_134733: status=completed run_ok=True verify_failed=1 
+[INFO] 13:50:54 worker 2: bond_one on bond_inj_cora
+[INFO] 13:51:41 done exp__bond_one__bond_inj_cora__20261117_135054: status=completed run_ok=True verify_failed=0 
+[INFO] 13:51:41 worker 2: bond_radar on bond_inj_cora
+[INFO] 13:54:09 done exp__bond_radar__bond_inj_cora__20261117_135141: status=completed run_ok=True verify_failed=0 
+[INFO] 13:54:09 worker 2: bond_scan on bond_inj_cora
+[INFO] 13:54:49 done exp__bond_scan__bond_inj_cora__20261117_135409: status=completed run_ok=True verify_failed=0 
+[INFO] 22:25:17 done exp__bond_card__bond_inj_cora__20261117_130943: status=None run_ok=False verify_failed=None ManagerUnreachable: Cannot reach the manager as root@manager: mux_client_request_stdio_fwd: read from master failed: Broken pipe
+Connection closed by UNKNOWN port 65535. Check MANAGER_IP, SSH_USER
+[INFO] 22:25:32 done exp__bond_gadnr__bond_inj_cora__20261117_132337: status=None run_ok=False verify_failed=None ManagerUnreachable: Cannot reach the manager as root@manager: Connection timed out during banner exchange
+Connection to UNKNOWN port 65535 timed out. Check MANAGER_IP, SSH_USER, SSH_KEY and SSH_PR
+[OK] campaign finished

@@ -57,14 +57,30 @@ not comparing like with like.
 
 `metadata.summary.training_info` records `selected_timestep` and
 `timestep_selected_on: "test_labels"` so the property travels with the result
-instead of living only here.
+instead of living only here, and `auc_roc`, the AUC upstream printed for the
+published scores, which is what `graflag verify` checks them against.
+
+**And it is one trial of twenty.** `forward()` runs `sample()` in a loop of
+`num_trial = 20`: each trial retrains both diffusion models on the shared
+autoencoder, selects its own best timestep against the labels, and contributes
+that maximum. What upstream prints, and what its paper reports, is the mean
+and standard deviation over the 20 maxima, with the best one in parentheses
+(`Final AUC: 0.6715±0.0230 (0.7228)` on `bond_books`). `selected_scores` is
+overwritten by every trial, so the scores GraFlag publishes are the **last
+trial's**, at its selected timestep. Their AUC is that trial's maximum, one
+draw from the distribution upstream averages -- not upstream's headline
+number, and not its best trial. `training_info.trial_auc_roc` records all 20
+maxima and `published_trial` which one was published, so a reader can compute
+upstream's summary and see where the published trial sits in it.
 
 ## The patch
 
-`patches/expose-scores.patch` adds three lines to `sample()`: a list, an
-append, and two assignments onto `self`. Upstream keeps only `np.max` of the
-metrics and discards every score vector behind them; GraFlag publishes the
-scores a method computed rather than recomputing them.
+`patches/expose-scores.patch` adds five lines to `sample()` -- a list, an
+append, and three assignments onto `self` (the selected timestep, its scores
+and the AUC upstream measured for them) -- and one to `forward()`, which keeps
+the 20 per-trial AUCs before they become a tensor. Upstream keeps only
+`np.max` of the metrics and discards every score vector behind them; GraFlag
+publishes the scores a method computed rather than recomputing them.
 
 Applied with `git apply --verbose`, which exits non-zero when the context no
 longer matches, so upstream drift fails the build rather than producing an
@@ -86,6 +102,43 @@ convention BOND and `graflag_bond` use.
 
 ## Verification
 
-**Not verified: never run on a cluster.** The definition passes gate 1 (the
-contract tests); gates 2 to 4 are outstanding, so DiffGAD is defined and
-pinned, not integrated. A run needs a GPU (see "No CPU path").
+**Verified on `bond_books`** (three-node GPU cluster, 2026-11-17, defaults
+above, the authors' `configs/books.yaml`, seed 42, GPU):
+
+| Gate | Result |
+|---|---|
+| 1. Contract | `tests/test_methods.py` passes |
+| 2. Build and run | `exp__diffgad__bond_books__20261117_111400`: completed in 2,253.7 s (20 trials of 500 timesteps), peak RAM 1,337 MB, peak GPU 175 MB |
+| 3. `graflag evaluate` | AUC-ROC **0.6743**, AUC-PR 0.0403, over all 1,418 nodes (28 anomalous) |
+| 4. `graflag verify` | 0 failed, 2 warned, 2 passed. One warning is `scored_split: all_nodes` (see "Labels" above). The other is that the run records no AUC of its own to cross-check against |
+
+That cross-check was done by hand from the run's log instead: in the 20th
+trial, at timestep 92 -- the `selected_timestep` the run recorded -- upstream
+printed `pyg_AUC: 0.6743`, the evaluator's number to the four digits upstream
+prints. Upstream's own summary for the same run was `Final AUC:
+0.6715±0.0230 (0.7228)`; see "And it is one trial of twenty" for why the
+published number is neither of those.
+
+That run predates `training_info.auc_roc`. The image rebuilt with it ran the
+same configuration on 2026-11-18 (`exp__diffgad__bond_books__20261118_200637`,
+node-2, 2,262.4 s, peak RAM 1,342 MB, peak GPU 175 MB; record
+`validation/results/diffgad-auc-record.json`), and `graflag verify` now makes
+the check itself: 0 failed, 1 warned (`all_nodes`), 3 passed, "evaluator AUC
+0.6743 matches the method's training_info.auc_roc".
+
+What that run records about its trials:
+
+| | |
+|---|---|
+| Published trial | 20 of 20, selected timestep 92 |
+| Its AUC-ROC | 0.6743 (upstream measured 0.674293) |
+| The 20 trials | mean 0.6729, standard deviation 0.0253, min 0.6427, max 0.7355 |
+| Rank of the published trial | 9th of 20 |
+
+Against the first run, same seed: the same selected timestep and the same AUC
+to four digits, but not the same scores -- they differ by up to 0.047 -- and
+not the same trials (upstream's summary then was 0.6715 +/- 0.0230, max
+0.7228). DiffGAD on a GPU does not repeat bit for bit, so its published number
+is one draw twice over: one trial of twenty, from one run of many.
+
+Not yet done: the other datasets upstream ships configs for.
